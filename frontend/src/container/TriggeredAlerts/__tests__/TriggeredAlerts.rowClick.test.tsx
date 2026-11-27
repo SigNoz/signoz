@@ -3,13 +3,13 @@ import { logEventMock } from '__tests__/logEventMock';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { screen, waitFor } from 'tests/test-utils';
+import { screen, waitFor, NO_DELAY_USER_EVENT } from 'tests/test-utils';
 
 import { getTriggeredAlertRowTestId, renderTriggeredAlerts } from './_helpers';
 
 describe('TriggeredAlerts — row click', () => {
 	it('navigates to the alert overview with the rule id from labels on row click', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderTriggeredAlerts();
 
 		await waitFor(() =>
@@ -35,7 +35,7 @@ describe('TriggeredAlerts — row click', () => {
 	});
 
 	it('opens in a new tab when ctrl+clicked', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderTriggeredAlerts();
 
 		await waitFor(() =>
@@ -83,7 +83,7 @@ describe('TriggeredAlerts — row click', () => {
 			),
 		);
 
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderTriggeredAlerts();
 
 		await waitFor(() =>
@@ -125,7 +125,7 @@ describe('TriggeredAlerts — row click', () => {
 			),
 		);
 
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderTriggeredAlerts();
 
 		await waitFor(() =>

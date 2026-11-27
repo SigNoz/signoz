@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import { screen, userEvent } from 'tests/test-utils';
+import { screen, userEvent, NO_DELAY_USER_EVENT } from 'tests/test-utils';
 import type { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
@@ -223,7 +223,7 @@ const renderHarness = (): void => {
 // the field values these never recover from a context swap that lands after mount.
 describe('View modal, builder add-on rows', () => {
 	it('shows the opened panel add-ons, not the previous panel ones', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderHarness();
 
 		await user.click(screen.getByTestId('open-grouped'));
@@ -237,7 +237,7 @@ describe('View modal, builder add-on rows', () => {
 	});
 
 	it('shows add-ons the opened panel has after a panel without them', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderHarness();
 
 		await user.click(screen.getByTestId('open-plain'));

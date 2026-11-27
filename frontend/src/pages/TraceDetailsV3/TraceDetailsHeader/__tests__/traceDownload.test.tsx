@@ -4,7 +4,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { fetchExportData } from 'api/v1/download/downloadExportData';
 import { downloadFile } from 'lib/exportData/downloadFile';
-import { render } from 'tests/test-utils';
+import { render, NO_DELAY_USER_EVENT } from 'tests/test-utils';
 
 import TraceDownloadPanel from '../TraceDownloadPanel';
 import TraceOptionsMenu from '../TraceOptionsMenu';
@@ -52,7 +52,7 @@ function renderFeature(
 // Base UI's safe-polygon math (zero rects in jsdom) closes the submenu.
 function setupUser(): ReturnType<typeof userEvent.setup> {
 	return userEvent.setup({
-		delay: null,
+		...NO_DELAY_USER_EVENT,
 		skipHover: true,
 	});
 }

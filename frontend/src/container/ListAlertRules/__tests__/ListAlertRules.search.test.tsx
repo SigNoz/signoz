@@ -4,7 +4,13 @@ import {
 } from 'mocks-server/__mockdata__/alert_rules';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { screen, userEvent, waitFor, within } from 'tests/test-utils';
+import {
+	screen,
+	userEvent,
+	waitFor,
+	within,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 import {
 	getCurrentNuqsQueryString,
 	getCurrentNuqsSearchParams,
@@ -134,7 +140,7 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it('runs the draft when the search box loses focus', async () => {
-		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		// jsdom reports no focus once it lands on <body>; a focused browser window does.
 		jest.spyOn(document, 'hasFocus').mockReturnValue(true);
 		renderListAlertRules();
@@ -154,7 +160,7 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it('keeps the draft unrun when focus leaves the window', async () => {
-		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');

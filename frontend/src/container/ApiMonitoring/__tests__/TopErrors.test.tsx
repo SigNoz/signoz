@@ -8,6 +8,7 @@ import {
 	userEvent,
 	waitFor,
 	within,
+	NO_DELAY_USER_EVENT,
 } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -209,7 +210,7 @@ describe('TopErrors', () => {
 	});
 
 	it('scopes the query to the endpoint picked in the picker', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		const expressions: string[] = [];
 		server.use(
 			rest.post(V5_QUERY_RANGE_API_PATH, async (req) => {

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
+import type userEvent from '@testing-library/user-event';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { NuqsAdapter } from 'nuqs/adapters/react-router/v7';
 import { AppContext } from 'providers/App/App';
@@ -204,6 +205,15 @@ const customRender = (
 		...options,
 	});
 };
+
+type UserEventOptions = NonNullable<Parameters<typeof userEvent.setup>[0]>;
+
+// The default `delay: 0` still awaits a timer after every key and click.
+// Keep it when a test checks what happens between two actions, such as a
+// debounce per key: with `null` that code runs only after the whole action.
+export const NO_DELAY_USER_EVENT = {
+	delay: null,
+} as const satisfies UserEventOptions;
 
 export * from '@testing-library/react';
 export { default as userEvent } from '@testing-library/user-event';

@@ -6,7 +6,13 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 
 import ChannelActionsMenu from './ChannelActionsMenu';
 
@@ -59,7 +65,7 @@ describe('ChannelActionsMenu - AuthZ', () => {
 			/>,
 		);
 
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		await user.click(await screen.findByTestId('channel-actions-3', {}, FIND));
 
 		await screen.findByTestId('channel-actions-3-delete', {}, FIND);
@@ -103,7 +109,7 @@ describe('ChannelActionsMenu - AuthZ', () => {
 		});
 		expect(selectors).toHaveLength(0);
 
-		await userEvent.setup({ delay: null }).click(trigger);
+		await userEvent.setup(NO_DELAY_USER_EVENT).click(trigger);
 
 		await waitFor(() => expect(selectors).toContain('3'), FIND);
 	});

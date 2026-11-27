@@ -26,8 +26,14 @@ export function editorAt(page: Page, root: () => Locator): FilterEditor {
 		root,
 		content,
 		async type(text) {
-			await editor.clear();
-			await page.keyboard.type(text);
+			// Keys typed while the explorer settles can be lost or land at
+			// position 0 (`count()` came out `c()`), so retype until the editor
+			// holds exactly the text.
+			await expect(async () => {
+				await editor.clear();
+				await page.keyboard.type(text);
+				await expect.poll(() => EDITOR_DOC(root()), { timeout: 1_000 }).toBe(text);
+			}).toPass({ timeout: 15_000 });
 		},
 		async append(text) {
 			await content().click();

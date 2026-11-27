@@ -5,11 +5,30 @@ import {
 	makeListResponse,
 	makeUnmappedResponse,
 	mockRules,
+	mockUnpricedModels,
 } from 'container/LLMObservability/Settings/ModelPricing/__tests__/fixtures';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+import {
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 
 import UnpricedModelsTab from '../UnpricedModelsTab';
+import { usePendingMappingStore } from '../usePendingMappingStore';
+
+// One antd skeleton renders per placeholder row and per dropdown option on every
+// load, so fewer of them keep each test's first paint cheap.
+jest.mock('container/LLMObservability/Settings/ModelPricing/constants', () => ({
+	...jest.requireActual(
+		'container/LLMObservability/Settings/ModelPricing/constants',
+	),
+	SKELETON_ROW_COUNT: 1,
+	RULE_OPTIONS_LIMIT: 2,
+}));
 
 const toastSuccess = jest.fn();
 const toastError = jest.fn();
@@ -21,12 +40,20 @@ jest.mock('@signozhq/ui/toast', () => ({
 	},
 }));
 
-const MODEL = 'gpt-4o-mini-2024-07-18';
+const [UNPRICED_MODEL] = mockUnpricedModels;
+const MODEL = UNPRICED_MODEL.modelName;
+const [TARGET_RULE] = mockRules;
+
+function stageMapping(): void {
+	usePendingMappingStore.setState({
+		pending: { model: UNPRICED_MODEL, rule: TARGET_RULE },
+	});
+}
 
 function setup(): void {
 	server.use(
 		rest.get(LLM_UNMAPPED_ENDPOINT, (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(makeUnmappedResponse())),
+			res(ctx.status(200), ctx.json(makeUnmappedResponse([UNPRICED_MODEL]))),
 		),
 		rest.get(LLM_PRICING_ENDPOINT, (_req, res, ctx) =>
 			res(ctx.status(200), ctx.json(makeListResponse(mockRules))),
@@ -36,8 +63,8 @@ function setup(): void {
 
 // Picks a billing model in a row's dropdown: open the combobox, wait for the
 // options (fetched from the rules list mocked above), then arrow down to the
-// option and press Enter. jsdom cannot deliver the pointer click Base UI
-// expects on an option.
+// option and press Enter in its search box. jsdom cannot deliver the pointer
+// click Base UI expects on an option.
 async function selectRule(
 	user: ReturnType<typeof userEvent.setup>,
 	modelName: string,
@@ -50,10 +77,10 @@ async function selectRule(
 		.findIndex(
 			(option) => option.getAttribute('data-testid') === `map-to-option-${ruleId}`,
 		);
-	await waitFor(() =>
-		expect(screen.getByTestId(`map-to-select-${modelName}-search`)).toHaveFocus(),
+	await user.type(
+		screen.getByTestId(`map-to-select-${modelName}-search`),
+		`${'{ArrowDown}'.repeat(index + 1)}{Enter}`,
 	);
-	await user.keyboard(`${'{ArrowDown}'.repeat(index + 1)}{Enter}`);
 }
 
 describe('UnpricedModelsTab (integration)', () => {
@@ -64,12 +91,36 @@ describe('UnpricedModelsTab (integration)', () => {
 
 	afterEach(() => {
 		server.resetHandlers();
+		usePendingMappingStore.getState().clearPending();
 		toastSuccess.mockClear();
 		toastError.mockClear();
 	});
 
+	it('cancels the mapping without committing', async () => {
+		const sent: LlmpricingruletypesUpdatableLLMPricingRulesDTO[] = [];
+		server.use(
+			rest.put(LLM_PRICING_ENDPOINT, async (req, res, ctx) => {
+				sent.push(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success' }));
+			}),
+		);
+
+		stageMapping();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
+		render(<UnpricedModelsTab />);
+
+		await user.click(await screen.findByTestId('unpriced-map-cancel-btn'));
+
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId(`unpriced-map-confirm-item-${MODEL}`),
+			).not.toBeInTheDocument(),
+		);
+		expect(sent).toHaveLength(0);
+	});
+
 	it('opens the confirm dialog with the target rule pricing when a model is picked', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
@@ -94,26 +145,20 @@ describe('UnpricedModelsTab (integration)', () => {
 	});
 
 	it('reverts the row trigger to the placeholder when the mapping is cancelled', async () => {
-		const user = userEvent.setup();
+		stageMapping();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(<UnpricedModelsTab />);
 
-		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
-		await selectRule(user, MODEL, 'rule-openai');
-
+		const trigger = await screen.findByTestId(`map-to-select-${MODEL}`);
 		expect(
-			within(screen.getByTestId(`map-to-select-${MODEL}`)).getByText(
-				'openai:gpt-4o ($3.00/$9.00)',
-			),
+			within(trigger).getByText('openai:gpt-4o ($3.00/$9.00)'),
 		).toBeInTheDocument();
 
-		await user.click(await screen.findByTestId('unpriced-map-cancel-btn'));
+		await user.click(screen.getByTestId('unpriced-map-cancel-btn'));
 
-		await waitFor(() => {
-			const trigger = screen.getByTestId(`map-to-select-${MODEL}`);
-			expect(
-				within(trigger).getByText('Select / Create a pricing model'),
-			).toBeInTheDocument();
-		});
+		expect(
+			within(trigger).getByText('Select / Create a pricing model'),
+		).toBeInTheDocument();
 	});
 
 	it('commits the mapping in one request when confirmed', async () => {
@@ -125,11 +170,9 @@ describe('UnpricedModelsTab (integration)', () => {
 			}),
 		);
 
-		const user = userEvent.setup();
+		stageMapping();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(<UnpricedModelsTab />);
-
-		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
-		await selectRule(user, MODEL, 'rule-openai');
 
 		await user.click(await screen.findByTestId('unpriced-map-confirm-btn'));
 
@@ -147,33 +190,8 @@ describe('UnpricedModelsTab (integration)', () => {
 		);
 	});
 
-	it('cancels the mapping without committing', async () => {
-		const sent: LlmpricingruletypesUpdatableLLMPricingRulesDTO[] = [];
-		server.use(
-			rest.put(LLM_PRICING_ENDPOINT, async (req, res, ctx) => {
-				sent.push(await req.json());
-				return res(ctx.status(200), ctx.json({ status: 'success' }));
-			}),
-		);
-
-		const user = userEvent.setup();
-		render(<UnpricedModelsTab />);
-
-		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
-		await selectRule(user, MODEL, 'rule-openai');
-
-		await user.click(await screen.findByTestId('unpriced-map-cancel-btn'));
-
-		await waitFor(() =>
-			expect(
-				screen.queryByTestId(`unpriced-map-confirm-item-${MODEL}`),
-			).not.toBeInTheDocument(),
-		);
-		expect(sent).toHaveLength(0);
-	});
-
 	it('opens the add-cost drawer prefilled when creating pricing for a model', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);

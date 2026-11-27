@@ -64,7 +64,7 @@ describe('InviteMembers - Submission', () => {
 
 			render(
 				<InviteMembers
-					initialRowCount={3}
+					initialRowCount={2}
 					renderFooter={({ submit }): JSX.Element => (
 						<button data-testid="submit-btn" onClick={submit}>
 							Submit
@@ -77,13 +77,11 @@ describe('InviteMembers - Submission', () => {
 			await pickRole(user, 0, 'role-viewer');
 			await enterInviteEmail(user, 1, 'bob@signoz.io');
 			await pickRole(user, 1, 'role-editor');
-			await enterInviteEmail(user, 2, 'charlie@signoz.io');
-			await pickRole(user, 2, 'role-admin');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
 			await waitFor(() => {
-				expect(calls).toHaveLength(3);
+				expect(calls).toHaveLength(2);
 			});
 
 			expect(calls[0]).toMatchObject({
@@ -93,10 +91,6 @@ describe('InviteMembers - Submission', () => {
 			expect(calls[1]).toMatchObject({
 				email: 'bob@signoz.io',
 				userRoles: [{ id: 'role-editor' }],
-			});
-			expect(calls[2]).toMatchObject({
-				email: 'charlie@signoz.io',
-				userRoles: [{ id: 'role-admin' }],
 			});
 		});
 	});

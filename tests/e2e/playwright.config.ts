@@ -106,7 +106,11 @@ export default defineConfig({
 					// Google Fonts CSS blocks the app script and `load` until it settles,
 					// so a stalled request blanks the page. Failing DNS settles it at once;
 					// a `route` would too, but routing turns off the HTTP cache.
-					args: ['--host-resolver-rules=MAP fonts.googleapis.com ~NOTFOUND'],
+					// The release-changelog CMS is external; a CORS or network failure on
+					// it logs a console error in whichever spec asserts a clean console.
+					args: [
+						'--host-resolver-rules=MAP fonts.googleapis.com ~NOTFOUND, MAP cms.signoz.cloud ~NOTFOUND',
+					],
 				},
 			},
 			dependencies: ['setup'],

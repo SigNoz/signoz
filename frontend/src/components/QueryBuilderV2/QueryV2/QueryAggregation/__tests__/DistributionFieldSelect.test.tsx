@@ -8,7 +8,14 @@ import { ENVIRONMENT } from 'constants/env';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { rest, server } from 'mocks-server/server';
-import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	act,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import DistributionFieldSelect from '../DistributionFieldSelect';
@@ -74,7 +81,7 @@ describe('DistributionFieldSelect', () => {
 	});
 
 	it('picks a numeric field, keeping its context', async () => {
-		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		const onChange = jest.fn() as jest.MockedFunction<(field: string) => void>;
 		render(
 			<DistributionFieldSelect queryData={tracesQuery('')} onChange={onChange} />,
@@ -97,7 +104,7 @@ describe('DistributionFieldSelect', () => {
 	});
 
 	it('replaces the saved field with the newly picked one', async () => {
-		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		const onChange = jest.fn() as jest.MockedFunction<(field: string) => void>;
 		render(
 			<DistributionFieldSelect
@@ -119,7 +126,7 @@ describe('DistributionFieldSelect', () => {
 	});
 
 	it('only offers listed fields: typed text is a filter, not a value', async () => {
-		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(
 			<DistributionFieldSelect queryData={tracesQuery('')} onChange={jest.fn()} />,
 		);

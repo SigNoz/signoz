@@ -135,9 +135,10 @@ describe('ServiceAccountsSettings — FGA', () => {
 		renderPage();
 
 		await waitFor(() => {
-			expect(
-				screen.getByRole('button', { name: /New Service Account/i }),
-			).toHaveAttribute('aria-disabled', 'true');
+			expect(screen.getByTestId('new-sa-btn')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
@@ -160,9 +161,10 @@ describe('ServiceAccountsSettings — FGA', () => {
 		renderPage();
 
 		await waitFor(() => {
-			expect(
-				screen.getByRole('button', { name: /New Service Account/i }),
-			).not.toHaveAttribute('aria-disabled', 'true');
+			expect(screen.getByTestId('new-sa-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 });

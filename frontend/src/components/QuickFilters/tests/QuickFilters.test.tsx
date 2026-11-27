@@ -10,6 +10,8 @@ import {
 import { getHostsQuickFiltersConfig } from 'container/InfraMonitoringHostsV2/utils';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import {
 	otherFiltersResponse,
 	quickFiltersFieldValuesResponse,
@@ -17,7 +19,14 @@ import {
 } from 'mocks-server/__mockdata__/customQuickFilters';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+import {
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { QueryBuilderContextType } from 'types/common/queryBuilder';
 
@@ -32,6 +41,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
 jest.mock('container/ApiMonitoring/queryParams');
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 jest.mock(
 	'components/OverlayScrollbar/OverlayScrollbar',
 	() =>
@@ -55,6 +65,7 @@ const mockSetApiMonitoringParams = jest.fn() as jest.MockedFunction<
 	(newParams: Partial<ApiMonitoringParams>, replace?: boolean) => void
 >;
 const mockUseApiMonitoringParams = jest.mocked(useApiMonitoringParams);
+const mockedUseAuthZ = jest.mocked(useAuthZ);
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const quickFiltersListURL = `${BASE_URL}/api/v2/quick_filters/logs`;
@@ -78,11 +89,12 @@ const QUERY_NAME = 'Test Query';
 
 const savedFilters = quickFiltersListResponse.data
 	.filters as TelemetryFieldKey[];
+const smallSavedFilters = savedFilters.slice(0, 2);
 const smallFiltersListResponse = {
 	...quickFiltersListResponse,
 	data: {
 		...quickFiltersListResponse.data,
-		filters: savedFilters.slice(0, 2),
+		filters: smallSavedFilters,
 	},
 };
 
@@ -134,7 +146,7 @@ function renderSettings(): void {
 		<QuickFiltersSettings
 			savedFiltersSource={QuickfiltertypesSourceDTO.logs}
 			setIsSettingsOpen={jest.fn()}
-			customFilters={savedFilters}
+			customFilters={smallSavedFilters}
 			refetchCustomFilters={jest.fn()}
 		/>,
 	);
@@ -180,12 +192,13 @@ beforeEach(() => {
 		{ showIP: true } as ApiMonitoringParams,
 		mockSetApiMonitoringParams,
 	]);
+	mockedUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
 	setupServer();
 });
 
 describe('Quick Filters', () => {
 	it('displays the correct query name in the header', () => {
-		render(<TestQuickFilters />);
+		render(<TestQuickFilters config={[]} />);
 		expect(screen.getByText('Filters for')).toBeInTheDocument();
 		expect(screen.getByText(QUERY_NAME)).toBeInTheDocument();
 	});
@@ -194,7 +207,7 @@ describe('Quick Filters', () => {
 		const setLastUsedQuery = jest.fn() as jest.MockedFunction<
 			QueryBuilderContextType['setLastUsedQuery']
 		>;
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		(useQueryBuilder as jest.Mock).mockReturnValue({
 			currentQuery: {
@@ -221,7 +234,7 @@ describe('Quick Filters', () => {
 			panelType: 'graph', // not LIST view
 		});
 
-		render(<TestQuickFilters />);
+		render(<TestQuickFilters config={[]} />);
 
 		// The dropdown trigger should show the first query name
 		const trigger = screen.getByTestId('quick-filters-query-select');
@@ -243,12 +256,10 @@ describe('Quick Filters', () => {
 
 		// jsdom cannot deliver the pointer click Base UI expects on an option,
 		// so pick Query B with the arrow keys and Enter
-		await waitFor(() =>
-			expect(
-				screen.getByTestId('quick-filters-query-select-search'),
-			).toHaveFocus(),
+		await user.type(
+			screen.getByTestId('quick-filters-query-select-search'),
+			'{ArrowDown}{Enter}',
 		);
-		await user.keyboard('{ArrowDown}{Enter}');
 
 		// Verify setLastUsedQuery was called with index 1
 		expect(setLastUsedQuery).toHaveBeenCalledWith(1);
@@ -275,7 +286,7 @@ describe('Quick Filters', () => {
 			panelType: 'list', // ListView
 		});
 
-		render(<TestQuickFilters />);
+		render(<TestQuickFilters config={[]} />);
 
 		// Should show static query name without dropdown
 		expect(screen.getByText('Query A')).toBeInTheDocument();
@@ -286,7 +297,7 @@ describe('Quick Filters', () => {
 	});
 
 	it('should display static query name when only one query exists', () => {
-		render(<TestQuickFilters />);
+		render(<TestQuickFilters config={[]} />);
 
 		// Should show static query name
 		expect(screen.getByText(QUERY_NAME)).toBeInTheDocument();
@@ -298,7 +309,7 @@ describe('Quick Filters', () => {
 	});
 
 	it('should add filter data to query when checkbox is clicked', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		render(<TestQuickFilters />);
 
@@ -330,7 +341,7 @@ describe('Quick Filters', () => {
 		});
 	});
 	it('toggles Show IP addresses and updates API Monitoring params', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		render(
 			<TestQuickFilters quickFilterSource={QuickFiltersSource.API_MONITORING} />,
@@ -364,7 +375,7 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('opens the settings with the saved filters added and the rest under other filters', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		server.use(
 			rest.get(quickFiltersListURL, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(smallFiltersListResponse)),
@@ -386,7 +397,7 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('keeps same-name fields with different context as distinct entries', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		server.use(
 			rest.get(quickFiltersSuggestionsURL, (_req, res, ctx) =>
 				res(
@@ -438,7 +449,7 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('adds a filter from OTHER FILTERS to ADDED FILTERS when clicked', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		renderSettings();
 
@@ -450,7 +461,7 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('removes a filter from ADDED FILTERS and moves it to OTHER FILTERS', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		renderSettings();
 		const addedSection = screen.getByTestId(ADDED_FILTERS_TEST_ID);
@@ -468,7 +479,7 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('restores original filter state on Discard', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		renderSettings();
 		const addedSection = screen.getByTestId(ADDED_FILTERS_TEST_ID);
@@ -491,7 +502,7 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('saves the updated filters by calling PUT with correct payload', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		renderSettings();
 
@@ -506,7 +517,7 @@ describe('Quick Filters with custom filters', () => {
 		expect(requestBody.filters).not.toContainEqual(
 			expect.objectContaining({ name: FILTER_OS_DESCRIPTION }),
 		);
-		expect(requestBody.filters).toHaveLength(10);
+		expect(requestBody.filters).toHaveLength(smallSavedFilters.length - 1);
 	});
 
 	it('should render duration slider for duration_nono filter', async () => {
@@ -548,10 +559,10 @@ describe('Quick Filters with custom filters', () => {
 		expect(maxDuration).toHaveProperty('placeholder', '100000000');
 
 		// Type values and advance debounce
-		await user.clear(minDuration);
-		await user.type(minDuration, '10000');
-		await user.clear(maxDuration);
-		await user.type(maxDuration, '20000');
+		await user.click(minDuration);
+		await user.paste('10000');
+		await user.click(maxDuration);
+		await user.paste('20000');
 		jest.advanceTimersByTime(2000);
 
 		await waitFor(() => {
@@ -650,7 +661,7 @@ describe('Quick Filters refetch behavior', () => {
 			}),
 		);
 
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(
 			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
 		);
@@ -692,7 +703,7 @@ describe('Quick Filters refetch behavior', () => {
 			),
 		);
 
-		const user = userEvent.setup();
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(
 			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
 		);

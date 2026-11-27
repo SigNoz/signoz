@@ -5,7 +5,7 @@ import {
 } from 'mocks-server/__mockdata__/alert_rules';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { screen, waitFor } from 'tests/test-utils';
+import { screen, waitFor, NO_DELAY_USER_EVENT } from 'tests/test-utils';
 import { getCurrentNuqsQueryString } from 'tests/nuqs-helpers';
 
 import { renderListAlertRules } from './_helpers';
@@ -53,7 +53,7 @@ describe('ListAlertRules — pagination', () => {
 	});
 
 	it('navigates to page 2 by requesting the next offset', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderListAlertRules();
 
 		await screen.findByText('Pag Rule 0');

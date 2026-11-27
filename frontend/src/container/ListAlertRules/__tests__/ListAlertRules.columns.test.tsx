@@ -1,4 +1,9 @@
-import { screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	screen,
+	userEvent,
+	waitFor,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
 
@@ -16,7 +21,7 @@ describe('ListAlertRules — columns selector', () => {
 	});
 
 	it('opens columns popover and lists toggleable columns', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
@@ -44,7 +49,7 @@ describe('ListAlertRules — columns selector', () => {
 	});
 
 	it('toggling Created At on writes to localStorage and adds the header', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
