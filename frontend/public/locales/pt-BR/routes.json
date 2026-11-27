@@ -1,0 +1,16 @@
+{
+	"general": "Geral",
+	"alert_channels": "Canais de Alerta",
+	"organization_settings": "Configurações da Organização",
+	"ingestion_settings": "Configurações de Ingestão",
+	"api_keys": "Chaves de API",
+	"my_settings": "Minhas Configurações",
+	"overview_metrics": "Métricas de Visão Geral",
+	"custom_domain_settings": "Configurações de Domínio Personalizado",
+	"dbcall_metrics": "Chamadas de Banco de Dados",
+	"external_metrics": "Chamadas Externas",
+	"pipeline": "Pipeline",
+	"pipelines": "Pipelines",
+	"archives": "Arquivos",
+	"logs_to_metrics": "Logs para Métricas"
+}

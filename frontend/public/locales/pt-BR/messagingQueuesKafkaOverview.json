@@ -1,0 +1,54 @@
+{
+	"breadcrumb": "Filas de Mensageria",
+	"header": "Kafka / Visão Geral",
+	"overview": {
+		"title": "Comece a enviar dados em menos de 20 minutos",
+		"subtitle": "Conecte e Monitore seus Fluxos de Dados"
+	},
+	"configureConsumer": {
+		"title": "Configurar Consumidor",
+		"description": "Adicione fontes de dados do consumidor para obter insights e aprimorar o monitoramento.",
+		"button": "Começar"
+	},
+	"configureProducer": {
+		"title": "Configurar Produtor",
+		"description": "Adicione fontes de dados do produtor para obter insights e aprimorar o monitoramento.",
+		"button": "Começar"
+	},
+	"monitorKafka": {
+		"title": "Monitorar Kafka",
+		"description": "Adicione sua fonte Kafka para obter insights e aprimorar o rastreamento de atividades.",
+		"button": "Começar"
+	},
+	"summarySection": {
+		"viewDetailsButton": "Ver Detalhes",
+		"consumer": {
+			"title": "Visualização de atraso (lag) do consumidor",
+			"description": "Conecte e Monitore seus Fluxos de Dados"
+		},
+		"producer": {
+			"title": "Visualização de latência do produtor",
+			"description": "Conecte e Monitore seus Fluxos de Dados"
+		},
+		"partition": {
+			"title": "Visualização de latência de partição",
+			"description": "Conecte e Monitore seus Fluxos de Dados"
+		},
+		"dropRate": {
+			"title": "Visualização de taxa de descarte",
+			"description": "Conecte e Monitore seus Fluxos de Dados"
+		},
+		"metricPage": {
+			"title": "Visualização de Métricas",
+			"description": "Conecte e Monitore seus Fluxos de Dados"
+		}
+	},
+	"confirmModal": {
+		"content": "Antes de navegar para a página de detalhes, certifique-se de que você configurou todas as etapas necessárias para garantir o monitoramento correto dos dados.",
+		"okText": "Prosseguir"
+	},
+	"overviewSummarySection": {
+		"title": "Monitore seus Fluxos de Dados",
+		"subtitle": "Monitore métricas importantes do Kafka, como atraso (lag) e latência do consumidor, para garantir um fluxo de dados eficiente e resolver problemas em tempo real."
+	}
+}
