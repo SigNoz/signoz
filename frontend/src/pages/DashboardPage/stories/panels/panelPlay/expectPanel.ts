@@ -7,7 +7,13 @@ import { expectHeatmap, expectHistogram } from './distributions';
 import { expectLineChart } from './lineChart';
 import { expectListPage } from './list';
 import { findPlot } from './plot';
-import { expectNumber, expectPie, expectTable } from './scalars';
+import {
+	expectGeoMap,
+	expectNumber,
+	expectPie,
+	expectScatterPlot,
+	expectTable,
+} from './scalars';
 import { expectText } from './text';
 import { expectsTopListWarning, expectTopList } from './topList';
 
@@ -36,7 +42,9 @@ const KIND_EXPECTATIONS: Record<
 	Number: expectNumber,
 	Table: expectTable,
 	List: (root, args) => expectListPage(root, args.listRows, 0),
+	ScatterPlot: expectScatterPlot,
 	TopList: expectTopList,
+	GeoMap: expectGeoMap,
 };
 
 /**

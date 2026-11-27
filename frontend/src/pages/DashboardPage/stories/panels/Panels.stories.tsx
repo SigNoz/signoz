@@ -208,6 +208,27 @@ export const ListPaginated: Story = {
 	play: playListPaginated,
 };
 
+/** Each service as one dot, its p99 latency (`A`) across and its errors (`B`) up. */
+export const ScatterPlot: Story = {
+	args: { kind: 'ScatterPlot' },
+	play: playPanel,
+};
+
+/** p99 latency per country, each country shaded by its value on a world map. */
+export const GeoMap: Story = {
+	args: { kind: 'GeoMap' },
+	play: playPanel,
+};
+
+/**
+ * Countries above the threshold painted in its colour instead of the palette,
+ * with a legend key that reads in the latency column's unit.
+ */
+export const GeoMapThresholds: Story = {
+	args: { kind: 'GeoMap', thresholds: true },
+	play: playPanel,
+};
+
 /**
  * Logs carrying 24 attributes each, a column apiece: every row stays one line
  * high, the body truncated rather than wrapped.

@@ -23,6 +23,8 @@ import {
 } from '../../__story_mockdata__/panelData';
 
 import {
+	COUNTRIES,
+	GEO_COUNTRY_KEY,
 	HEATMAP_BUCKETS,
 	HEATMAP_COLUMNS,
 	HOLE,
@@ -260,7 +262,18 @@ export const panelQueryResponse = ({
 				]),
 				warning,
 			});
-		case 'Table': {
+		case 'GeoMap':
+			return queryRangeV5ScalarTableResponse({
+				groupBy: [GEO_COUNTRY_KEY],
+				aggregations: [QUERY_NAME],
+				rows: TABLE_VALUES(series).map((value, index) => [
+					COUNTRIES[index % COUNTRIES.length],
+					value,
+				]),
+				warning,
+			});
+		case 'Table':
+		case 'ScatterPlot': {
 			const second = TABLE_SECOND_VALUES(series);
 
 			return queryRangeV5ScalarTableResponse({

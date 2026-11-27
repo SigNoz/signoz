@@ -16,6 +16,7 @@ import {
 	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal as TraceSignal,
 	Querybuildertypesv5RequestTypeDTO as RequestType,
 	type DashboardtypesComparisonThresholdDTO,
+	type DashboardtypesGeoMapThresholdDTO,
 	type DashboardtypesQueryDTO,
 	type DashboardtypesTableThresholdDTO,
 	type DashboardtypesThresholdWithLabelDTO,
@@ -53,6 +54,20 @@ export const comparisonThresholds = (
 					operator: ComparisonOperator.above,
 					color: THRESHOLD_COLOR,
 					format: ThresholdFormat.background,
+				},
+			]
+		: [];
+
+/** Unitless, so it compares in the color column's unit. */
+export const geoMapThresholds = (
+	on: boolean,
+): DashboardtypesGeoMapThresholdDTO[] =>
+	on
+		? [
+				{
+					value: TABLE_THRESHOLD_VALUE,
+					operator: ComparisonOperator.above,
+					color: THRESHOLD_COLOR,
 				},
 			]
 		: [];
@@ -96,6 +111,7 @@ interface MetricQueryOptions {
 	name?: string;
 	metricName?: string;
 	spaceAggregation?: SpaceAggregation;
+	groupBy?: string;
 }
 
 export const metricQuery = (
@@ -106,6 +122,7 @@ export const metricQuery = (
 		name = QUERY_NAME,
 		metricName = 'signoz_latency',
 		spaceAggregation = SpaceAggregation.p99,
+		groupBy = 'service.name',
 	}: MetricQueryOptions,
 ): DashboardtypesQueryDTO => {
 	const spec: MetricBuilderQuery = {
@@ -118,11 +135,9 @@ export const metricQuery = (
 				timeAggregation: heatmap ? TimeAggregation.increase : TimeAggregation.avg,
 			},
 		],
-		groupBy: grouped ? [{ name: 'service.name' }] : undefined,
+		groupBy: grouped ? [{ name: groupBy }] : undefined,
 		legend:
-			grouped && requestType !== RequestType.scalar
-				? '{{service.name}}'
-				: undefined,
+			grouped && requestType !== RequestType.scalar ? `{{${groupBy}}}` : undefined,
 		bucketOptions: heatmap
 			? { kind: LinearBuckets.linear, spec: { maxValue: 1000, numBuckets: 10 } }
 			: undefined,

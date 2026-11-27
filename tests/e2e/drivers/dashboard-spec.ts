@@ -33,6 +33,9 @@ export const PanelKind = {
 	List: 'signoz/ListPanel',
 	Heatmap: 'signoz/HeatmapPanel',
 	Text: 'signoz/TextPanel',
+	ScatterPlot: 'signoz/ScatterPlotPanel',
+	TopList: 'signoz/TopListPanel',
+	GeoMap: 'signoz/GeoMapPanel',
 } as const;
 
 export type PanelKind = (typeof PanelKind)[keyof typeof PanelKind];
@@ -140,6 +143,8 @@ export function logsCountQuery(options?: {
 	signal?: Extract<Signal, 'logs' | 'traces'>;
 	filter?: string;
 	groupBy?: string[];
+	/** Aggregation expressions; defaults to `count()`. */
+	aggregations?: string[];
 }): Query {
 	return {
 		kind: 'time_series',
@@ -149,7 +154,9 @@ export function logsCountQuery(options?: {
 				spec: {
 					name: options?.name ?? 'A',
 					signal: options?.signal ?? 'logs',
-					aggregations: [{ expression: 'count()' }],
+					aggregations: (options?.aggregations ?? ['count()']).map((expression) => ({
+						expression,
+					})),
 					filter: { expression: options?.filter ?? '' },
 					groupBy: (options?.groupBy ?? ['service.name']).map((name) => ({
 						name,
@@ -199,6 +206,9 @@ const SCALAR_KINDS: PanelKind[] = [
 	PanelKind.Number,
 	PanelKind.PieChart,
 	PanelKind.Table,
+	PanelKind.ScatterPlot,
+	PanelKind.TopList,
+	PanelKind.GeoMap,
 ];
 
 function defaultQueryFor(kind: PanelKind): Query {

@@ -30,7 +30,9 @@ export const PANEL_KINDS = [
 	'Table',
 	'List',
 	'Text',
+	'ScatterPlot',
 	'TopList',
+	'GeoMap',
 ] as const;
 
 export const PANEL_RESULTS = ['data', 'empty', 'warning'] as const;
@@ -106,7 +108,9 @@ export const PANEL_NAME: Record<PanelKind, string> = {
 	Table: 'Calls by service',
 	List: 'Recent logs',
 	Text: 'Runbook',
+	ScatterPlot: 'Latency against errors by service',
 	TopList: 'Busiest services',
+	GeoMap: 'p99 latency by country',
 };
 
 /** The bars' fill, unless a threshold recolours the row. */
@@ -156,3 +160,17 @@ export const SERVICES = [
 ] as const;
 
 export const MAX_SERIES = SERVICES.length;
+
+export const GEO_COUNTRY_KEY = 'geo.country.iso_code';
+
+/** ISO codes GeoIP enrichment writes; one per series, all on the world map. */
+export const COUNTRIES = [
+	'US',
+	'IN',
+	'BR',
+	'DE',
+	'AU',
+	'JP',
+	'ZA',
+	'CA',
+] as const;

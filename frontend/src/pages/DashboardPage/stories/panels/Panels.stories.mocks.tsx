@@ -102,13 +102,13 @@ export const panelsMocks = defineStoryMocks({
 		thresholds: toggleControl('Thresholds', {
 			group: PANEL,
 			description:
-				'A dashed labelled line on Time Series, Bar and Area; a background colour on Number when the value is above it; a filled `A` cell on Table rows above it, never a `B` cell; a recoloured bar on Top List rows above it. Other kinds have none.',
+				'A dashed labelled line on Time Series, Bar and Area; a background colour on Number when the value is above it; a filled `A` cell on Table rows above it, never a `B` cell; a recoloured bar on Top List rows above it; Geo Map countries above it in its colour. Other kinds have none.',
 			value: false,
 		}),
 		unit: choiceControl<PanelUnit>('Unit', {
 			group: PANEL,
 			description:
-				'Formatting unit: the y axis and tooltip of the charts, the Number value, the pie total, the Table value column.',
+				'Formatting unit: the y axis and tooltip of the charts, the Number value, the pie total, the Table value column, the Geo Map color column.',
 			options: UNITS,
 			value: 'ms',
 		}),
@@ -228,7 +228,7 @@ export const panelsMocks = defineStoryMocks({
 		series: countControl('Series', {
 			group: DATA,
 			description:
-				'Series on the charts, groups on the heatmap, slices on the pie, rows on the table and the top list.',
+				'Series on the charts, groups on the heatmap, slices on the pie, rows on the table and the top list, dots on the scatter plot, countries on the geo map.',
 			value: 4,
 			max: MAX_SERIES,
 		}),
