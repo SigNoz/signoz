@@ -116,6 +116,9 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	req.Start = qbtypes.ToMilliSecs(req.Start)
 	req.End = qbtypes.ToMilliSecs(req.End)
 
+	// Default the group by order and cap unbounded group by queries before building them.
+	req.Normalize()
+
 	event := &qbtypes.QBEvent{
 		Version:         "v5",
 		NumberOfQueries: len(req.CompositeQuery.Queries),
@@ -748,6 +751,9 @@ func (q *querier) run(
 		stats.BytesScanned += result.Stats.BytesScanned
 		stats.DurationMS += result.Stats.DurationMS
 	}
+
+	// Trim capped queries before post-processing, which can reshape results and obscure counts.
+	warnings = append(warnings, enforceImplicitLimit(results, req.RequestType, req.CompositeQuery.Queries)...)
 
 	gomaps.Copy(results, preseededResults)
 	processedResults, err := q.postProcessResults(ctx, orgID, results, req)
