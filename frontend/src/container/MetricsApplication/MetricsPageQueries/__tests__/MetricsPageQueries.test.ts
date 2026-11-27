@@ -1,7 +1,7 @@
 import { prepareQueryRangePayloadV5 } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilderData } from 'types/common/queryBuilder';
-import { QueryEnvelope } from 'types/api/v5/queryRange';
+import { QueryBuilderFormula, QueryEnvelope } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 
 import {
@@ -103,7 +103,6 @@ describe('service details queries on v5', () => {
 				tagFilterItems: [],
 				topLevelOperationsRoute: ['GET /'],
 				threashold: 0.5,
-				delta: true,
 				metricsBuckets: [100, 250, 500, 1000, 2000, 5000],
 			}),
 		);
@@ -139,6 +138,11 @@ describe('service details queries on v5', () => {
 					"status.code != 'STATUS_CODE_ERROR' AND service.name = 'frontend' AND operation in ['GET /']",
 			},
 		]);
+		expect(
+			queries
+				.filter((query) => query.type === 'builder_formula')
+				.map((query) => (query.spec as QueryBuilderFormula).expression),
+		).toStrictEqual(['((B + C)/2)/A']);
 	});
 
 	it('reads the count metric when the apdex threshold is past the largest bucket', () => {
@@ -148,7 +152,6 @@ describe('service details queries on v5', () => {
 				tagFilterItems: [],
 				topLevelOperationsRoute: ['GET /'],
 				threashold: 0.5,
-				delta: true,
 				metricsBuckets: [100, 250, 500, 1000],
 			}),
 		);

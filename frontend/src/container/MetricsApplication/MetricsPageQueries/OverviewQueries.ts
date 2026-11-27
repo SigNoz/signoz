@@ -40,7 +40,7 @@ export const latency = ({
 	const newAutoCompleteData: BaseAutocompleteData = {
 		key: isSpanMetricEnable
 			? signozLatencyBucketMetrics
-			: WidgetKeys.SpanDurationNano,
+			: WidgetKeys.DurationNano,
 		dataType: DataTypes.Float64,
 		type: isSpanMetricEnable ? '' : MetricsType.Tag,
 	};
@@ -99,7 +99,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 	tagFilterItems,
 	topLevelOperationsRoute,
 	threashold,
-	delta,
 	metricsBuckets,
 }: ApDexMetricsQueryBuilderQueriesProps): QueryBuilderData => {
 	// the comparison count stops at the largest finite bucket, so a threshold past it
@@ -245,9 +244,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 	const additionalItems = [filterItemA, filterItemB, filterItemC];
 	const legends = [GraphTitle.APDEX];
 	const disabled = Array(3).fill(true);
-	const expressions = delta
-		? [FORMULA.APDEX_DELTA_SPAN_METRICS]
-		: [FORMULA.APDEX_CUMULATIVE_SPAN_METRICS];
+	const expressions = [FORMULA.APDEX];
 	const legendFormulas = [GraphTitle.APDEX];
 	// v5 forces increase on histograms, so the total matches it
 	const timeAggregateOperators: TimeAggregation[] = [

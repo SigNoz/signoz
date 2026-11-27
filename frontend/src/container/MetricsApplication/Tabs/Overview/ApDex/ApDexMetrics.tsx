@@ -45,7 +45,6 @@ function ApDexMetrics({
 						tagFilterItems,
 						topLevelOperationsRoute,
 						threashold: thresholdValue || 0,
-						delta: delta || false,
 						metricsBuckets: metricsBuckets || [],
 					}),
 					clickhouse_sql: [],
@@ -75,7 +74,6 @@ function ApDexMetrics({
 				id: SERVICE_CHART_ID.apdex,
 			}),
 		[
-			delta,
 			metricsBuckets,
 			servicename,
 			tagFilterItems,
@@ -112,7 +110,6 @@ function ApDexMetrics({
 
 ApDexMetrics.defaultProps = {
 	delta: undefined,
-	le: undefined,
 };
 
 export default ApDexMetrics;
