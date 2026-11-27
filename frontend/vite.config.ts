@@ -8,6 +8,7 @@ import vitePluginChecker from 'vite-plugin-checker';
 import viteCompression from 'vite-plugin-compression';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import { MONACO_STRIPPED_FEATURES } from './plugins/rules/shared/monaco-stripped-features.mjs';
 import type {
 	Appcues,
 	Posthog,
@@ -75,6 +76,10 @@ function rawMarkdownPlugin(): Plugin {
 		},
 	};
 }
+
+// Monaco contributions that need a provider SigNoz never registers. monaco-editor
+// declares no `sideEffects`, so its bare imports keep all of them.
+const MONACO_UNUSED_CONTRIBS = Object.keys(MONACO_STRIPPED_FEATURES);
 
 export default defineConfig(({ mode }): UserConfig => {
 	const env = loadEnv(mode, process.cwd(), '') as ImportMetaEnv;
@@ -188,6 +193,18 @@ export default defineConfig(({ mode }): UserConfig => {
 			sourcemap: true,
 			outDir: 'build',
 			cssMinify: 'esbuild',
+			rolldownOptions: {
+				treeshake: {
+					moduleSideEffects: [
+						{
+							test: new RegExp(
+								`monaco-editor/esm/vs/editor/contrib/(${MONACO_UNUSED_CONTRIBS.join('|')})/`,
+							),
+							sideEffects: false,
+						},
+					],
+				},
+			},
 		},
 		server: {
 			open: true,

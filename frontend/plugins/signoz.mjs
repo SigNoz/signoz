@@ -21,6 +21,7 @@ import noTextCss from './rules/no-text-css.mjs';
 import requireDisableReason from './rules/require-disable-reason.mjs';
 import noDomNodeAccess from './rules/no-dom-node-access.mjs';
 import noBuilderAiQueryAccess from './rules/no-builder-ai-query-access.mjs';
+import noMonacoStrippedFeatures from './rules/no-monaco-stripped-features.mjs';
 
 export default {
 	meta: {
@@ -43,5 +44,6 @@ export default {
 		'require-disable-reason': requireDisableReason,
 		'no-dom-node-access': noDomNodeAccess,
 		'no-builder-ai-query-access': noBuilderAiQueryAccess,
+		'no-monaco-stripped-features': noMonacoStrippedFeatures,
 	},
 };
