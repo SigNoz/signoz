@@ -66,7 +66,7 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 	return &provider{
 		config:        config,
 		indexContents: indexContents,
-		fileHandler:   http.FileServer(http.Dir(config.Directory)),
+		fileHandler:   newPrecompressedHandler(http.Dir(config.Directory), config.Index),
 	}, nil
 }
 
