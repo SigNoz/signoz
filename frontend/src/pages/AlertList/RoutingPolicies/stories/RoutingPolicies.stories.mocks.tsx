@@ -4,7 +4,7 @@
  */
 
 import { rest } from 'msw';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -133,6 +133,16 @@ export const routingPoliciesMocks = defineStoryMocks({
 /** The page fetches before it renders a row, which outlasts the 1s default. */
 export const untilLoaded = { timeout: 15_000 };
 
+/** Save stays disabled until its permission check answers. */
+const clickSave = async (): Promise<void> => {
+	const save = await screen.findByTestId('routing-policy-save');
+	await waitFor(
+		() => expect(save).not.toHaveAttribute('aria-disabled', 'true'),
+		untilLoaded,
+	);
+	await userEvent.click(save);
+};
+
 export const fillNewPolicy = async (): Promise<void> => {
 	await userEvent.type(
 		await screen.findByPlaceholderText('e.g. Base routing policy...'),
@@ -148,9 +158,7 @@ export const fillNewPolicy = async (): Promise<void> => {
 	const options = await screen.findAllByTitle('ops-slack');
 	await userEvent.click(options[options.length - 1]);
 	await userEvent.keyboard('{Escape}');
-	await userEvent.click(
-		await screen.findByRole('button', { name: 'Save Routing Policy' }),
-	);
+	await clickSave();
 };
 
 export const openEditPolicy = async (
@@ -163,7 +171,5 @@ export const openEditPolicy = async (
 			untilLoaded,
 		),
 	);
-	await userEvent.click(
-		await screen.findByRole('button', { name: 'Save Routing Policy' }),
-	);
+	await clickSave();
 };

@@ -1,0 +1,16 @@
+// Stacked so it reads in a picker as narrow as a threshold's channel select.
+.container {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	padding: 4px 0;
+	white-space: normal;
+}
+
+.message {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	column-gap: 4px;
+}

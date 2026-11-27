@@ -8,7 +8,9 @@ Quick reference for permission-gating UI. All components use AND semantics: user
 Need to gate...
 ├── A button? → AuthZButton
 ├── Rows of a dropdown menu? → AuthZDropdown
-├── Any element with tooltip on deny? → AuthZTooltip
+├── Options of a picker that links items (channels, rules)? → AuthZSelect, fed by useLinkPickerAccess
+├── A @signozhq/ui control with its own disabledTooltip (Input, Switch)? → useAuthZDisabled
+├── Any other element with tooltip on deny? → AuthZTooltip
 ├── A section inside a page? → withAuthZContent (preferred)
 │   └── Need JSX wrapper? → AuthZGuardContent
 ├── An entire page/route? → withAuthZPage (preferred)
@@ -108,6 +110,21 @@ import { buildSADeletePermission } from 'lib/authz/hooks/useAuthZ/permissions/se
 <AuthZTooltip checks={[buildSADeletePermission(accountId)]}>
   <IconButton icon={<Trash />} onClick={handleDelete} />
 </AuthZTooltip>
+```
+
+### useAuthZDisabled
+
+For a `@signozhq/ui` control that already takes `disabled` and `disabledTooltip`. It feeds the control's own props, so there is no wrapper span or second tooltip, and the reason reads "Checking permissions" while the check runs. A failed check leaves the control enabled.
+
+```tsx
+import { useAuthZDisabled } from 'lib/authz/hooks/useAuthZDisabled/useAuthZDisabled';
+
+const searchLock = useAuthZDisabled([RoutePolicyListPermission]);
+
+<Input
+  disabled={searchLock.disabled}
+  disabledTooltip={searchLock.disabledTooltip}
+/>
 ```
 
 ### withAuthZPage (preferred for pages)

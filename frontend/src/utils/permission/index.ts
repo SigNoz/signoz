@@ -151,6 +151,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
  * This prevents us from adding `ANONYMOUS` on the `routePermission`
  */
 export const routeWithInitialAuthZSupport = {
+	LIST_ALL_ALERT: true,
 	CHANNELS_NEW: true,
 	CHANNELS_EDIT: true,
 	ALL_DASHBOARD: true,

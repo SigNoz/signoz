@@ -1,18 +1,18 @@
 import { useMemo } from 'react';
-import { Button, Form, Input, Modal, Select } from 'antd';
+import { Button, Form, Input, Modal } from 'antd';
 import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
-import ROUTES from 'constants/routes';
-import { Check, Loader, X } from '@signozhq/icons';
-import { useAppContext } from 'providers/App/App';
-import { USER_ROLES } from 'types/roles';
-import { openInNewTab } from 'utils/navigation';
+import NotificationChannelsNotFound from 'components/NotificationChannelsNotFound/NotificationChannelsNotFound';
+import { Check, X } from '@signozhq/icons';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import AuthZSelect from 'lib/authz/components/AuthZSelect/AuthZSelect';
 
 import { INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE } from './constants';
 import {
 	RoutingPolicyDetailsFormState,
 	RoutingPolicyDetailsProps,
 } from './types';
+import { useRoutingPolicyFormPermissions } from './useRoutingPolicyFormPermissions';
 
 function RoutingPolicyDetails({
 	closeModal,
@@ -26,7 +26,8 @@ function RoutingPolicyDetails({
 	refreshChannels,
 }: RoutingPolicyDetailsProps): JSX.Element {
 	const [form] = Form.useForm();
-	const { user } = useAppContext();
+	const { isReadOnly, saveChecks, channelOptions, onPickerVisibleChange } =
+		useRoutingPolicyFormPermissions(mode, routingPolicy, channels);
 
 	const initialFormState = useMemo(() => {
 		if (mode === 'edit') {
@@ -40,12 +41,6 @@ function RoutingPolicyDetails({
 		return INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE;
 	}, [routingPolicy, mode]);
 
-	const saveButtonIcon = isPolicyDetailsModalActionLoading ? (
-		<Loader size={16} />
-	) : (
-		<Check size={16} />
-	);
-
 	const modalTitle =
 		mode === 'edit' ? 'Edit routing policy' : 'Create routing policy';
 
@@ -57,58 +52,6 @@ function RoutingPolicyDetails({
 			description: form.getFieldValue('description'),
 		});
 	};
-
-	const notificationChannelsNotFoundContent = (
-		<Flex justify="space-between">
-			<Flex gap={4} align="center">
-				<Typography
-					variant="paragraph"
-					size="base"
-					weight="regular"
-					color="inherit"
-					as="span"
-					textOverflow="wrap"
-				>
-					No channels yet.
-				</Typography>
-				{user?.role === USER_ROLES.ADMIN ? (
-					<Typography
-						variant="paragraph"
-						size="base"
-						weight="regular"
-						color="inherit"
-						as="span"
-						textOverflow="wrap"
-					>
-						Create one
-						<Button
-							style={{ padding: '0 4px' }}
-							type="link"
-							onClick={(): void => {
-								openInNewTab(ROUTES.CHANNELS_NEW);
-							}}
-						>
-							here.
-						</Button>
-					</Typography>
-				) : (
-					<Typography
-						variant="paragraph"
-						size="base"
-						weight="regular"
-						color="inherit"
-						as="span"
-						textOverflow="wrap"
-					>
-						Please ask your admin to create one.
-					</Typography>
-				)}
-			</Flex>
-			<Button type="text" onClick={refreshChannels}>
-				Refresh
-			</Button>
-		</Flex>
-	);
 
 	return (
 		<Modal
@@ -136,6 +79,7 @@ function RoutingPolicyDetails({
 			<Form<RoutingPolicyDetailsFormState>
 				form={form}
 				initialValues={initialFormState}
+				disabled={isReadOnly}
 				onFinish={handleSave}
 			>
 				<div className="create-policy-container">
@@ -240,12 +184,10 @@ function RoutingPolicyDetails({
 								},
 							]}
 						>
-							<Select
-								options={channels.map((channel) => ({
-									value: channel.name,
-									label: channel.name,
-								}))}
-								mode="multiple"
+							<AuthZSelect
+								options={channelOptions}
+								popupMatchSelectWidth={false}
+								onDropdownVisibleChange={onPickerVisibleChange}
 								placeholder="Select notification channels"
 								aria-label="Notification Channels"
 								showSearch
@@ -254,12 +196,11 @@ function RoutingPolicyDetails({
 									`+${omittedValues.length} more`
 								}
 								maxTagTextLength={10}
-								filterOption={(input, option): boolean =>
-									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
-								}
 								status={isErrorChannels ? 'error' : undefined}
-								disabled={isLoadingChannels}
-								notFoundContent={notificationChannelsNotFoundContent}
+								disabled={isReadOnly || isLoadingChannels}
+								notFoundContent={
+									<NotificationChannelsNotFound onRefresh={refreshChannels} />
+								}
 								data-testid="routing-policy-channels-select"
 							/>
 						</Form.Item>
@@ -274,16 +215,18 @@ function RoutingPolicyDetails({
 					>
 						Cancel
 					</Button>
-					<Button
-						icon={saveButtonIcon}
-						type="primary"
-						htmlType="submit"
+					<AuthZButton
+						checks={saveChecks}
+						size="md"
+						variant="solid"
+						color="primary"
+						type="submit"
+						prefix={<Check size={16} />}
 						loading={isPolicyDetailsModalActionLoading}
-						disabled={isPolicyDetailsModalActionLoading}
-						data-testid="routing-policy-save"
+						testId="routing-policy-save"
 					>
 						Save Routing Policy
-					</Button>
+					</AuthZButton>
 				</Flex>
 			</Form>
 		</Modal>
