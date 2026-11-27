@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"regexp"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -104,6 +103,18 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 	return payload, err
 }
 
+// groupKey identifies one group by its label values in column order. Each value
+// is length-prefixed, so values that hold a separator cannot run into each other.
+func groupKey(lblVals []string) string {
+	var sb strings.Builder
+	for _, v := range lblVals {
+		sb.WriteString(strconv.Itoa(len(v)))
+		sb.WriteByte(':')
+		sb.WriteString(v)
+	}
+	return sb.String()
+}
+
 func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
 	colTypes := rows.ColumnTypes()
 	colNames := rows.Columns()
@@ -119,7 +130,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 
 	type sKey struct {
 		agg int
-		key string // deterministic join of label values
+		key string // groupKey of the label values
 	}
 	seriesMap := map[sKey]*qbtypes.TimeSeries{}
 
@@ -236,8 +247,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			continue // nothing useful
 		}
 
-		sort.Strings(lblVals)
-		labelsKey := strings.Join(lblVals, ",")
+		labelsKey := groupKey(lblVals)
 
 		// one point per aggregation in this row
 		for aggIdx, val := range aggValues {
@@ -380,8 +390,7 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 		if ts == 0 || !isValidBucketBounds(bounds) || math.IsNaN(count) || math.IsInf(count, 0) {
 			continue
 		}
-		sort.Strings(lblVals)
-		labelsKey := strings.Join(lblVals, ",")
+		labelsKey := groupKey(lblVals)
 
 		if err := accumulator.addCell(labelsKey, lblObjs, ts, bounds, count); err != nil {
 			return nil, err
