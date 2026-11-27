@@ -131,7 +131,7 @@ function ItemInputSelector({
 				onChange={handleInputChange}
 				onKeyDown={handleInputKeyDown}
 				onBlur={handleInputBlur}
-				data-testid={`item-input-selector-input-${testId}`}
+				testId={`item-input-selector-input-${testId}`}
 				prefix={prefixElement}
 				suffix={
 					<Button
@@ -159,7 +159,15 @@ function ItemInputSelector({
 								closeAriaLabel={`Remove ${id}`}
 								onClose={(e): void => handleBadgeClose(e, id, index)}
 							>
-								<Typography as="span" size="small" truncate={1} title={id}>
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="inherit"
+									as="span"
+									display="block"
+									textOverflow="ellipsis"
+								>
 									{id}
 								</Typography>
 							</Pill.Closeable>
@@ -167,12 +175,22 @@ function ItemInputSelector({
 					</div>
 					<Tooltip
 						title={
-							<Typography align="left">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="p"
+								textOverflow="wrap"
+							>
 								Still not sure on how to add selectors? <br />
 								<Typography.Link
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									textOverflow="wrap"
 									href={`${BASE_DOCS_URL}#${docsAnchor}`}
 									target="_blank"
-									rel="noopener noreferrer"
 								>
 									Check the docs
 								</Typography.Link>{' '}
@@ -184,12 +202,22 @@ function ItemInputSelector({
 					</Tooltip>
 				</div>
 			) : (
-				<Typography className={styles.itemInputSelectorHint}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="p"
+					textOverflow="wrap"
+				>
 					Not sure what to type here?{' '}
 					<Typography.Link
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						textOverflow="wrap"
 						href={`${BASE_DOCS_URL}#${docsAnchor}`}
 						target="_blank"
-						rel="noopener noreferrer"
 					>
 						Check the docs
 					</Typography.Link>{' '}

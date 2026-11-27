@@ -4,8 +4,9 @@ import {
 	render,
 	RenderResult,
 	screen,
+	userEvent,
 	waitFor,
-} from '@testing-library/react';
+} from 'tests/test-utils';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 
@@ -28,9 +29,6 @@ const mockOptions = [
 	{ label: 'Option 2', value: 'option2' },
 	{ label: 'Option 3', value: 'option3' },
 ];
-
-// CSS selector for retry button
-const RETRY_BUTTON_SELECTOR = '[data-testid="retry-button"]';
 
 describe('CustomMultiSelect - Retry Functionality', () => {
 	beforeEach(() => {
@@ -61,8 +59,7 @@ describe('CustomMultiSelect - Retry Functionality', () => {
 		});
 
 		// Check that retry button (ReloadOutlined icon) is present
-		const retryButton = document.querySelector(RETRY_BUTTON_SELECTOR);
-		expect(retryButton).toBeInTheDocument();
+		expect(screen.getByTestId('retry-button')).toBeInTheDocument();
 	});
 
 	it('should show retry button when 4xx error occurs and error message is displayed (current behavior)', async () => {
@@ -88,11 +85,11 @@ describe('CustomMultiSelect - Retry Functionality', () => {
 			expect(screen.getByText(errorMessage)).toBeInTheDocument();
 		});
 
-		const retryButton = document.querySelector(RETRY_BUTTON_SELECTOR);
-		expect(retryButton).not.toBeInTheDocument();
+		expect(screen.queryByTestId('retry-button')).not.toBeInTheDocument();
 	});
 
 	it('should call onRetry function when retry button is clicked', async () => {
+		const user = userEvent.setup();
 		const mockOnRetry = jest.fn();
 		const errorMessage = 'Internal Server Error (500)';
 
@@ -108,7 +105,7 @@ describe('CustomMultiSelect - Retry Functionality', () => {
 
 		// Open dropdown
 		const selectElement = screen.getByRole('combobox');
-		fireEvent.mouseDown(selectElement);
+		await user.click(selectElement);
 
 		// Wait for dropdown to appear
 		await waitFor(() => {
@@ -116,10 +113,7 @@ describe('CustomMultiSelect - Retry Functionality', () => {
 		});
 
 		// Find and click the retry button
-		const retryButton = document.querySelector(RETRY_BUTTON_SELECTOR);
-		expect(retryButton).toBeInTheDocument();
-
-		fireEvent.click(retryButton as Element);
+		await user.click(screen.getByTestId('retry-button'));
 
 		// Verify onRetry was called
 		expect(mockOnRetry).toHaveBeenCalledTimes(1);

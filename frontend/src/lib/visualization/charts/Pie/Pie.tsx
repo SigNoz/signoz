@@ -261,6 +261,7 @@ export default function Pie({
 						applyPositionStyle
 						style={{ pointerEvents: isPinned ? 'auto' : 'none' }}
 						data-pie-tooltip=""
+						data-testid="pie-tooltip"
 					>
 						<PieTooltipContent
 							id={id ?? ''}

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
-import { Input as AntdInput } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -139,12 +138,13 @@ export function AboutSigNozQuestions({
 					<div className="form-group">
 						<div className="question">How did you first come across SigNoz?</div>
 
-						<AntdInput.TextArea
-							className="discover-signoz-input"
+						<Input.TextArea
+							testId="discover-signoz-input"
 							placeholder="e.g., I asked ChatGPT for Datadog alternatives, searched Google for “OpenTelemetry tools,” saw a Reddit or LinkedIn post, or heard about it from a colleague."
 							value={discoverSignoz}
 							autoFocus
 							rows={4}
+							enterKeyHint="enter"
 							onChange={(e): void => setDiscoverSignoz(e.target.value)}
 						/>
 					</div>
@@ -157,6 +157,7 @@ export function AboutSigNozQuestions({
 									<Checkbox
 										color="primary"
 										id={`checkbox-${option}`}
+										testId={`interest-${option}`}
 										value={interestInSignoz.includes(option)}
 										onChange={createInterestChangeHandler(option)}
 									>
@@ -169,20 +170,24 @@ export function AboutSigNozQuestions({
 								<Checkbox
 									color="primary"
 									id="others-checkbox"
+									testId="interest-Others"
 									value={interestInSignoz.includes('Others')}
 									onChange={createInterestChangeHandler('Others')}
 								>
 									{interestInSignoz.includes('Others') ? '' : 'Others'}
 								</Checkbox>
 								{interestInSignoz.includes('Others') && (
-									<Input
-										type="text"
-										className="onboarding-questionaire-other-input"
-										placeholder="What got you interested in SigNoz?"
-										value={otherInterestInSignoz}
-										autoFocus
-										onChange={(e): void => setOtherInterestInSignoz(e.target.value)}
-									/>
+									<div className="onboarding-questionaire-other-input">
+										<Input
+											type="text"
+											placeholder="What got you interested in SigNoz?"
+											testId="other-interest-input"
+											value={otherInterestInSignoz}
+											autoFocus
+											width="100%"
+											onChange={(e): void => setOtherInterestInSignoz(e.target.value)}
+										/>
+									</div>
 								)}
 							</div>
 						</div>
@@ -199,6 +204,7 @@ export function AboutSigNozQuestions({
 						disabled={isNextDisabled}
 						disabledTooltip={getNextDisabledReason()}
 						suffix={<ArrowRight size={12} />}
+						testId="about-signoz-next"
 					>
 						Next
 					</Button>

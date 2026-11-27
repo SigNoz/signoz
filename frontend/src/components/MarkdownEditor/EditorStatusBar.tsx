@@ -23,7 +23,16 @@ function EditorStatusBar({
 
 	return (
 		<div className={styles.statusBar} data-testid="markdown-editor-status">
-			<Typography.Text className={styles.statusPosition}>
+			<Typography
+				variant="code"
+				size="small"
+				weight="regular"
+				color="tertiary"
+				as="span"
+				display="inline-flex"
+				gap={3}
+				textOverflow="wrap"
+			>
 				{`Ln ${cursor.line}, Col ${cursor.column}`}
 				<span className={styles.statusSeparator}>·</span>
 				<span
@@ -34,9 +43,18 @@ function EditorStatusBar({
 				>
 					{isOverLimit ? `${length} / ${maxLength} chars` : `${length} chars`}
 				</span>
-			</Typography.Text>
+			</Typography>
 			{hint && (
-				<Typography.Text className={styles.statusHint}>{hint}</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="tertiary"
+					as="span"
+					textOverflow="wrap"
+				>
+					{hint}
+				</Typography>
 			)}
 		</div>
 	);

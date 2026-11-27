@@ -1,14 +1,13 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Row } from 'antd';
+import Row from 'periscope/components/Row/Row';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { useIsAnomalyDetectionAvailable } from 'container/CreateAlertV2/useIsAnomalyDetectionAvailable';
+import { useIsAnomalyDetectionAvailable } from 'container/CreateAlert/useIsAnomalyDetectionAvailable';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { isModifierKeyPressed } from 'utils/app';
-import { openInNewTab } from 'utils/navigation';
 
 import { getOptionList } from './config';
 import { AlertTypeCard, SelectTypeContainer } from './styles';
@@ -21,7 +20,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 
 	const optionList = getOptionList(t, isAnomalyDetectionEnabled);
 
-	function handleRedirection(option: AlertTypes): void {
+	function getSampleAlertUrl(option: AlertTypes): string {
 		let url = '';
 		switch (option) {
 			case AlertTypes.ANOMALY_BASED_ALERT:
@@ -47,45 +46,62 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 				break;
 		}
 
-		logEvent('Alert: Sample alert link clicked', {
+		return url;
+	}
+
+	function handleSampleAlertClick(option: AlertTypes): void {
+		void logEvent('Alert: Sample alert link clicked', {
 			dataSource: ALERTS_DATA_SOURCE_MAP[option],
-			link: url,
+			link: getSampleAlertUrl(option),
 			page: 'New alert data source selection page',
 		});
-
-		openInNewTab(url);
 	}
 	const renderOptions = useMemo(
 		() => (
 			<>
-				{optionList.map((option: OptionType) => (
-					<AlertTypeCard
-						key={option.selection}
-						title={option.title}
-						extra={
-							option.isBeta ? (
-								<Badge variant="solid" color="primary">
-									Beta
-								</Badge>
-							) : undefined
-						}
-						onClick={(e): void => {
-							onSelect(option.selection, isModifierKeyPressed(e));
-						}}
-						data-testid={`alert-type-card-${option.selection}`}
-					>
-						{option.description}{' '}
-						<Typography.Link
+				{optionList.map((option: OptionType) => {
+					const sampleAlertUrl = getSampleAlertUrl(option.selection);
+					return (
+						<AlertTypeCard
+							key={option.selection}
+							title={option.title}
+							extra={
+								option.isBeta ? (
+									<Badge
+										variant="solid"
+										color="primary"
+										testId={`alert-type-beta-${option.selection}`}
+									>
+										Beta
+									</Badge>
+								) : undefined
+							}
 							onClick={(e): void => {
-								e.preventDefault();
-								e.stopPropagation();
-								handleRedirection(option.selection);
+								onSelect(option.selection, isModifierKeyPressed(e));
 							}}
+							data-testid={`alert-type-card-${option.selection}`}
 						>
-							Click here to see how to create a sample alert.
-						</Typography.Link>{' '}
-					</AlertTypeCard>
-				))}
+							{option.description}{' '}
+							{sampleAlertUrl ? (
+								<Typography.Link
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									textOverflow="wrap"
+									href={sampleAlertUrl}
+									target="_blank"
+									onClick={(e): void => {
+										e.stopPropagation();
+										handleSampleAlertClick(option.selection);
+									}}
+									testId={`alert-type-sample-link-${option.selection}`}
+								>
+									Click here to see how to create a sample alert.
+								</Typography.Link>
+							) : null}{' '}
+						</AlertTypeCard>
+					);
+				})}
 			</>
 		),
 		[onSelect, optionList],
@@ -93,14 +109,18 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 
 	return (
 		<SelectTypeContainer>
-			<Typography.Title
-				level={4}
-				style={{
-					padding: '0 8px',
-				}}
+			<Typography
+				variant="label"
+				size="large"
+				weight="bold"
+				color="inherit"
+				as="h4"
+				marginY={4}
+				paddingX={4}
+				textOverflow="wrap"
 			>
 				{t('choose_alert_type')}
-			</Typography.Title>
+			</Typography>
 			<Row>{renderOptions}</Row>
 		</SelectTypeContainer>
 	);

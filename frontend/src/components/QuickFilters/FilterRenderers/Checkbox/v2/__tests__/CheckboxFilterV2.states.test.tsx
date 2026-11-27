@@ -1,7 +1,5 @@
-import { screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { server, rest } from 'mocks-server/server';
-import { render } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import { QuickFiltersSource } from '../../../../types';
 
@@ -31,11 +29,9 @@ describe('CheckboxFilterV2 - states', () => {
 			);
 
 			expect(screen.getByTestId('checkbox-filter-v2')).toBeInTheDocument();
-			await waitFor(() => {
-				expect(
-					screen.getByTestId('checkbox-filter-v2').querySelector('.ant-skeleton'),
-				).toBeInTheDocument();
-			});
+			await expect(
+				screen.findByTestId('checkbox-filter-skeleton'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('shows skeleton when initially closed filter is opened for the first time', async () => {
@@ -54,7 +50,7 @@ describe('CheckboxFilterV2 - states', () => {
 
 			// Filter starts closed - no skeleton, no content
 			expect(
-				screen.getByTestId('checkbox-filter-v2').querySelector('.ant-skeleton'),
+				screen.queryByTestId('checkbox-filter-skeleton'),
 			).not.toBeInTheDocument();
 			expect(
 				screen.queryByTestId('checkbox-filter-empty'),
@@ -65,11 +61,9 @@ describe('CheckboxFilterV2 - states', () => {
 			await user.click(header);
 
 			// Should show skeleton while loading, NOT "No values found"
-			await waitFor(() => {
-				expect(
-					screen.getByTestId('checkbox-filter-v2').querySelector('.ant-skeleton'),
-				).toBeInTheDocument();
-			});
+			await expect(
+				screen.findByTestId('checkbox-filter-skeleton'),
+			).resolves.toBeInTheDocument();
 			expect(
 				screen.queryByTestId('checkbox-filter-empty'),
 			).not.toBeInTheDocument();
@@ -111,7 +105,7 @@ describe('CheckboxFilterV2 - states', () => {
 
 			await screen.findByTestId('checkbox-value-row-production');
 
-			const searchInput = screen.getByTestId('checkbox-filter-search');
+			const searchInput = screen.getByTestId('checkbox-filter-search-field');
 			await user.type(searchInput, 'prod');
 
 			await waitFor(() => {

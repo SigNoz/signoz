@@ -58,7 +58,6 @@ func (migration *updateQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 			{"key": "http.method", "dataType": "string", "type": "tag"},
 			{"key": "http.route", "dataType": "string", "type": "tag"},
 			{"key": "http_url", "dataType": "string", "type": "tag"},
-			{"key": "trace_id", "dataType": "string", "type": "tag"},
 		}},
 		{"logs", []map[string]any{
 			{"key": "severity_text", "dataType": "string", "type": "resource"},

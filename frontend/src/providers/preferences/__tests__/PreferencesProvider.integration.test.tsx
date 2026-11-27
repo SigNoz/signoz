@@ -125,7 +125,7 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('direct mode updateColumns persists to localStorage', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			render(
 				<Consumer
 					sourcePage={SavedviewtypesSourceDTO.logs}
@@ -153,7 +153,7 @@ describe('PreferencesProvider integration', () => {
 		it('saved view mode uses in-memory preferences (no localStorage write)', async () => {
 			const viewKey = JSON.stringify('saved-view-id-1');
 			const initialEntry = `/logs?viewKey=${encodeURIComponent(viewKey)}`;
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<Consumer sourcePage={SavedviewtypesSourceDTO.logs} testIdPrefix="logs" />,
@@ -211,7 +211,7 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('updateFormatting persists to localStorage in direct mode', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			function FormattingConsumer(): JSX.Element {
 				const logs = usePreferenceContext()[SavedviewtypesSourceDTO.logs];
@@ -247,7 +247,7 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('saved view mode updates in-memory preferences (columns-len changes)', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const viewKey = JSON.stringify('saved-view-id-3');
 			const initialEntry = `/logs?viewKey=${encodeURIComponent(viewKey)}`;
 
@@ -310,7 +310,7 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('direct mode updateColumns persists to localStorage', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			render(
 				<Consumer
 					sourcePage={SavedviewtypesSourceDTO.traces}
@@ -335,7 +335,7 @@ describe('PreferencesProvider integration', () => {
 		it('saved view mode uses in-memory preferences (no localStorage write)', async () => {
 			const viewKey = JSON.stringify('saved-view-id-2');
 			const initialEntry = `/traces?viewKey=${encodeURIComponent(viewKey)}`;
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<Consumer
@@ -387,7 +387,7 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('updateFormatting is a no-op in direct mode (no localStorage write)', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			function TracesFormattingConsumer(): JSX.Element {
 				const traces = usePreferenceContext()[SavedviewtypesSourceDTO.traces];
@@ -420,7 +420,7 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('saved view mode updates in-memory preferences (columns-len changes)', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const viewKey = JSON.stringify('saved-view-id-4');
 			const initialEntry = `/traces?viewKey=${encodeURIComponent(viewKey)}`;
 
@@ -531,7 +531,7 @@ describe('PreferencesProvider integration', () => {
 			});
 
 			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent(
-				AI_DEFAULT_COUNT,
+				String(URL_COLUMNS.length),
 			);
 		});
 
@@ -648,7 +648,7 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('updateColumns writes its own localStorage key in direct mode', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			renderAiConsumer();
 
 			await user.click(screen.getByTestId('ai-update-columns'));

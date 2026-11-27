@@ -19,6 +19,7 @@ export const mapQueryDataToApi = <Data extends MapData, Key extends keyof Data>(
 					[query[nameField] as string]: {
 						...query,
 						...tableParams?.pagination,
+						...(tableParams?.pageSize ? { pageSize: tableParams.pageSize } : null),
 						...(tableParams?.selectColumns
 							? { selectColumns: tableParams?.selectColumns }
 							: null),

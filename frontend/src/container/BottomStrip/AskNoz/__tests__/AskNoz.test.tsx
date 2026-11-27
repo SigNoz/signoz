@@ -1,57 +1,40 @@
-import { fireEvent } from '@testing-library/react';
 import logEvent from 'api/common/logEvent';
 import {
 	AIAssistantEvents,
 	AIAssistantOpenSource,
 } from 'container/AIAssistant/events';
-import { openAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore';
+import { openNewAIAssistantChat } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { render } from 'tests/test-utils';
+import { render, userEvent } from 'tests/test-utils';
 
 import AskNoz from '../AskNoz';
 
 jest.mock('hooks/useIsAIAssistantEnabled');
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
 jest.mock('container/AIAssistant/store/useAIAssistantStore', () => ({
-	openAIAssistant: jest.fn(),
+	openNewAIAssistantChat: jest.fn(),
 	useAIAssistantStore: jest.fn(),
 }));
 
 const mockEnabled = useIsAIAssistantEnabled as jest.MockedFunction<
 	typeof useIsAIAssistantEnabled
 >;
-const mockOpen = openAIAssistant as jest.MockedFunction<typeof openAIAssistant>;
+const mockOpenNew = jest.mocked(openNewAIAssistantChat);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const { useAIAssistantStore } = jest.requireMock(
 	'container/AIAssistant/store/useAIAssistantStore',
 ) as { useAIAssistantStore: jest.Mock };
 
-/** The component reads the store through three separate selector calls. */
 function mockStore({
 	isDrawerOpen = false,
-	isModalOpen = false,
-	pendingCount = 0,
-}: {
-	isDrawerOpen?: boolean;
-	isModalOpen?: boolean;
-	pendingCount?: number;
-} = {}): void {
-	const state = { isDrawerOpen, isModalOpen, streams: {} };
-	useAIAssistantStore.mockImplementation((selector: (s: unknown) => unknown) => {
-		const picked = selector(state);
-		// `selectPendingUserInputStreamCount` walks `streams`, which is empty here,
-		// so stand in the count we want to assert against.
-		return typeof picked === 'number' ? pendingCount : picked;
-	});
+}: { isDrawerOpen?: boolean } = {}): void {
+	useAIAssistantStore.mockImplementation((selector: (s: unknown) => unknown) =>
+		selector({ isDrawerOpen }),
+	);
 }
 
-// `TooltipSimple` replaces its trigger's props, so the testId lives on the
-// wrapper and the button itself is reached by role — there is only ever one.
 const SLOT = 'bottom-strip-ask-noz';
+const BUTTON = 'bottom-strip-ask-noz-button';
 
 describe('AskNoz', () => {
 	beforeEach(() => {
@@ -62,9 +45,9 @@ describe('AskNoz', () => {
 
 	describe('visibility', () => {
 		it('renders when the assistant is enabled', () => {
-			const { getByRole } = render(<AskNoz />);
+			const { getByTestId } = render(<AskNoz />);
 
-			expect(getByRole('button')).toBeInTheDocument();
+			expect(getByTestId(BUTTON)).toBeInTheDocument();
 		});
 
 		it('renders nothing when the assistant is disabled', () => {
@@ -75,12 +58,12 @@ describe('AskNoz', () => {
 			expect(queryByTestId(SLOT)).not.toBeInTheDocument();
 		});
 
-		it('renders nothing while the drawer is open', () => {
+		it('stays while the drawer is open, to start another chat', () => {
 			mockStore({ isDrawerOpen: true });
 
-			const { queryByTestId } = render(<AskNoz />);
+			const { getByTestId } = render(<AskNoz />);
 
-			expect(queryByTestId(SLOT)).not.toBeInTheDocument();
+			expect(getByTestId(BUTTON)).toHaveTextContent('Ask Noz');
 		});
 
 		it('renders nothing on the Noz full page, where the drawer does not mount', () => {
@@ -93,61 +76,46 @@ describe('AskNoz', () => {
 	});
 
 	describe('what it does', () => {
-		it('opens the drawer on click', () => {
-			const { getByRole } = render(<AskNoz />);
+		it('opens the drawer on a new chat', async () => {
+			const user = userEvent.setup();
+			const { getByTestId } = render(<AskNoz />);
 
-			fireEvent.click(getByRole('button'));
+			await user.click(getByTestId(BUTTON));
 
-			expect(mockOpen).toHaveBeenCalledTimes(1);
+			expect(mockOpenNew).toHaveBeenCalledTimes(1);
 		});
 
-		it('reports the open as coming from the strip', () => {
-			const { getByRole } = render(<AskNoz />);
+		it('starts a new chat from the open drawer and reports it as one', async () => {
+			const user = userEvent.setup();
+			mockStore({ isDrawerOpen: true });
+			const { getByTestId } = render(<AskNoz />);
 
-			fireEvent.click(getByRole('button'));
+			await user.click(getByTestId(BUTTON));
+
+			expect(mockOpenNew).toHaveBeenCalledTimes(1);
+			expect(logEvent).toHaveBeenCalledWith(
+				AIAssistantEvents.NewChatClicked,
+				expect.objectContaining({
+					mode: 'sidepane',
+					source: AIAssistantOpenSource.BottomStrip,
+				}),
+			);
+			expect(logEvent).not.toHaveBeenCalledWith(
+				AIAssistantEvents.Opened,
+				expect.anything(),
+			);
+		});
+
+		it('reports the open as coming from the strip', async () => {
+			const user = userEvent.setup();
+			const { getByTestId } = render(<AskNoz />);
+
+			await user.click(getByTestId(BUTTON));
 
 			expect(logEvent).toHaveBeenCalledWith(
 				AIAssistantEvents.Opened,
 				expect.objectContaining({ source: AIAssistantOpenSource.BottomStrip }),
 			);
-		});
-	});
-
-	describe('pending badge', () => {
-		it('announces the count when Noz is waiting on the user', () => {
-			mockStore({ pendingCount: 2 });
-
-			const { getByRole } = render(<AskNoz />);
-
-			expect(getByRole('button')).toHaveAttribute(
-				'aria-label',
-				'Ask Noz, 2 actions need your response',
-			);
-		});
-
-		it('uses the singular for one pending action', () => {
-			mockStore({ pendingCount: 1 });
-
-			const { getByRole } = render(<AskNoz />);
-
-			expect(getByRole('button')).toHaveAttribute(
-				'aria-label',
-				'Ask Noz, 1 action needs your response',
-			);
-		});
-
-		it('stays quiet when nothing is pending', () => {
-			const { getByRole } = render(<AskNoz />);
-
-			expect(getByRole('button')).toHaveAttribute('aria-label', 'Ask Noz');
-		});
-
-		it('stays quiet while the modal is open, Noz is already on screen', () => {
-			mockStore({ isModalOpen: true, pendingCount: 3 });
-
-			const { getByRole } = render(<AskNoz />);
-
-			expect(getByRole('button')).toHaveAttribute('aria-label', 'Ask Noz');
 		});
 	});
 });

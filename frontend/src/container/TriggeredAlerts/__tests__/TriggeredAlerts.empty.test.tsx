@@ -1,14 +1,25 @@
-import userEvent from '@testing-library/user-event';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import ROUTES from 'constants/routes';
 import { triggeredAlertsFixture } from 'mocks-server/__mockdata__/triggered_alerts';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { screen, waitFor } from 'tests/test-utils';
+import { act, screen, userEvent } from 'tests/test-utils';
 
-import { renderTriggeredAlerts } from './_helpers';
+import {
+	getTriggeredAlertRowTestId,
+	renderTriggeredAlerts,
+	search,
+	SEARCH_SETTLE_MS,
+} from './_helpers';
+
+const HIGH_CPU_NAME = getTriggeredAlertRowTestId('fp-critical-1', 'name');
+const NO_MATCH_SEARCH = 'this-matches-nothing-xyz';
 
 describe('TriggeredAlerts — empty / error states', () => {
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
 	it('shows the "No alerts firing" empty state when the API returns []', async () => {
 		server.use(
 			rest.get('http://localhost/api/v1/alerts', (_, res, ctx) =>
@@ -28,7 +39,7 @@ describe('TriggeredAlerts — empty / error states', () => {
 	});
 
 	it('navigates to ROUTES.ALERTS_NEW when "Create Alert Rule" is clicked', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup();
 		server.use(
 			rest.get('http://localhost/api/v1/alerts', (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [], status: 'success' })),
@@ -74,45 +85,51 @@ describe('TriggeredAlerts — empty / error states', () => {
 			}),
 		);
 
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup();
 		renderTriggeredAlerts();
 
 		await screen.findByTestId('error-refresh-button');
 
 		await user.click(screen.getByTestId('error-refresh-button'));
 
-		await waitFor(() =>
-			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
+		await expect(screen.findByTestId(HIGH_CPU_NAME)).resolves.toHaveTextContent(
+			'High CPU Usage',
 		);
 	});
 
 	it('shows NoResultsEmptyState when filters yield zero matches', async () => {
-		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
 
-		await waitFor(() =>
-			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
-		);
+		await screen.findByTestId(HIGH_CPU_NAME);
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
-		await user.type(input, 'this-matches-nothing-xyz');
+		await search(NO_MATCH_SEARCH);
 
-		await screen.findByTestId('no-results-empty-state');
+		expect(screen.getByTestId('no-results-empty-state')).toBeInTheDocument();
 		expect(screen.getByTestId('no-results-title')).toHaveTextContent(
 			'No matching alerts',
 		);
 		expect(screen.getByTestId('no-results-subtitle')).toHaveTextContent(
 			'No alerts match your current filters. Try adjusting your search criteria.',
 		);
+	});
 
+	it('clears the search from the no-results state', async () => {
+		renderTriggeredAlerts({ initialRoute: `/?search=${NO_MATCH_SEARCH}` });
+
+		await screen.findByTestId('no-results-empty-state');
+
+		jest.useFakeTimers();
+		const user = userEvent.setup({
+			advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+		});
 		await user.click(screen.getByTestId('no-results-clear-button'));
+		act(() => {
+			jest.advanceTimersByTime(SEARCH_SETTLE_MS);
+		});
 
-		await waitFor(() =>
-			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
+		expect(screen.getByTestId(HIGH_CPU_NAME)).toHaveTextContent('High CPU Usage');
+		expect(screen.getByTestId('triggered-alerts-search-input-field')).toHaveValue(
+			'',
 		);
-		expect(
-			(screen.getByTestId('triggered-alerts-search-input') as HTMLInputElement)
-				.value,
-		).toBe('');
 	});
 });

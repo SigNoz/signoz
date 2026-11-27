@@ -34,22 +34,35 @@ export function getModelCostsColumns({
 			id: 'model',
 			header: 'Model',
 			accessorFn: (row): string => row.modelName ?? '',
-			// Flexes to absorb spare width alongside Extra buckets so the row fills
-			// the container instead of leaving a gap on the right.
-			width: { min: 240, default: '100%' },
+			// Flexes to absorb spare width so the row fills the container instead of
+			// leaving a gap on the right.
+			width: { min: 200, default: '100%' },
 			enableMove: false,
 			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
 				<div className={styles.modelCell}>
-					<Typography.Text
-						truncate={1}
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="main"
+						as="p"
+						textOverflow="ellipsis"
 						testId={`model-cell-name-${row.id}`}
-						className={styles.tableCellStyles}
 					>
 						{row.modelName}
-					</Typography.Text>
+					</Typography>
 
-					<Typography.Text truncate={1}>{getCanonicalId(row)}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="p"
+						textOverflow="ellipsis"
+					>
+						{getCanonicalId(row)}
+					</Typography>
 				</div>
 			),
 		},
@@ -60,9 +73,16 @@ export function getModelCostsColumns({
 			width: { min: 140 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<Typography.Text className={styles.tableCellStyles}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					{row.provider ?? ''}
-				</Typography.Text>
+				</Typography>
 			),
 		},
 		{
@@ -71,9 +91,16 @@ export function getModelCostsColumns({
 			width: { min: 120 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<Typography.Text className={styles.tableCellStyles}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					{formatPricePerMillion(row.pricing?.input)}
-				</Typography.Text>
+				</Typography>
 			),
 		},
 		{
@@ -82,23 +109,38 @@ export function getModelCostsColumns({
 			width: { min: 120 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<Typography.Text className={styles.tableCellStyles}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					{formatPricePerMillion(row.pricing?.output)}
-				</Typography.Text>
+				</Typography>
 			),
 		},
 		{
 			id: 'extraBuckets',
 			header: 'Extra buckets',
-			width: { min: 200, default: '100%' },
+			// Fits both cache chips on one line.
+			width: { min: 264 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => {
 				const buckets = getExtraBuckets(row);
 				if (buckets.length === 0) {
 					return (
-						<Typography.Text as="span" className={styles.tableCellStyles}>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="main"
+							as="span"
+							textOverflow="wrap"
+						>
 							—
-						</Typography.Text>
+						</Typography>
 					);
 				}
 				return (
@@ -110,21 +152,26 @@ export function getModelCostsColumns({
 								color="secondary"
 								variant="outlined"
 							>
-								<Typography.Text
-									as="span"
+								<Typography
+									variant="paragraph"
 									size="small"
-									className={styles.tableCellStyles}
+									weight="regular"
+									color="main"
+									as="span"
+									textOverflow="visible"
 								>
 									{startCase(bucket.key)}
-								</Typography.Text>{' '}
-								<Typography.Text
-									as="span"
+								</Typography>{' '}
+								<Typography
+									variant="paragraph"
 									size="small"
-									weight="semibold"
-									className={styles.tableCellStyles}
+									weight="bold"
+									color="main"
+									as="span"
+									textOverflow="visible"
 								>
 									{formatPricePerMillion(bucket.pricePerMillion)}
-								</Typography.Text>
+								</Typography>
 							</Badge>
 						))}
 					</div>
@@ -153,9 +200,16 @@ export function getModelCostsColumns({
 			width: { min: 120 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
-				<Typography.Text className={styles.tableCellStyles}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					{getRelativeLastSeen(row)}
-				</Typography.Text>
+				</Typography>
 			),
 		},
 		{

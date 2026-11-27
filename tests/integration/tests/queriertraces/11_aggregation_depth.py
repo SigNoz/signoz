@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 
 import numpy as np
@@ -12,6 +12,7 @@ from fixtures.querier import (
     build_group_by_field,
     build_order_by,
     build_traces_scalar_query,
+    get_attribute_backend_now,
     get_scalar_table_data,
     make_scalar_query_request,
 )
@@ -33,7 +34,6 @@ def test_traces_aggregate_percentiles(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     noise: str,
 ) -> None:
@@ -49,10 +49,10 @@ def test_traces_aggregate_percentiles(
     intrinsic column rather than error with ClickHouse NO_COMMON_TYPE (386) — the
     regression behind the span_percentile 500.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     durations_s = [1, 2, 3, 4, 5]
     spans = [
         Traces(
@@ -101,7 +101,6 @@ def test_traces_aggregate_group_by_non_resource(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     noise: str,
     group_key: str,
@@ -116,10 +115,10 @@ def test_traces_aggregate_group_by_non_resource(
     not just a resource key — buckets by the real value; under the corrupt variant a
     same-named colliding attribute must not divert the grouping.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     specs = [("op-a", "/a"), ("op-a", "/a"), ("op-b", "/b")]
     spans = [
         Traces(
@@ -157,7 +156,6 @@ def test_traces_aggregate_multi_group_by(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     noise: str,
 ) -> None:
@@ -170,10 +168,10 @@ def test_traces_aggregate_multi_group_by(
     Grouping by two keys (a resource key and an intrinsic column) returns one row per
     present pair with the correct per-pair count.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     pair_counts = {("svc-1", "op-a"): 2, ("svc-1", "op-b"): 1, ("svc-2", "op-a"): 1}
     spans = [
         Traces(
@@ -224,7 +222,6 @@ def test_traces_aggregate_having_breadth(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     noise: str,
     having_expression: str,
@@ -239,10 +236,10 @@ def test_traces_aggregate_having_breadth(
     each keep only the qualifying groups — extending the count()-only HAVING in
     02_aggregation.py.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     specs = [("svc-a", 1), ("svc-a", 1), ("svc-a", 1), ("svc-b", 5)]
     spans = [
         Traces(
@@ -288,7 +285,6 @@ def test_traces_duration_nano_qol_filter_with_collision(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     duration_filter: str,
 ) -> None:
@@ -303,9 +299,9 @@ def test_traces_duration_nano_qol_filter_with_collision(
     ClickHouse NO_COMMON_TYPE (386). The string attribute is cast; the intrinsic column
     stays a bare comparison.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     durations_s = [1, 2, 3, 4, 5]
     spans = [
         Traces(

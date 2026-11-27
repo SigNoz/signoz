@@ -1,8 +1,8 @@
+import { EQueryType } from 'types/common/dashboard';
 import {
 	Querybuildertypesv5RequestTypeDTO,
 	type TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 export type { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';
 
@@ -44,24 +44,24 @@ export function isRawRequest(capabilities: PanelQueryCapabilities): boolean {
 	return capabilities.requestType === Querybuildertypesv5RequestTypeDTO.raw;
 }
 
-export enum QueryModeKind {
+export enum QueryTypeKind {
 	SIGNAL = 'signal',
 	SIGNAL_LESS = 'signal-less',
 }
 
-export type QueryModeCapability =
-	| { kind: QueryModeKind.SIGNAL; signals: TelemetrytypesSignalDTO[] }
-	| { kind: QueryModeKind.SIGNAL_LESS };
+export type QueryTypeCapability =
+	| { kind: QueryTypeKind.SIGNAL; signals: TelemetrytypesSignalDTO[] }
+	| { kind: QueryTypeKind.SIGNAL_LESS };
 
-export type SupportedQueryModesKindMap = Partial<
-	Record<QueryMode, QueryModeCapability>
+export type SupportedQueryTypesKindMap = Partial<
+	Record<EQueryType, QueryTypeCapability>
 >;
 
-/** Signals `mode` accepts; empty for a signal-less or undeclared mode. */
-export function getQueryModeSignals(
-	modes: SupportedQueryModesKindMap | undefined,
-	mode: QueryMode,
+/** Signals `queryType` accepts; empty for a signal-less or undeclared query type. */
+export function getQueryTypeSignals(
+	queryTypes: SupportedQueryTypesKindMap | undefined,
+	queryType: EQueryType,
 ): TelemetrytypesSignalDTO[] {
-	const capability = modes?.[mode];
-	return capability?.kind === QueryModeKind.SIGNAL ? capability.signals : [];
+	const capability = queryTypes?.[queryType];
+	return capability?.kind === QueryTypeKind.SIGNAL ? capability.signals : [];
 }

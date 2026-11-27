@@ -26,7 +26,7 @@ var (
 )
 
 const (
-	expectedLastObservedAtCacheEntries int64 = 5000 // 1000 users * Max 5 tokens per user
+	expectedLastObservedAtCacheEntries int64 = 20000 // 1000 users * Max 20 tokens per user
 )
 
 type provider struct {

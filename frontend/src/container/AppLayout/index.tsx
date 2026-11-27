@@ -1,5 +1,7 @@
 import {
+	lazy,
 	ReactNode,
+	Suspense,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -13,9 +15,8 @@ import { useMutation, useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import * as Sentry from '@sentry/react';
-import { Toaster } from '@signozhq/ui/sonner';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { Flex } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
@@ -27,7 +28,7 @@ import getUserVersion from 'api/v1/version/get';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
-import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
+import AppToaster from 'components/AppToaster/AppToaster';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -38,8 +39,6 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
-import AIAssistantModal from 'container/AIAssistant/AIAssistantModal';
-import AIAssistantPanel from 'container/AIAssistant/AIAssistantPanel';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import BottomStrip from 'container/BottomStrip';
 import SideNav from 'container/SideNav';
@@ -81,6 +80,7 @@ import AppReducer from 'types/reducer/app';
 import { getBaseUrl } from 'utils/basePath';
 import { showErrorNotification } from 'utils/error';
 import { eventEmitter } from 'utils/getEventEmitter';
+import { lazyRetry } from 'utils/lazyWithRetries';
 import {
 	getFormattedDate,
 	getFormattedDateWithMinutes,
@@ -91,6 +91,19 @@ import { ChildrenContainer, Layout, LayoutContent } from './styles';
 import { getRouteKey } from './utils';
 
 import './AppLayout.styles.scss';
+
+// The assistant pulls in the dashboard panel registry and the query builder, so it
+// loads only for users who have it.
+const AIAssistantModal = lazy(() =>
+	lazyRetry(() => import('container/AIAssistant/AIAssistantModal')),
+);
+const AIAssistantPanel = lazy(() =>
+	lazyRetry(() => import('container/AIAssistant/AIAssistantPanel')),
+);
+
+const ChangelogModal = lazy(() =>
+	lazyRetry(() => import('components/ChangelogModal/ChangelogModal')),
+);
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function AppLayout(props: AppLayoutProps): JSX.Element {
@@ -832,20 +845,24 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					</div>
 
 					{isLoggedIn && isAIAssistantEnabled && (
-						<>
-							<AIAssistantPanel />
-							<AIAssistantModal />
-						</>
+						<Sentry.ErrorBoundary>
+							<Suspense fallback={null}>
+								<AIAssistantPanel />
+								<AIAssistantModal />
+							</Suspense>
+						</Sentry.ErrorBoundary>
 					)}
 				</Flex>
 
 				{showChangelogModal && changelog && (
-					<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
+					<Sentry.ErrorBoundary>
+						<Suspense fallback={null}>
+							<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
+						</Suspense>
+					</Sentry.ErrorBoundary>
 				)}
 
-				<Toaster
-					offset={{ bottom: 'calc(var(--bottom-strip-height, 0px) + 24px)' }}
-				/>
+				<AppToaster />
 			</Layout>
 		</TooltipProvider>
 	);

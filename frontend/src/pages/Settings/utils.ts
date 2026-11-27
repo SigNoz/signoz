@@ -21,7 +21,6 @@ import {
 
 export const getRoutes = (
 	userRole: ROLES | null,
-	isCurrentOrgSettings: boolean,
 	isGatewayEnabled: boolean,
 	isWorkspaceBlocked: boolean,
 	isCloudUser: boolean,
@@ -31,15 +30,14 @@ export const getRoutes = (
 	const settings = [];
 
 	const isAdmin = userRole === USER_ROLES.ADMIN;
-	const isEditor = userRole === USER_ROLES.EDITOR;
 
 	if (isWorkspaceBlocked) {
+		settings.push(...organizationSettings(t));
+
+		settings.push(...membersSettings(t));
+
 		if (isAdmin) {
-			settings.push(
-				...organizationSettings(t),
-				...membersSettings(t),
-				...mySettings(t),
-			);
+			settings.push(...mySettings(t));
 		}
 
 		settings.push(...billingSettings(t));
@@ -53,11 +51,7 @@ export const getRoutes = (
 
 	settings.push(...generalSettings(t));
 
-	if (isCurrentOrgSettings) {
-		settings.push(...organizationSettings(t));
-	}
-
-	if (isGatewayEnabled && (isAdmin || isEditor)) {
+	if (isGatewayEnabled) {
 		settings.push(...multiIngestionSettings(t));
 	}
 
@@ -67,17 +61,14 @@ export const getRoutes = (
 
 	// Visible to all authenticated users
 	settings.push(
+		...organizationSettings(t),
+		...membersSettings(t),
 		...serviceAccountsSettings(t),
 		...rolesSettings(t),
 		...roleCreate(t),
 		...roleDetails(t),
 		...roleEdit(t),
 	);
-
-	// Admin-only: members management
-	if (isAdmin) {
-		settings.push(...membersSettings(t));
-	}
 
 	if (isCloudUser || isEnterpriseSelfHostedUser) {
 		settings.push(...billingSettings(t));

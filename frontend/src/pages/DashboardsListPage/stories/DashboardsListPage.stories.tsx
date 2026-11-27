@@ -1,46 +1,42 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	dashboardsListMocks,
+	type DashboardsListArgs,
 	longQueryRoute,
 	overflowingRows,
 } from './DashboardsListPage.stories.mocks';
 import {
 	copyLegacyDashboardId,
-	createDashboardFails,
+	createDashboard,
 	deleteDashboard,
-	deleteViewFails,
+	deleteView,
 	duplicateDashboard,
-	importCreateFails,
+	importDashboard,
 	importInvalidImage,
 	importInvalidJson,
 	lockDashboard,
 	migrateDashboard,
-	migrationFails,
 	openCreatedByFilter,
 	openEditTagsDialog,
 	openFirstRowActions,
 	openRenameDialog,
-	openSaveViewPopover,
+	openRenameViewDialog,
+	openSaveViewDialog,
 	openTemplateTab,
-	pinFails,
-	pinPastLimit,
+	pinDashboard,
 	renameDashboard,
-	renameViewFails,
-	saveViewFails,
+	removeCreatedByTag,
+	renameView,
+	saveView,
 	submitTemplateRequest,
-	templateRequestFails,
-	templateRequestRejected,
 	unlockDashboard,
-	unpinFails,
+	unpinDashboard,
 	updateTags,
 } from './__story_mockdata__/dashboardsList.play';
 
 import DashboardsListPage from '../DashboardsListPage';
-
-type DashboardsListArgs = PageStoryArgs<typeof dashboardsListMocks>;
 
 const pageStory = storyMocks(dashboardsListMocks, { layout: 'app' });
 
@@ -90,6 +86,11 @@ export const Viewer: Story = {
 	args: { access: 'viewer' },
 };
 
+/** Rows whose images are bundled logos rather than icons. */
+export const Logos: Story = {
+	args: { images: 'logos' },
+};
+
 /** The rows the user pinned, which the page filters out of the fetched page. */
 export const Pinned: Story = {
 	args: { view: 'pinned' },
@@ -103,6 +104,12 @@ export const LongQuery: Story = {
 /** The Created-by dropdown, open with one creator picked. */
 export const CreatedByFilterOpen: Story = {
 	play: openCreatedByFilter,
+};
+
+/** My dashboards with its creator tag removed by its ×: the list runs unfiltered. */
+export const CreatedByTagRemoved: Story = {
+	args: { view: 'mine' },
+	play: removeCreatedByTag,
 };
 
 /** The template tab of the New dashboard dialog. */
@@ -144,9 +151,14 @@ export const EditTagsDialog: Story = {
 	play: openEditTagsDialog,
 };
 
-/** The popover that names the current filters as a new saved view. */
-export const SaveViewPopover: Story = {
-	play: openSaveViewPopover,
+/** The dialog that names the current filters as a new saved view. */
+export const SaveView: Story = {
+	play: openSaveViewDialog,
+};
+
+/** A saved view's rename dialog, opened from its row. */
+export const RenameView: Story = {
+	play: openRenameViewDialog,
 };
 
 /** The renamed toast, raised once the PATCH answers. */
@@ -182,21 +194,21 @@ export const DashboardDeletedToast: Story = {
 /** Pinning past the limit: the backend refuses with a 409. */
 export const PinLimitToast: Story = {
 	args: { pinWrite: 'limit' },
-	play: pinPastLimit,
+	play: pinDashboard,
 	parameters: { allowConsoleErrors: true },
 };
 
 /** A pin the backend failed to write. */
 export const PinFailedToast: Story = {
 	args: { pinWrite: 'error' },
-	play: pinFails,
+	play: pinDashboard,
 	parameters: { allowConsoleErrors: true },
 };
 
 /** An unpin the backend failed to write, from the first (pinned) row. */
 export const UnpinFailedToast: Story = {
 	args: { pinWrite: 'error' },
-	play: unpinFails,
+	play: unpinDashboard,
 	parameters: { allowConsoleErrors: true },
 };
 
@@ -213,14 +225,14 @@ export const DashboardMigratedToast: Story = {
 /** Retry migration of the legacy dashboard refused by the backend. */
 export const DashboardMigrationFailedToast: Story = {
 	args: { migrationWrite: 'error' },
-	play: migrationFails,
+	play: migrateDashboard,
 	parameters: { allowConsoleErrors: true },
 };
 
 /** The Blank tab's create failing: the toast raised beside the error modal. */
 export const CreateDashboardFailedToast: Story = {
 	args: { createWrite: 'error' },
-	play: createDashboardFails,
+	play: createDashboard,
 	parameters: { allowConsoleErrors: true },
 };
 
@@ -232,7 +244,7 @@ export const ImportJsonInvalidImageToast: Story = {
 /** A valid dashboard file the create endpoint refuses. */
 export const ImportJsonCreateFailedToast: Story = {
 	args: { createWrite: 'error' },
-	play: importCreateFails,
+	play: importDashboard,
 	parameters: { allowConsoleErrors: true },
 };
 
@@ -244,33 +256,33 @@ export const TemplateRequestSubmittedToast: Story = {
 /** A template request the analytics endpoint answered with a failure. */
 export const TemplateRequestFailedToast: Story = {
 	args: { templateRequest: 'error' },
-	play: templateRequestFails,
+	play: submitTemplateRequest,
 };
 
 /** A template request that threw before an answer came back. */
 export const TemplateRequestRejectedToast: Story = {
 	args: { templateRequest: 'rejected' },
-	play: templateRequestRejected,
+	play: submitTemplateRequest,
 };
 
 /** Saving the current filters as a view, refused by the backend. */
 export const SaveViewFailedToast: Story = {
 	args: { viewWrite: 'error' },
-	play: saveViewFails,
+	play: saveView,
 	parameters: { allowConsoleErrors: true },
 };
 
 /** Renaming a saved view, refused by the backend. */
 export const RenameViewFailedToast: Story = {
 	args: { viewWrite: 'error' },
-	play: renameViewFails,
+	play: renameView,
 	parameters: { allowConsoleErrors: true },
 };
 
 /** Deleting a saved view, refused by the backend. */
 export const DeleteViewFailedToast: Story = {
 	args: { viewWrite: 'error' },
-	play: deleteViewFails,
+	play: deleteView,
 	parameters: { allowConsoleErrors: true },
 };
 

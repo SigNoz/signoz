@@ -2,6 +2,19 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
+function readPersistedTimes(): Record<string, string> {
+	const stored = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
+	try {
+		return stored ? JSON.parse(stored) : {};
+	} catch {
+		return {};
+	}
+}
+
+export function hasPersistedTimeForRoute(pathname: string): boolean {
+	return Boolean(readPersistedTimes()[pathname]);
+}
+
 /**
  * Updates the stored time duration for a route in localStorage.
  * Used by both DateTimeSelectionV2 (manual time pick) and useZoomOut (zoom out button).
@@ -13,14 +26,7 @@ export function persistTimeDurationForRoute(
 	pathname: string,
 	value: string,
 ): void {
-	const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
-	let preRoutesObject: Record<string, string> = {};
-	try {
-		preRoutesObject = preRoutes ? JSON.parse(preRoutes) : {};
-	} catch {
-		preRoutesObject = {};
-	}
-	const preRoute = { ...preRoutesObject, [pathname]: value };
+	const preRoute = { ...readPersistedTimes(), [pathname]: value };
 	setLocalStorageKey(
 		LOCALSTORAGE.METRICS_TIME_IN_DURATION,
 		JSON.stringify(preRoute),

@@ -41,15 +41,17 @@ function SavedViewsRowLink({
 			onClick={handleClick}
 			data-testid="saved-views-row-name"
 		>
-			<Typography.Text
-				as="span"
+			<Typography
+				variant="paragraph"
 				size="base"
-				weight="normal"
-				truncate={1}
-				className={styles.rowLinkLabel}
+				weight="regular"
+				color="inherit"
+				as="span"
+				display="block"
+				textOverflow="ellipsis"
 			>
 				{view.spec.displayName}
-			</Typography.Text>
+			</Typography>
 		</AppLink>
 	);
 }

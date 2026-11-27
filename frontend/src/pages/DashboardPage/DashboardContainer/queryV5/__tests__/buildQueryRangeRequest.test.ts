@@ -477,6 +477,47 @@ describe('extractLegendMap', () => {
 });
 
 describe('hasRunnableQueries', () => {
+	const heatmapQuery = (
+		signal: string,
+		aggregations: Record<string, unknown>[],
+	): DashboardtypesQueryDTO[] =>
+		compositeQuery([
+			{ type: 'builder_query', spec: { name: 'A', signal, aggregations } },
+		]).map((query) => ({ ...query, kind: 'heatmap' }) as DashboardtypesQueryDTO);
+
+	it.each([
+		['logs', [], false],
+		['traces', [{ expression: ' ' }], false],
+		['traces', [{ expression: 'duration_nano' }], true],
+		['metrics', [{ metricName: 'http_latency' }], true],
+	])(
+		'%s heatmap with aggregations %j is runnable: %s',
+		(signal, aggregations, runnable) => {
+			expect(hasRunnableQueries(heatmapQuery(signal, aggregations))).toBe(
+				runnable,
+			);
+		},
+	);
+
+	it('ignores a disabled heatmap query with no field', () => {
+		const queries = compositeQuery([
+			{
+				type: 'builder_query',
+				spec: {
+					name: 'A',
+					signal: 'traces',
+					aggregations: [{ expression: 'duration_nano' }],
+				},
+			},
+			{
+				type: 'builder_query',
+				spec: { name: 'B', signal: 'logs', aggregations: [], disabled: true },
+			},
+		]).map((query) => ({ ...query, kind: 'heatmap' }) as DashboardtypesQueryDTO);
+
+		expect(hasRunnableQueries(queries)).toBe(true);
+	});
+
 	it('false when the panel has no queries', () => {
 		expect(hasRunnableQueries([])).toBe(false);
 	});

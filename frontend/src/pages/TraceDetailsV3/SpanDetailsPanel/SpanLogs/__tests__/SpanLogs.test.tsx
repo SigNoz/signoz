@@ -201,7 +201,7 @@ describe('SpanLogs', () => {
 	});
 
 	it('should call handleExplorerPageRedirect when Log Explorer button is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const mockHandleExplorerPageRedirect = jest.fn();
 
 		render(
@@ -220,7 +220,7 @@ describe('SpanLogs', () => {
 	});
 
 	it('opens a new tab to Logs Explorer with the trace_id + span_id query when a log row is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<SpanLogs {...defaultProps} logs={[sampleLog]} />);
 

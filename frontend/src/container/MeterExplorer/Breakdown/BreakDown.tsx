@@ -99,7 +99,16 @@ function Section(section: MetricSection): JSX.Element {
 			data-testid={`meter-breakdown-section-${title.toLowerCase()}`}
 		>
 			<CardContainer className="row-card" isDarkMode={isDarkMode}>
-				<Typography.Text className="section-title">{title}</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
+					{title}
+				</Typography>
 			</CardContainer>
 			<div className="meter-page-grid">
 				{graphs.map((widget) => (

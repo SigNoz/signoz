@@ -12,4 +12,5 @@
 
 import '@signozhq/design-tokens';
 import '@signozhq/icons';
+import '@signozhq/noz-client';
 import '@signozhq/ui';

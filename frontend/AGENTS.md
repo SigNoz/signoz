@@ -28,20 +28,24 @@ You are operating within a constrained context window and strict system prompts.
 - UI primitives come from `@signozhq/ui` (subpath imports) and icons from `@signozhq/icons`. No new `antd` component or direct icon library (`lucide-react`) where `@signozhq/ui` has an equivalent; `signoz/no-antd-components` enforces part of this list.
   - Exception: a control added beside `antd` siblings of the same kind (a tab in an `antd` tab strip) matches them until that surface migrates. Say so in the PR.
   - When `@signozhq/ui` or `@signozhq/icons` lacks what you need, say so in the PR before reaching for another library.
-- Before styling a `@signozhq/ui` component, check its props in `node_modules/@signozhq/ui/dist/<component>/*.d.ts` for `className`/`style` support; some omit them. Avoid overriding the component's CSS vars unless explicitly needed.
+- Never override a `@signozhq/ui` component's styles: no `--<component>-*` CSS variables, no `:global` class or `data-*` selectors, no restyling through `className`/`style`. Use its props, and put layout on a wrapper you own. When it can't do what the design needs, file a UI suggestion in `SigNoz/uforge-pod` (`ui-suggestion.yml` template) and link it in the PR.
 - When writing code that could need authorization checks, read ./src/lib/authz/README.md
   - A flow that gains a request also gates on that request's permission: a rename that now reads the view first needs `read` as well as `update`.
 - Identity keys (legend groups, color groups, CSV headers, React keys) come from structured values, never from joined display text: `['us, east', 'prod']` and `['us', 'east, prod']` both join to `us, east, prod`.
 - A payload saved under another kind or schema copies only the fields that schema accepts, and drops bindings to columns the user removed. The server rejects unknown or stale fields, so the preview works and the save fails.
 
-3. FORCED VERIFICATION: Your internal tools mark file writes as successful even if the code does not compile. Run these checks once all changes of a task are done, never after each edit. You are FORBIDDEN from reporting a task as complete until you have:
+3. CHECKS AT THE GATE: Your internal tools mark file writes as successful even if the code does not compile, so the checks below are required, but only at the gate. The gate is when the user says commit, push, raise or update the PR, mark it ready, or "run checks". Never run them after each edit or between the user's iterations.
+- Between gates, after an edit, run at most the one test file that covers it.
+- `no checks`: when the user says it (or "don't run tests", "just making changes"), run nothing: no tests, type check, lint, format or build. Make the change and stop. This holds until the user names a gate.
+
+At the gate, you are FORBIDDEN from reporting a task as complete until you have:
 - Run `pnpm tsgo --noEmit`
 - Run `pnpm lint:js --quiet` to find critical errors
 - Run `pnpm oxlint <file1> <file2>` and fix all warnings
 - Run `pnpm build`
 - Find if the file has tests for it, or if there's `__test__` folder or the parent folder has tests, and run. Run them before coding the change or after all changes, never in between.
 - For e2e, run only the specs you added or changed: the stack is heavy. Leave the full jest and e2e suites to CI unless the user asks.
-- For every test you added or changed, revert the change it covers and confirm the test fails
+- For every test you added or changed, revert the change it covers and confirm the test fails, and that each test runs under 500 ms (`pnpm jest <file> --verbose`)
 - On a stacked branch (`gh stack`), run `pnpm tsgo --noEmit` on every branch above it before pushing: a renamed prop or moved export breaks them
 - Fixed ALL resulting errors
 

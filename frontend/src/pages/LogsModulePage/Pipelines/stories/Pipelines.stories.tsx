@@ -1,14 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { pipelinesMocks } from './Pipelines.stories.mocks';
+import { type PipelinesArgs, pipelinesMocks } from './Pipelines.stories.mocks';
+import {
+	expandProcessors,
+	hoverPipelineFilterSuggestions,
+	openAddPipeline,
+	openAddProcessor,
+	openChangeHistory,
+	openEditMode,
+	openEditPipeline,
+	openPreviewLogDetails,
+	openProcessingPreview,
+	openSeverityParserProcessor,
+	suggestPipelineFilterKeys,
+	suggestPipelineFilterValues,
+} from './__story_mockdata__/pipelines.play';
 
 import LogsModulePage from '../../LogsModulePage';
-
-type PipelinesArgs = PageStoryArgs<typeof pipelinesMocks>;
 
 const pageStory = storyMocks(pipelinesMocks, { layout: 'app' });
 
@@ -30,37 +40,6 @@ export default meta;
 
 type Story = StoryObj<PipelinesArgs>;
 
-/** The page fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
-/** Row actions repeat per pipeline, so a story that opens one takes the first. */
-const clickFirst = async (
-	canvasElement: HTMLElement,
-	testId: string,
-): Promise<void> => {
-	const [action] = await within(canvasElement).findAllByTestId(
-		testId,
-		undefined,
-		untilLoaded,
-	);
-
-	await userEvent.click(action);
-};
-
-/**
- * Editing is a mode the whole table is in: the row actions, the drag handles and
- * the save bar only exist inside it.
- */
-const enterEditMode = async (canvasElement: HTMLElement): Promise<void> => {
-	await userEvent.click(
-		await within(canvasElement).findByText(
-			/enter edit mode/i,
-			undefined,
-			untilLoaded,
-		),
-	);
-};
-
 /**
  * The pipelines tab: the processors the org runs over logs before storing them,
  * in the order they run, with the version that is deployed on the collector.
@@ -74,46 +53,47 @@ export const NoPipelines: Story = {
 
 /** A pipeline opened up: the operators it runs, in order. */
 export const ExpandedProcessors: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickFirst(canvasElement, 'pipeline-row-expand');
-	},
+	play: expandProcessors,
 };
 
 /** Edit mode: rows can be reordered, switched off, edited and deleted. */
 export const EditMode: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await enterEditMode(canvasElement);
-	},
+	play: openEditMode,
 };
 
 /** The form a new pipeline is written in: what it matches and what to call it. */
 export const AddPipeline: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await enterEditMode(canvasElement);
-		await userEvent.click(
-			await within(canvasElement).findByText(/add a new pipeline/i),
-		);
-		await screen.findByText(/create new pipeline/i);
-	},
+	play: openAddPipeline,
+};
+
+/** The new pipeline's filter focused: the keys it can match on. */
+export const AddPipelineFilterKeys: Story = {
+	play: suggestPipelineFilterKeys,
+};
+
+/** A key and an operator typed into the filter: the values that key holds. */
+export const AddPipelineFilterValues: Story = {
+	play: suggestPipelineFilterValues,
+};
+
+/** The filter's suggestions hovered: a key that fits has no tooltip, a route cut short shows in full once. */
+export const AddPipelineFilterHover: Story = {
+	play: hoverPipelineFilterSuggestions,
 };
 
 /** The same form over an existing pipeline, filter included. */
 export const EditPipeline: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await enterEditMode(canvasElement);
-		await clickFirst(canvasElement, 'pipeline-edit-action');
-		await screen.findByText(/edit pipeline/i);
-	},
+	play: openEditPipeline,
 };
 
 /** Adding an operator to a pipeline: the type decides the rest of the form. */
 export const AddProcessor: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await enterEditMode(canvasElement);
-		await clickFirst(canvasElement, 'pipeline-row-expand');
-		await userEvent.click(await screen.findByText(/add processor/i));
-		await screen.findByText(/create new processor/i);
-	},
+	play: openAddProcessor,
+};
+
+/** Severity Parser is the type whose mapping fields are CSV inputs. */
+export const AddSeverityParserProcessor: Story = {
+	play: openSeverityParserProcessor,
 };
 
 /**
@@ -121,22 +101,17 @@ export const AddProcessor: Story = {
  * simulation of its processors one click away.
  */
 export const ProcessingPreview: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickFirst(canvasElement, 'pipeline-preview-action');
-		await screen.findByText(/processed output/i, undefined, untilLoaded);
-	},
+	play: openProcessingPreview,
+};
+
+/** A sample log from the preview opened in the log detail drawer. */
+export const PreviewLogDetails: Story = {
+	play: openPreviewLogDetails,
 };
 
 /** Every config version the org deployed, and how each deployment went. */
 export const ChangeHistory: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		const canvas = within(canvasElement);
-
-		await userEvent.click(
-			await canvas.findByText(/change history/i, undefined, untilLoaded),
-		);
-		await canvas.findByText('Deployment Stage', undefined, untilLoaded);
-	},
+	play: openChangeHistory,
 };
 
 /** A deployment the collector has not finished, which the page polls for. */

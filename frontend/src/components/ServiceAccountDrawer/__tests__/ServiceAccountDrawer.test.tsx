@@ -4,10 +4,12 @@ import {
 } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
-import ServiceAccountDrawer from '../ServiceAccountDrawer';
+import ServiceAccountDrawer, {
+	ServiceAccountDrawerProps,
+} from '../ServiceAccountDrawer';
 
 const ROLES_ENDPOINT = '*/api/v1/roles';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
@@ -93,16 +95,18 @@ describe('ServiceAccountDrawer', () => {
 			screen.findByDisplayValue('CI Bot'),
 		).resolves.toBeInTheDocument();
 		expect(screen.getByText('ci-bot@signoz.io')).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /Save Changes/i })).toHaveAttribute(
+		expect(screen.getByTestId('sa-save-btn')).toHaveAttribute(
 			'aria-disabled',
 			'true',
 		);
 	});
 
 	it('editing name enables Save; clicking Save sends correct payload and calls onSuccess', async () => {
-		const onSuccess = jest.fn();
+		const onSuccess = jest.fn() as jest.MockedFunction<
+			ServiceAccountDrawerProps['onSuccess']
+		>;
 		const updateSpy = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		server.use(
 			rest.put(SA_ENDPOINT, async (req, res, ctx) => {
@@ -121,7 +125,7 @@ describe('ServiceAccountDrawer', () => {
 		await user.clear(nameInput);
 		await user.type(nameInput, 'CI Bot Updated');
 
-		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		const saveBtn = screen.getByTestId('sa-save-btn');
 		await waitFor(() =>
 			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
 		);
@@ -140,7 +144,7 @@ describe('ServiceAccountDrawer', () => {
 	it('adding a role fires POST for the new role and no DELETE for existing roles', async () => {
 		const roleSpy = jest.fn();
 		const deleteSpy = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		server.use(
 			rest.post(SA_ROLES_ENDPOINT, async (req, res, ctx) => {
@@ -161,10 +165,13 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByDisplayValue('CI Bot');
 
 		// Add signoz-viewer while keeping signoz-admin selected
-		await user.click(screen.getByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-viewer'));
+		await user.click(screen.getByTestId('sa-roles-select'));
+		await user.type(
+			await screen.findByTestId('sa-roles-select-search'),
+			`${managedRoles[2].name}{Enter}`,
+		);
 
-		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		const saveBtn = screen.getByTestId('sa-save-btn');
 		await waitFor(() =>
 			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
 		);
@@ -184,7 +191,7 @@ describe('ServiceAccountDrawer', () => {
 	it('removing a role fires DELETE for the removed role and no POST', async () => {
 		const roleSpy = jest.fn();
 		const deleteSpy = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		server.use(
 			rest.post(SA_ROLES_ENDPOINT, async (req, res, ctx) => {
@@ -205,13 +212,13 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByDisplayValue('CI Bot');
 
 		// Remove the signoz-admin tag from the multi-select
-		const adminTag = await screen.findByTitle('signoz-admin');
-		const removeBtn = adminTag.querySelector(
-			'.ant-select-selection-item-remove',
-		) as Element;
-		await user.click(removeBtn);
+		await user.click(
+			await screen.findByTestId(
+				`sa-roles-select-chip-${managedRoles[0].id}-remove`,
+			),
+		);
 
-		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		const saveBtn = screen.getByTestId('sa-save-btn');
 		await waitFor(() =>
 			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
 		);
@@ -225,7 +232,7 @@ describe('ServiceAccountDrawer', () => {
 
 	it('"Delete Service Account" opens confirm dialog; confirming sends delete request', async () => {
 		const deleteSpy = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		server.use(
 			rest.delete(SA_DELETE_ENDPOINT, (_, res, ctx) => {
@@ -238,9 +245,7 @@ describe('ServiceAccountDrawer', () => {
 
 		await screen.findByDisplayValue('CI Bot');
 
-		await user.click(
-			screen.getByRole('button', { name: /Delete Service Account/i }),
-		);
+		await user.click(screen.getByTestId('sa-delete-btn'));
 
 		await screen.findByTestId('delete-service-account-modal');
 		expect(
@@ -272,23 +277,19 @@ describe('ServiceAccountDrawer', () => {
 
 		await screen.findByText('CI Bot');
 
-		expect(
-			screen.queryByRole('button', { name: /Save Changes/i }),
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByRole('button', { name: /Delete Service Account/i }),
-		).not.toBeInTheDocument();
+		expect(screen.queryByTestId('sa-save-btn')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('sa-delete-btn')).not.toBeInTheDocument();
 		expect(screen.queryByDisplayValue('CI Bot')).not.toBeInTheDocument();
 	});
 
 	it('switching to Keys tab shows "No keys" empty state', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderDrawer();
 
 		await screen.findByDisplayValue('CI Bot');
 
-		await user.click(screen.getByRole('button', { name: /Keys/i }));
+		await user.click(screen.getByTestId('sa-tab-button-keys'));
 
 		await expect(screen.findByText(/No keys/i)).resolves.toBeInTheDocument();
 	});
@@ -341,11 +342,12 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 	});
 
 	afterEach(() => {
+		jest.useRealTimers();
 		server.resetHandlers();
 	});
 
 	it('name update failure shows SaveErrorItem with "Name update" context', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		server.use(
 			rest.put(SA_ENDPOINT, (_, res, ctx) =>
@@ -367,7 +369,7 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await user.clear(nameInput);
 		await user.type(nameInput, 'New Name');
 
-		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		const saveBtn = screen.getByTestId('sa-save-btn');
 		await waitFor(() =>
 			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
 		);
@@ -381,7 +383,7 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 	});
 
 	it('role add failure shows SaveErrorItem with the role name context', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		server.use(
 			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
@@ -402,10 +404,13 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await screen.findByDisplayValue('CI Bot');
 
 		// Add the signoz-viewer role (which is not currently assigned)
-		await user.click(screen.getByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-viewer'));
+		await user.click(screen.getByTestId('sa-roles-select'));
+		await user.type(
+			await screen.findByTestId('sa-roles-select-search'),
+			`${managedRoles[2].name}{Enter}`,
+		);
 
-		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		const saveBtn = screen.getByTestId('sa-save-btn');
 		await waitFor(() =>
 			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
 		);
@@ -419,7 +424,13 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 	});
 
 	it('role add retries on 429 then succeeds without showing an error', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		jest.useFakeTimers();
+		const user = userEvent.setup({
+			advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+		});
+		const onSuccess = jest.fn() as jest.MockedFunction<
+			ServiceAccountDrawerProps['onSuccess']
+		>;
 		let roleAddCallCount = 0;
 
 		// First call → 429, second call → 201
@@ -436,31 +447,38 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 			}),
 		);
 
-		renderDrawer();
+		render(
+			<NuqsTestingAdapter searchParams={{ account: 'sa-1' }} hasMemory>
+				<ServiceAccountDrawer onSuccess={onSuccess} />
+			</NuqsTestingAdapter>,
+		);
 
 		await screen.findByDisplayValue('CI Bot');
 
-		await user.click(screen.getByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-viewer'));
+		await user.click(screen.getByTestId('sa-roles-select'));
+		await user.type(
+			await screen.findByTestId('sa-roles-select-search'),
+			`${managedRoles[2].name}{Enter}`,
+		);
 
-		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		const saveBtn = screen.getByTestId('sa-save-btn');
 		await waitFor(() =>
 			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
 		);
 		await user.click(saveBtn);
 
-		// Retried after 429 — at least 2 calls, no error shown
-		await waitFor(
-			() => {
-				expect(roleAddCallCount).toBeGreaterThanOrEqual(2);
-			},
-			{ timeout: 5000 },
+		await waitFor(() => expect(roleAddCallCount).toBe(1));
+		await act(() => jest.advanceTimersByTimeAsync(1000));
+		await waitFor(() =>
+			expect(onSuccess).toHaveBeenCalledWith({ closeDrawer: false }),
 		);
+		expect(roleAddCallCount).toBe(2);
 		expect(screen.queryByText(/role assign failed/i)).not.toBeInTheDocument();
+		expect(screen.queryByTestId('sa-error-retry-btn')).not.toBeInTheDocument();
 	});
 
 	it('clicking Retry on a name-update error re-triggers the request; on success the error item is removed', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		// First: PUT always fails so the error appears
 		server.use(
@@ -483,7 +501,7 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await user.clear(nameInput);
 		await user.type(nameInput, 'Retry Test');
 
-		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		const saveBtn = screen.getByTestId('sa-save-btn');
 		await waitFor(() =>
 			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
 		);
@@ -499,7 +517,7 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 			),
 		);
 
-		const retryBtn = screen.getByRole('button', { name: /Retry/i });
+		const retryBtn = screen.getByTestId('sa-error-retry-btn');
 		await user.click(retryBtn);
 
 		// Error item should be removed after successful retry

@@ -14,7 +14,6 @@ import {
 	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 } from '../MessagingQueuesUtils';
-import DropRateView from '../MQDetails/DropRateView/DropRateView';
 import MessagingQueueOverview from '../MQDetails/MessagingQueueOverview';
 import MetricPage from '../MQDetails/MetricPage/MetricPage';
 import MessagingQueuesDetails from '../MQDetails/MQDetails';
@@ -24,27 +23,21 @@ import MessagingQueuesGraph from '../MQGraph/MQGraph';
 import '../MessagingQueues.styles.scss';
 
 function MQDetailPage(): JSX.Element {
-	const [selectedView, setSelectedView] =
-		useState<MessagingQueuesViewTypeOptions>(
-			MessagingQueuesViewType.consumerLag.value,
-		);
-
 	const [producerLatencyOption, setproducerLatencyOption] =
 		useState<ProducerLatencyOptions>(ProducerLatencyOptions.Producers);
 
 	const mqServiceView = useUrlQuery().get(
 		QueryParams.mqServiceView,
 	) as MessagingQueuesViewTypeOptions;
+	const selectedView = Object.values(MessagingQueuesViewTypeOptions).includes(
+		mqServiceView,
+	)
+		? mqServiceView
+		: MessagingQueuesViewType.consumerLag.value;
 
 	useEffect(() => {
 		logEvent('Messaging Queues: Detail page visited', {});
 	}, []);
-
-	useEffect(() => {
-		if (mqServiceView) {
-			setSelectedView(mqServiceView);
-		}
-	}, [mqServiceView]);
 
 	const updateUrlQuery = (query: Record<string, string | number>): void => {
 		const searchParams = new URLSearchParams(getCurrentLocation().search);
@@ -57,7 +50,6 @@ function MQDetailPage(): JSX.Element {
 	};
 
 	const showMessagingQueueDetails =
-		selectedView !== MessagingQueuesViewType.dropRate.value &&
 		selectedView !== MessagingQueuesViewType.metricPage.value;
 
 	const handleBackClick = (
@@ -93,7 +85,6 @@ function MQDetailPage(): JSX.Element {
 						defaultValue={MessagingQueuesViewType.consumerLag.value}
 						popupClassName="messaging-queue-options-popup"
 						onChange={(value): void => {
-							setSelectedView(value);
 							updateUrlQuery({ [QueryParams.mqServiceView]: value });
 						}}
 						value={selectedView}
@@ -111,10 +102,6 @@ function MQDetailPage(): JSX.Element {
 								value: MessagingQueuesViewType.producerLatency.value,
 							},
 							{
-								label: MessagingQueuesViewType.dropRate.label,
-								value: MessagingQueuesViewType.dropRate.value,
-							},
-							{
 								label: MessagingQueuesViewType.metricPage.label,
 								value: MessagingQueuesViewType.metricPage.value,
 							},
@@ -128,8 +115,6 @@ function MQDetailPage(): JSX.Element {
 					<MessagingQueuesConfigOptions />
 					<MessagingQueuesGraph />
 				</div>
-			) : selectedView === MessagingQueuesViewType.dropRate.value ? (
-				<DropRateView />
 			) : selectedView === MessagingQueuesViewType.metricPage.value ? (
 				<MetricPage />
 			) : (

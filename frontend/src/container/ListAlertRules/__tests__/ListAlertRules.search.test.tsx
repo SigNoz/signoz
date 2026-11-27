@@ -19,12 +19,22 @@ import {
 
 const QUERY = "name CONTAINS 'CPU'";
 
+function getSearchContent(): HTMLElement {
+	return within(screen.getByTestId('alert-rules-list-search')).getByRole(
+		'textbox',
+	);
+}
+
 function lastRequest(requests: URLSearchParams[]): URLSearchParams {
 	return requests[requests.length - 1];
 }
 
 describe('ListAlertRules — search', () => {
 	let requests: URLSearchParams[];
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
 
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
@@ -41,10 +51,10 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it('sends the draft query only when Run is clicked', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup();
 		renderListAlertRules();
 
-		await screen.findByText('High CPU Alert');
+		await screen.findByTestId('alert-row-rule-1-name');
 
 		setSearchDraft(QUERY);
 
@@ -68,19 +78,13 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it('runs the draft on Mod-Enter', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup();
 		renderListAlertRules();
 
-		await screen.findByText('High CPU Alert');
+		await screen.findByTestId('alert-row-rule-1-name');
 
 		setSearchDraft(QUERY);
-		const content = screen
-			.getByTestId('alert-rules-list-search')
-			.querySelector<HTMLElement>('.cm-content');
-		if (!content) {
-			throw new Error('Editor content not found');
-		}
-		content.focus();
+		screen.getByTestId('alert-rules-list-search-field').focus();
 		await user.keyboard('{Control>}{Enter}{/Control}');
 
 		await waitFor(() => {
@@ -89,10 +93,10 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it('trims the submitted query', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup();
 		renderListAlertRules();
 
-		await screen.findByText('High CPU Alert');
+		await screen.findByTestId('alert-row-rule-1-name');
 
 		await runSearchQuery(user, `  ${QUERY}  `);
 
@@ -107,14 +111,14 @@ describe('ListAlertRules — search', () => {
 			initialRoute: `/?query=${encodeURIComponent(QUERY)}`,
 		});
 
-		await screen.findByText('High CPU Alert');
+		await screen.findByTestId('alert-row-rule-1-name');
 
 		expect(getSearchDraft()).toBe(QUERY);
 		expect(requests[0].get('query')).toBe(QUERY);
 	});
 
 	it('resets page to 1 when a query is run', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup();
 		renderListAlertRules({ initialRoute: '/?page=2' });
 
 		await screen.findByTestId('alert-rules-list-search');
@@ -129,15 +133,65 @@ describe('ListAlertRules — search', () => {
 		});
 	});
 
-	it('sends each selected state as a repeated states= param', async () => {
-		const user = userEvent.setup({ delay: null });
+	it('runs the draft when the search box loses focus', async () => {
+		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		// jsdom reports no focus once it lands on <body>; a focused browser window does.
+		jest.spyOn(document, 'hasFocus').mockReturnValue(true);
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
 
-		await user.click(screen.getByTestId('alert-rules-filter-states'));
-		await user.click(await screen.findByRole('option', { name: 'Firing' }));
-		await user.click(await screen.findByRole('option', { name: 'Disabled' }));
+		await user.click(getSearchContent());
+		setSearchDraft(QUERY);
+		await user.click(document.body);
+
+		await waitFor(() => {
+			expect(lastRequest(requests).get('query')).toBe(QUERY);
+		});
+		await waitFor(() => {
+			expect(getCurrentNuqsSearchParams().get('query')).toBe(QUERY);
+		});
+	});
+
+	it('keeps the draft unrun when focus leaves the window', async () => {
+		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		renderListAlertRules();
+
+		await screen.findByText('High CPU Alert');
+
+		await user.click(getSearchContent());
+		setSearchDraft(QUERY);
+		jest.spyOn(document, 'hasFocus').mockReturnValue(false);
+		await user.click(document.body);
+
+		expect(requests.some((r) => r.has('query'))).toBe(false);
+		expect(
+			screen.getByTestId('alert-rules-list-search-dirty'),
+		).toBeInTheDocument();
+	});
+
+	it('sends the selected states once, as repeated states= params, when the dropdown closes', async () => {
+		const user = userEvent.setup();
+		renderListAlertRules();
+
+		await screen.findByTestId('alert-row-rule-1-name');
+
+		await user.click(
+			within(screen.getByTestId('alert-rules-filter-states')).getByLabelText(
+				'Status',
+			),
+		);
+		await user.click(
+			await screen.findByTestId('alert-rules-filter-states-option-firing'),
+		);
+		await user.click(
+			screen.getByTestId('alert-rules-filter-states-option-disabled'),
+		);
+
+		expect(requests.some((r) => r.has('states'))).toBe(false);
+		expect(getCurrentNuqsSearchParams().has('states')).toBe(false);
+
+		await user.click(screen.getByTestId('alert-rules-search-zone'));
 
 		await waitFor(() => {
 			expect(lastRequest(requests).getAll('states')).toStrictEqual([
@@ -145,6 +199,7 @@ describe('ListAlertRules — search', () => {
 				'disabled',
 			]);
 		});
+		expect(requests.filter((r) => r.has('states'))).toHaveLength(1);
 		expect(lastRequest(requests).has('states[]')).toBe(false);
 		await waitFor(() => {
 			expect(getCurrentNuqsSearchParams().get('states')).toBe('firing,disabled');
@@ -152,12 +207,12 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it('Clear empties the query and the states', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup();
 		renderListAlertRules({
 			initialRoute: `/?query=${encodeURIComponent(QUERY)}&states=firing`,
 		});
 
-		await screen.findByText('High CPU Alert');
+		await screen.findByTestId('alert-row-rule-1-name');
 		expect(lastRequest(requests).get('query')).toBe(QUERY);
 
 		await user.click(screen.getByTestId('alert-rules-filter-clear'));
@@ -179,9 +234,9 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it.each(['rule_list_filter_invalid', 'rule_list_invalid'])(
-		'shows the backend message and no-results state for %s',
+		'shows the invalid query state with the backend message for %s',
 		async (code) => {
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup();
 			server.use(
 				rest.get('http://localhost/api/v3/rules', (req, res, ctx) => {
 					if (req.url.searchParams.has('query')) {
@@ -199,17 +254,16 @@ describe('ListAlertRules — search', () => {
 
 			renderListAlertRules();
 
-			await screen.findByText('High CPU Alert');
+			await screen.findByTestId('alert-row-rule-1-name');
 
 			await runSearchQuery(user, "nme = 'x'");
 
 			await expect(
-				screen.findByTestId('alert-rules-query-error'),
+				screen.findByTestId('alert-rules-invalid-query-detail'),
 			).resolves.toHaveTextContent('unknown field "nme"');
-			const empty = screen.getByTestId('no-results-empty-state');
-			expect(within(empty).getByTestId('no-results-subtitle')).toHaveTextContent(
-				'The filter query is invalid. Fix it or clear the search.',
-			);
+			expect(
+				screen.queryByTestId('no-results-empty-state'),
+			).not.toBeInTheDocument();
 			expect(screen.queryByTestId('error-empty-state')).not.toBeInTheDocument();
 			expect(screen.queryByText('High CPU Alert')).not.toBeInTheDocument();
 		},

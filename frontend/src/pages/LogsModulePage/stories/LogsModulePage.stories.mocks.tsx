@@ -14,7 +14,7 @@ import { rest } from 'msw';
 import { defaultFeatureFlags } from 'tests/fixtures/appContextMock';
 import type { Warning } from 'types/api';
 import type {
-	BaseBuilderQuery,
+	BuilderQuery,
 	QueryRangeRequestV5,
 } from 'types/api/v5/queryRange';
 
@@ -25,6 +25,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import {
 	RESPONSE_STATES,
 	type ResponseState,
@@ -38,6 +39,9 @@ import {
 import {
 	attributeValuesResponse,
 	dashboardsResponse,
+	INFRA_RESOURCES,
+	type InfraResource,
+	infraMetricsResponse,
 	logCountResponse,
 	logFieldKeysResponse,
 	logFieldValuesResponse,
@@ -53,6 +57,9 @@ import {
 	recentFiltersStorage,
 	RELATIVE_TIME,
 	timeRangeState,
+	URL_FILTERS,
+	type UrlFilter,
+	urlFilterQuery,
 } from './__story_mockdata__/logs';
 
 const EXPLORER = 'Logs · explorer';
@@ -92,10 +99,14 @@ const QUERY_WARNING: Warning = {
 	],
 };
 
-const explorerRoute = (view: ExplorerView): string => {
+const explorerRoute = (view: ExplorerView, urlFilter: UrlFilter): string => {
 	const panelType = encodeURIComponent(JSON.stringify(VIEW_PANEL_TYPES[view]));
+	const query = urlFilterQuery(urlFilter);
+	const compositeQuery = query
+		? `&${QueryParams.compositeQuery}=${encodeURIComponent(JSON.stringify(query))}`
+		: '';
 
-	return `${ROUTES.LOGS_EXPLORER}?${QueryParams.panelTypes}=${panelType}&${QueryParams.relativeTime}=${RELATIVE_TIME}`;
+	return `${ROUTES.LOGS_EXPLORER}?${QueryParams.panelTypes}=${panelType}&${QueryParams.relativeTime}=${RELATIVE_TIME}${compositeQuery}`;
 };
 
 export const logsMocks = defineStoryMocks({
@@ -153,6 +164,13 @@ export const logsMocks = defineStoryMocks({
 				'`use_json_body`: the service logs JSON and the backend hands the body over parsed, so the body is a tree and its keys are queryable as `body.x`.',
 			value: false,
 		}),
+		infraResource: choiceControl<InfraResource>('Infra resource', {
+			group: LIST,
+			description:
+				"The k8s resource each log carries, which picks the charts on the log detail's Metrics tab.",
+			options: INFRA_RESOURCES,
+			value: 'pod',
+		}),
 		bodyColumns: toggleControl('Body field columns', {
 			group: LIST,
 			description:
@@ -170,6 +188,13 @@ export const logsMocks = defineStoryMocks({
 				'Filters the org configured for logs. Without any, the left panel offers to add some.',
 			value: QUICK_FILTER_MAX,
 			max: QUICK_FILTER_MAX,
+		}),
+		urlFilter: choiceControl<UrlFilter>('Linked filter', {
+			group: FILTERS,
+			description:
+				"A filter the explorer opened on from a link: a saved view's `service.name`, or a span's `trace_id`. With no log matching, the list says the search found nothing instead of offering to send logs.",
+			options: URL_FILTERS,
+			value: 'none',
 		}),
 		filterValues: choiceControl<ResponseState>('Filter values', {
 			group: FILTERS,
@@ -201,28 +226,38 @@ export const logsMocks = defineStoryMocks({
 				response.json(async (req) => {
 					const body = (await req.json()) as QueryRangeRequestV5;
 					const timeWindow = { start: body.start, end: body.end };
+					// Each log takes a severity: no log or no severity means nothing matches.
+					const matching = values.logs === 0 ? [] : values.severities;
+					const spec = body.compositeQuery?.queries?.[0]?.spec as
+						| BuilderQuery
+						| undefined;
+
+					if (spec?.signal === 'metrics') {
+						return infraMetricsResponse(body);
+					}
 
 					if (body.requestType === 'time_series') {
 						// The frequency chart asks for counts grouped by severity; the
 						// timeseries view asks the same aggregation without a group by.
-						const spec = body.compositeQuery?.queries?.[0]?.spec as
-							| BaseBuilderQuery
-							| undefined;
 						const bySeverity = (spec?.groupBy ?? []).some(
 							(key) => key.name === 'severity_text',
 						);
 
 						return bySeverity
-							? logHistogramResponse(values.severities, timeWindow, { warning })
-							: logTimeseriesResponse(timeWindow, { warning });
+							? logHistogramResponse(matching, timeWindow, { warning })
+							: logTimeseriesResponse(timeWindow, {
+									warning,
+									empty: matching.length === 0,
+								});
 					}
 
 					if (body.requestType === 'scalar') {
-						return logCountResponse(values.severities);
+						return logCountResponse(matching);
 					}
 
 					return logRowsResponse(values.logs, values.severities, body.end, {
 						jsonBody: values.jsonBody,
+						infraResource: values.infraResource,
 						warning,
 					});
 				}),
@@ -273,8 +308,8 @@ export const logsMocks = defineStoryMocks({
 			),
 		];
 	},
-	config: ({ view, jsonBody }) => ({
-		route: explorerRoute(view),
+	config: ({ view, urlFilter, jsonBody }) => ({
+		route: explorerRoute(view, urlFilter),
 		reduxState: timeRangeState(),
 		appContext: jsonBody
 			? {
@@ -312,3 +347,5 @@ export const logsMocks = defineStoryMocks({
 		);
 	},
 });
+
+export type LogsArgs = PageStoryArgs<typeof logsMocks>;

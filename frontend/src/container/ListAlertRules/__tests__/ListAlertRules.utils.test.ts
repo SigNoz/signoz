@@ -33,16 +33,16 @@ const makeRule = (overrides: Partial<AlertRule>): AlertRule => ({
 });
 
 describe('toListSort', () => {
-	it('returns the default sort when orderBy is null', () => {
+	it('returns the default sort, status first, when orderBy is null', () => {
 		expect(toListSort(null)).toStrictEqual({
-			sort: RuletypesListSortDTO.updated_at,
+			sort: RuletypesListSortDTO.state,
 			order: RuletypesListOrderDTO.desc,
 		});
 	});
 
 	it('returns the default sort for an unknown column', () => {
 		expect(toListSort({ columnName: 'labels', order: 'asc' })).toStrictEqual({
-			sort: RuletypesListSortDTO.updated_at,
+			sort: RuletypesListSortDTO.state,
 			order: RuletypesListOrderDTO.desc,
 		});
 	});
@@ -50,7 +50,7 @@ describe('toListSort', () => {
 	it.each([
 		['state', RuletypesListSortDTO.state],
 		['name', RuletypesListSortDTO.name],
-		['severity', RuletypesListSortDTO.severity],
+		['thresholds', RuletypesListSortDTO.thresholds],
 		['createdAt', RuletypesListSortDTO.created_at],
 		['updatedAt', RuletypesListSortDTO.updated_at],
 	])('maps column "%s" to sort "%s"', (columnName, sort) => {
@@ -71,8 +71,14 @@ describe('toListSort', () => {
 describe('toOrderBy', () => {
 	it('returns null for the default sort', () => {
 		expect(
-			toOrderBy(RuletypesListSortDTO.updated_at, RuletypesListOrderDTO.desc),
+			toOrderBy(RuletypesListSortDTO.state, RuletypesListOrderDTO.desc),
 		).toBeNull();
+	});
+
+	it('keeps the previous default, updated_at desc, as an explicit sort', () => {
+		expect(
+			toOrderBy(RuletypesListSortDTO.updated_at, RuletypesListOrderDTO.desc),
+		).toStrictEqual<SortState>({ columnName: 'updatedAt', order: 'desc' });
 	});
 
 	it('returns the column for a non-default sort', () => {
@@ -85,7 +91,7 @@ describe('toOrderBy', () => {
 	});
 
 	it('round-trips with toListSort', () => {
-		const orderBy: SortState = { columnName: 'severity', order: 'desc' };
+		const orderBy: SortState = { columnName: 'thresholds', order: 'desc' };
 		const { sort, order } = toListSort(orderBy);
 		expect(toOrderBy(sort, order)).toStrictEqual(orderBy);
 	});
@@ -93,7 +99,7 @@ describe('toOrderBy', () => {
 
 describe('isSameRuleListFilter', () => {
 	const filter: RuleListFilter = {
-		query: "severity = 'critical'",
+		query: "thresholds = 'critical'",
 		states: ['firing', 'pending'],
 		sort: RuletypesListSortDTO.name,
 		order: RuletypesListOrderDTO.asc,
@@ -112,7 +118,7 @@ describe('isSameRuleListFilter', () => {
 	});
 
 	it.each<[string, Partial<RuleListFilter>]>([
-		['query', { query: "severity = 'warning'" }],
+		['query', { query: "thresholds = 'warning'" }],
 		['states', { states: ['firing'] }],
 		['sort', { sort: RuletypesListSortDTO.state }],
 		['order', { order: RuletypesListOrderDTO.desc }],

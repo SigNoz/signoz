@@ -38,3 +38,17 @@
 		opacity: 0.5;
 	}
 }
+
+.pointerKey {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: var(--spacing-10);
+	height: var(--spacing-10);
+	border: 1px solid var(--secondary-border);
+	border-block-end-width: 2px;
+	border-radius: var(--radius-1-5);
+	background: var(--secondary-background);
+	color: var(--secondary-foreground);
+}

@@ -24,6 +24,8 @@ export interface LogDetail {
 	fieldActions(fieldKey: string): Locator;
 	fieldAction(fieldKey: string, action: FieldAction): Promise<void>;
 	contextItems(): Locator;
+	/** Step to the next (`ArrowDown`) or previous (`ArrowUp`) log. */
+	step(key: 'ArrowDown' | 'ArrowUp'): Promise<void>;
 	close(): Promise<void>;
 }
 
@@ -71,6 +73,10 @@ export function logDetailDriver(page: Page): LogDetail {
 		},
 
 		contextItems: () => page.locator('[data-testid^="context-log-item-"]'),
+
+		step: async (key) => {
+			await page.keyboard.press(key);
+		},
 
 		close: async () => {
 			await page.keyboard.press('Escape');

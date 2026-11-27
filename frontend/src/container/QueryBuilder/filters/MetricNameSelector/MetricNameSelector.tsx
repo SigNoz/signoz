@@ -281,11 +281,18 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 			onChange={handleChange}
 			notFoundContent={
 				isFetching ? (
-					<Spin size="small" />
+					<Spin size="small" data-testid="metric-name-selector-loading" />
 				) : isError ? (
-					<Typography.Text color="danger" style={{ fontSize: 12 }}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="danger"
+						as="span"
+						textOverflow="wrap"
+					>
 						Failed to load metrics
-					</Typography.Text>
+					</Typography>
 				) : null
 			}
 			data-testid={dataTestId}

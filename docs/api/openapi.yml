@@ -553,23 +553,23 @@ components:
       - apiKey
       type: object
     AlertmanagertypesChannelJiraAuth:
-      oneOf:
-      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraCloudAuth'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraSelfHostedAuth'
-      type: object
-    AlertmanagertypesChannelJiraCloudAuth:
       properties:
         apiToken:
-          description: The Atlassian API token paired with email. A secret; returned
-            by create, update and fetch by ID, never by list.
+          description: The Atlassian API token paired with email. Required when deployment
+            is cloud. A secret; returned by create, update and fetch by ID, never
+            by list.
           format: password
           type: string
         email:
-          description: The Atlassian account email used for basic auth.
+          description: The Atlassian account email used for basic auth. Required when
+            deployment is cloud.
           type: string
-      required:
-      - email
-      - apiToken
+        pat:
+          description: The Jira personal access token, sent as a Bearer header. Required
+            when deployment is selfhosted. A secret; returned by create, update and
+            fetch by ID, never by list.
+          format: password
+          type: string
       type: object
     AlertmanagertypesChannelJiraConfig:
       properties:
@@ -641,16 +641,6 @@ components:
       - project
       - issueType
       - auth
-      type: object
-    AlertmanagertypesChannelJiraSelfHostedAuth:
-      properties:
-        pat:
-          description: The Jira personal access token, sent as a Bearer header. A
-            secret; returned by create, update and fetch by ID, never by list.
-          format: password
-          type: string
-      required:
-      - pat
       type: object
     AlertmanagertypesChannelKind:
       enum:
@@ -3970,6 +3960,7 @@ components:
       - logs-field
       - traces-field
       - metrics-field
+      - llm-pricing-rule
       type: string
     CoretypesObject:
       properties:
@@ -4327,6 +4318,11 @@ components:
             last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a
             fixed window.'
       type: object
+    DashboardtypesBubbleRadius:
+      maximum: 64
+      minimum: 1
+      nullable: true
+      type: integer
     DashboardtypesBuilderQuerySpec:
       discriminator:
         mapping:
@@ -4424,7 +4420,8 @@ components:
           description: The dashboard title and description.
         duration:
           description: The default time range, as a Prometheus duration such as 1h
-            or 7d. Stored, but not applied by the UI.
+            or 7d. The UI opens the dashboard on it, rounded up to whole minutes,
+            when neither the URL nor the viewer's last pick sets a time range.
           type: string
         layouts:
           description: The Grid layouts that place panels, at most 500. Each panel
@@ -4559,6 +4556,231 @@ components:
       minimum: 0
       nullable: true
       type: number
+    DashboardtypesGeoMapBubbles:
+      properties:
+        maxRadius:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBubbleRadius'
+          description: Radius of the largest circle, in CSS pixels from 1 to 64. Null
+            means 8 on the points layer, 28 otherwise.
+        minRadius:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBubbleRadius'
+          description: Radius of the smallest circle, in CSS pixels from 1 to 64.
+            Null means 2 on the points layer, 3 otherwise.
+      type: object
+    DashboardtypesGeoMapChartAppearance:
+      properties:
+        bubbles:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapBubbles'
+          description: The circle radius range of the bubbles and points layers.
+        colors:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapColors'
+          description: The color scale applied to the colorBy values.
+        labels:
+          description: Shows country and state names once each fits inside its shape.
+            Null shows them.
+          nullable: true
+          type: boolean
+      type: object
+    DashboardtypesGeoMapColors:
+      properties:
+        fill:
+          description: The hex color varied in opacity mode. Empty uses the default
+            fill.
+          type: string
+        max:
+          description: The value mapped to the highest color. Null uses the highest
+            value in the data.
+          nullable: true
+          type: number
+        min:
+          description: The value mapped to the lowest color. Null uses the lowest
+            value in the data. Must not exceed max.
+          nullable: true
+          type: number
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapColorMode'
+          description: 'How values are colored: palette (default) picks a hue from
+            palette, opacity varies the opacity of fill.'
+        palette:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapPalette'
+          description: The named color ramp used in palette mode, such as lava (default),
+            ice or ember.
+        scale:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapColorScale'
+          description: 'How values map onto the color range: log (default), sqrt or
+            linear.'
+        steps:
+          description: The number of distinct color steps, 2 to 128. 0 uses the chart
+            default.
+          type: integer
+      type: object
+    DashboardtypesGeoMapCountryFormat:
+      enum:
+      - auto
+      - alpha2
+      - alpha3
+      - name
+      type: string
+    DashboardtypesGeoMapLayer:
+      enum:
+      - regions
+      - bubbles
+      - points
+      type: string
+    DashboardtypesGeoMapLocation:
+      properties:
+        country:
+          description: Group-by key holding the country, for the country and subdivision
+            modes. Empty detects it by name, such as geo.country.iso_code.
+          type: string
+        countryFormat:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapCountryFormat'
+          description: 'How country values are written: auto (default) detects it,
+            alpha2, alpha3 or name.'
+        lat:
+          description: Group-by key holding the latitude, for the coordinates mode.
+            Empty detects it by name.
+          type: string
+        lon:
+          description: Group-by key holding the longitude, for the coordinates mode.
+            Empty detects it by name.
+          type: string
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapLocationMode'
+          description: 'How rows are placed: auto (default) detects it from the group-by
+            keys, country, subdivision or coordinates.'
+        region:
+          description: Group-by key holding the ISO 3166-2 region code (e.g. geo.region.iso_code),
+            for the subdivision mode. Empty detects it by name.
+          type: string
+      required:
+      - mode
+      - countryFormat
+      type: object
+    DashboardtypesGeoMapLocationMode:
+      enum:
+      - auto
+      - country
+      - subdivision
+      - coordinates
+      type: string
+    DashboardtypesGeoMapPanelSpec:
+      properties:
+        chartAppearance:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapChartAppearance'
+          description: Color scale, bubble size and labels.
+        formatting:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTableFormatting'
+          description: Per-column units and decimal precision.
+        legend:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegend'
+          description: Legend placement.
+        location:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapLocation'
+          description: The group-by columns that place each row on the map.
+        map:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapSettings'
+          description: Layer, view, projection and the value columns drawn.
+        thresholds:
+          description: Rules that recolor a shape, bubble or point when its value
+            compares to a threshold as specified.
+          items:
+            $ref: '#/components/schemas/DashboardtypesGeoMapThreshold'
+          nullable: true
+          type: array
+        visualization:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          description: The time range the values are computed over.
+      type: object
+    DashboardtypesGeoMapProjection:
+      enum:
+      - mercator
+      - equal_earth
+      - natural_earth
+      type: string
+    DashboardtypesGeoMapSettings:
+      properties:
+        colorBy:
+          description: Value column key, as in a Table panel, that sets the color.
+            Empty uses the first value column.
+          type: string
+        layer:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapLayer'
+          description: 'What is drawn: regions (default) fills each shape, bubbles
+            draws a circle per region, points a circle per coordinate.'
+        projection:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapProjection'
+          description: 'The map projection: mercator (default), equal_earth or natural_earth.'
+        sizeBy:
+          description: Value column key, as in a Table panel, that sets the bubble
+            or point size. Empty uses colorBy.
+          type: string
+        view:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapView'
+          description: 'The area shown: world (default), fit to the data, a continent,
+            or country with viewCountry.'
+        viewCountry:
+          description: Uppercase ISO 3166-1 alpha-2 code of the country the country
+            view shows.
+          type: string
+      required:
+      - layer
+      - view
+      - projection
+      type: object
+    DashboardtypesGeoMapThreshold:
+      properties:
+        color:
+          description: 'The CSS color of the shape, bubble or point while the threshold
+            is active, for example #F1575F; CSS named colors such as red also work.'
+          type: string
+        operator:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesComparisonOperator'
+          description: 'The comparison that activates the threshold: above (default),
+            below, above_or_equal, below_or_equal, equal or not_equal.'
+        unit:
+          description: The unit id of value, such as ms or percent. Empty means the
+            colorBy column's unit.
+          type: string
+        value:
+          description: The value compared against, in unit.
+          format: double
+          type: number
+      required:
+      - value
+      - color
+      type: object
+    DashboardtypesGeoMapView:
+      enum:
+      - world
+      - fit
+      - africa
+      - asia
+      - europe
+      - north_america
+      - south_america
+      - oceania
+      - country
+      type: string
     DashboardtypesGettableDashboardV2:
       properties:
         createdAt:
@@ -5296,6 +5518,7 @@ components:
         mapping:
           signoz/AreaChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec'
           signoz/BarChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+          signoz/GeoMapPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec'
           signoz/HeatmapPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
           signoz/HistogramPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
           signoz/ListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
@@ -5305,6 +5528,7 @@ components:
           signoz/TablePanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
           signoz/TextPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
           signoz/TimeSeriesPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
+          signoz/TopListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpec'
         propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
@@ -5318,6 +5542,8 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
@@ -5332,6 +5558,8 @@ components:
       - signoz/TextPanel
       - signoz/HeatmapPanel
       - signoz/ScatterPlotPanel
+      - signoz/GeoMapPanel
+      - signoz/TopListPanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
       properties:
@@ -5358,6 +5586,21 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
+          description: The options for this panel kind. {} accepts every default.
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec:
+      properties:
+        kind:
+          description: The panel kind.
+          enum:
+          - signoz/GeoMapPanel
+          type: string
+        spec:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapPanelSpec'
           description: The options for this panel kind. {} accepts every default.
       required:
       - kind
@@ -5493,6 +5736,21 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesTimeSeriesPanelSpec'
+          description: The options for this panel kind. {} accepts every default.
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpec:
+      properties:
+        kind:
+          description: The panel kind.
+          enum:
+          - signoz/TopListPanel
+          type: string
+        spec:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTopListPanelSpec'
           description: The options for this panel kind. {} accepts every default.
       required:
       - kind
@@ -6259,6 +6517,43 @@ components:
             the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr,
             last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a
             fixed window.'
+      type: object
+    DashboardtypesTopListAppearance:
+      properties:
+        barColor:
+          description: Hex color of every bar; a matching background threshold overrides
+            it.
+          type: string
+        showRank:
+          description: Numbers each row by its position in the list.
+          type: boolean
+        showShare:
+          description: Shows each row's share of the listed rows' total.
+          type: boolean
+      required:
+      - barColor
+      type: object
+    DashboardtypesTopListPanelSpec:
+      properties:
+        appearance:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTopListAppearance'
+          description: Rank, share and bar color options.
+        formatting:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          description: Unit and decimal precision of the values.
+        thresholds:
+          description: Rules that recolor a row when its value compares to a threshold
+            as specified.
+          items:
+            $ref: '#/components/schemas/DashboardtypesComparisonThreshold'
+          nullable: true
+          type: array
+        visualization:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          description: The time range the rows are computed over.
       type: object
     DashboardtypesUpdatableDashboardV2:
       properties:
@@ -11587,7 +11882,7 @@ components:
       - created_at
       - name
       - state
-      - severity
+      - thresholds
       type: string
     RuletypesListableRule:
       properties:
@@ -11627,6 +11922,13 @@ components:
           - $ref: '#/components/schemas/RuletypesAlertState'
           description: 'The current evaluation state: inactive, pending, recovering,
             firing, nodata or disabled.'
+        thresholds:
+          description: The rule's threshold names in lowercase, deduplicated and ordered
+            critical, error, warning, info, then other names. An alert carries the
+            name of the threshold that fired as its severity. Read-only.
+          items:
+            type: string
+          type: array
         updatedAt:
           format: date-time
           type: string
@@ -11638,6 +11940,7 @@ components:
       - alert
       - alertType
       - ruleType
+      - thresholds
       type: object
     RuletypesListableRuleViews:
       properties:
@@ -11745,38 +12048,22 @@ components:
           description: Whether the rule is paused. A disabled rule is neither evaluated
             nor notifies. Defaults to false.
           type: boolean
-        evalWindow:
-          description: The lookback window as a Go duration such as 5m. Only read
-            when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec
-            instead.
-          type: string
         evaluation:
           allOf:
           - $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
           description: The evaluation window, as a kind and spec.
-        frequency:
-          description: How often the rule is evaluated, as a Go duration such as 1m.
-            Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set
-            it in evaluation.spec instead.
-          type: string
         labels:
           additionalProperties:
             type: string
           description: Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*;
-            values may use Go templates such as {{$labels.service_name}}. severity
-            is the conventional routing label.
+            values may use Go templates such as {{$labels.service_name}}. A label
+            named after one the engine writes, such as severity or threshold.name,
+            is ignored.
           type: object
         notificationSettings:
           allOf:
           - $ref: '#/components/schemas/RuletypesNotificationSettings'
           description: Grouping, re-notification and routing behaviour.
-        preferredChannels:
-          description: The displayName of each notification channel to notify, for
-            schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries
-            its own channels.
-          items:
-            type: string
-          type: array
         ruleType:
           allOf:
           - $ref: '#/components/schemas/RuletypesRuleType'
@@ -11788,15 +12075,6 @@ components:
           description: The rule payload schema.
           enum:
           - v2alpha1
-          type: string
-        source:
-          deprecated: true
-          description: The URL of the page the rule was created from. Informational;
-            it is not used for evaluation.
-          type: string
-        version:
-          deprecated: true
-          description: The query payload version. Nothing reads it.
           type: string
       required:
       - alert
@@ -11886,20 +12164,10 @@ components:
           description: Whether the rule is paused. A disabled rule is neither evaluated
             nor notifies. Defaults to false.
           type: boolean
-        evalWindow:
-          description: The lookback window as a Go duration such as 5m. Only read
-            when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec
-            instead.
-          type: string
         evaluation:
           allOf:
           - $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
           description: The evaluation window, as a kind and spec.
-        frequency:
-          description: How often the rule is evaluated, as a Go duration such as 1m.
-            Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set
-            it in evaluation.spec instead.
-          type: string
         id:
           description: The unique identifier of the rule.
           type: string
@@ -11907,20 +12175,14 @@ components:
           additionalProperties:
             type: string
           description: Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*;
-            values may use Go templates such as {{$labels.service_name}}. severity
-            is the conventional routing label.
+            values may use Go templates such as {{$labels.service_name}}. A label
+            named after one the engine writes, such as severity or threshold.name,
+            is ignored.
           type: object
         notificationSettings:
           allOf:
           - $ref: '#/components/schemas/RuletypesNotificationSettings'
           description: Grouping, re-notification and routing behaviour.
-        preferredChannels:
-          description: The displayName of each notification channel to notify, for
-            schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries
-            its own channels.
-          items:
-            type: string
-          type: array
         ruleType:
           allOf:
           - $ref: '#/components/schemas/RuletypesRuleType'
@@ -11933,11 +12195,6 @@ components:
           enum:
           - v2alpha1
           type: string
-        source:
-          deprecated: true
-          description: The URL of the page the rule was created from. Informational;
-            it is not used for evaluation.
-          type: string
         state:
           allOf:
           - $ref: '#/components/schemas/RuletypesAlertState'
@@ -11947,10 +12204,6 @@ components:
           format: date-time
           type: string
         updatedBy:
-          type: string
-        version:
-          deprecated: true
-          description: The query payload version. Nothing reads it.
           type: string
       required:
       - id
@@ -11974,28 +12227,10 @@ components:
           description: Whether to fire a nodata alert when the query returns no data.
             Defaults to false.
           type: boolean
-        algorithm:
-          description: 'anomaly_rule only: the anomaly detection algorithm. The supported
-            value is standard.'
-          type: string
         compositeQuery:
           allOf:
           - $ref: '#/components/schemas/RuletypesAlertCompositeQuery'
           description: The queries whose result is compared against the thresholds.
-        matchType:
-          allOf:
-          - $ref: '#/components/schemas/RuletypesMatchType'
-          description: 'schemaVersion v1 only: which points in the window must satisfy
-            op. Accepted as at_least_once, all_the_times, on_average, in_total or
-            last, their aliases avg and sum, or the legacy codes as strings, ''1''
-            to ''5''. Required for v1; v2alpha1 sets matchType on each threshold.'
-        op:
-          allOf:
-          - $ref: '#/components/schemas/RuletypesCompareOperator'
-          description: 'schemaVersion v1 only: how the value is compared with target.
-            Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal
-            or outside_bounds, their symbols, or the legacy codes as strings, ''1''
-            to ''7''. Required for v1; v2alpha1 sets op on each threshold.'
         requireMinPoints:
           description: Whether a series is skipped until it has at least requiredNumPoints
             points in the window. Defaults to false.
@@ -12012,17 +12247,6 @@ components:
         selectedQueryName:
           description: The name of the query whose result is evaluated, such as A
             or F1. Must match a query in compositeQuery.
-          type: string
-        target:
-          description: 'schemaVersion v1 only: the value compared against, in targetUnit.
-            Required for v1; v2alpha1 sets target on each threshold.'
-          format: double
-          nullable: true
-          type: number
-        targetUnit:
-          description: 'schemaVersion v1 only: the unit of target, such as percent
-            or ms. Converted to compositeQuery.unit before comparison when the two
-            differ.'
           type: string
         thresholds:
           allOf:
@@ -12083,7 +12307,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/RuletypesListSort'
           description: 'The field to sort by: updated_at (the default), created_at,
-            name, state or severity.'
+            name, state or thresholds. Sorting by thresholds ranks each rule by its
+            first threshold name.'
         states:
           description: 'Only return rules in these states: firing, pending, recovering,
             inactive, nodata or disabled. Empty means every state.'
@@ -12297,6 +12522,14 @@ components:
       - schemaVersion
       - spec
       type: object
+    ServiceaccounttypesDSLKey:
+      enum:
+      - created_at
+      - email
+      - name
+      - status
+      - updated_at
+      type: string
     ServiceaccounttypesGettableFactorAPIKey:
       properties:
         createdAt:
@@ -12332,6 +12565,28 @@ components:
       required:
       - id
       - key
+      type: object
+    ServiceaccounttypesListableServiceAccount:
+      properties:
+        reservedKeywords:
+          description: The filter keys the query accepts.
+          items:
+            $ref: '#/components/schemas/ServiceaccounttypesDSLKey'
+          type: array
+        serviceAccounts:
+          description: The service accounts on this page.
+          items:
+            $ref: '#/components/schemas/ServiceaccounttypesServiceAccount'
+          type: array
+        total:
+          description: The number of service accounts the filter matches across all
+            pages.
+          format: int64
+          type: integer
+      required:
+      - serviceAccounts
+      - total
+      - reservedKeywords
       type: object
     ServiceaccounttypesPostableFactorAPIKey:
       properties:
@@ -12375,17 +12630,30 @@ components:
         orgId:
           type: string
         status:
-          type: string
+          $ref: '#/components/schemas/ServiceaccounttypesServiceAccountStatus'
         updatedAt:
           format: date-time
           type: string
       required:
       - id
+      - createdAt
+      - updatedAt
       - name
       - email
       - status
       - orgId
       type: object
+    ServiceaccounttypesServiceAccountListOrder:
+      enum:
+      - asc
+      - desc
+      type: string
+    ServiceaccounttypesServiceAccountListSort:
+      enum:
+      - created_at
+      - updated_at
+      - name
+      type: string
     ServiceaccounttypesServiceAccountRole:
       properties:
         createdAt:
@@ -12408,6 +12676,11 @@ components:
       - roleId
       - role
       type: object
+    ServiceaccounttypesServiceAccountStatus:
+      enum:
+      - active
+      - deleted
+      type: string
     ServiceaccounttypesServiceAccountWithRoles:
       properties:
         createdAt:
@@ -12427,12 +12700,14 @@ components:
           nullable: true
           type: array
         status:
-          type: string
+          $ref: '#/components/schemas/ServiceaccounttypesServiceAccountStatus'
         updatedAt:
           format: date-time
           type: string
       required:
       - id
+      - createdAt
+      - updatedAt
       - name
       - email
       - status
@@ -13439,6 +13714,7 @@ components:
       type: string
     TelemetrytypesSource:
       enum:
+      - audit
       - meter
       - ""
       type: string
@@ -15998,13 +16274,22 @@ paths:
             where it is case-sensitive and % and _ act as wildcards. For keys, a context
             prefix such as resource.service.name sets fieldContext when it is empty.'
           type: string
-      - description: The key whose values to return, such as service.name. A context
-          prefix such as resource.service.name sets fieldContext when it is empty.
+      - description: 'The key whose values to return, such as service.name. With fieldContext
+          set, it is the stored name as is. Otherwise a context prefix such as resource.service.name
+          sets the context and a type suffix such as service.name:string sets fieldDataType
+          when that is empty; as in filter expressions, a prefixed name also matches
+          a key stored under the full name, whose values come first: log.level returns
+          values of a key named log.level, then of the log field level.'
         in: query
         name: name
         schema:
-          description: The key whose values to return, such as service.name. A context
-            prefix such as resource.service.name sets fieldContext when it is empty.
+          description: 'The key whose values to return, such as service.name. With
+            fieldContext set, it is the stored name as is. Otherwise a context prefix
+            such as resource.service.name sets the context and a type suffix such
+            as service.name:string sets fieldDataType when that is empty; as in filter
+            expressions, a prefixed name also matches a key stored under the full
+            name, whose values come first: log.level returns values of a key named
+            log.level, then of the log field level.'
           type: string
       - description: Filter expression already applied in the explorer. When set,
           relatedValues lists the values seen on data matching it.
@@ -16150,9 +16435,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - llm-pricing-rule:list
       - tokenizer:
-        - VIEWER
+        - llm-pricing-rule:list
       summary: List pricing rules
       tags:
       - llmpricingrules
@@ -16197,9 +16482,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - llm-pricing-rule:update
       - tokenizer:
-        - ADMIN
+        - llm-pricing-rule:update
       summary: Create or update pricing rules
       tags:
       - llmpricingrules
@@ -16245,9 +16530,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - llm-pricing-rule:delete
       - tokenizer:
-        - ADMIN
+        - llm-pricing-rule:delete
       summary: Delete a pricing rule
       tags:
       - llmpricingrules
@@ -16303,9 +16588,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - llm-pricing-rule:read
       - tokenizer:
-        - VIEWER
+        - llm-pricing-rule:read
       summary: Get a pricing rule
       tags:
       - llmpricingrules
@@ -16358,9 +16643,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - llm-pricing-rule:list
+        - traces:read
       - tokenizer:
-        - VIEWER
+        - llm-pricing-rule:list
+        - traces:read
       summary: List unmapped models
       tags:
       - llmpricingrules
@@ -16407,9 +16694,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - org-preference:list
       - tokenizer:
-        - ADMIN
+        - org-preference:list
       summary: List org preferences
       tags:
       - preferences
@@ -16472,9 +16759,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - org-preference:read
       - tokenizer:
-        - ADMIN
+        - org-preference:read
       summary: Get org preference
       tags:
       - preferences
@@ -16529,9 +16816,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - org-preference:update
       - tokenizer:
-        - ADMIN
+        - org-preference:update
       summary: Update org preference
       tags:
       - preferences
@@ -17525,8 +17812,56 @@ paths:
   /api/v1/service_accounts:
     get:
       deprecated: false
-      description: This endpoint lists the service accounts for an organisation
+      description: Returns a page of the service accounts for an organisation. `query`
+        is a filter expression over name, email, status, created_at and updated_at,
+        for example `status = 'active'`; `sort`/`order` pick the ordering and `limit`/`offset`
+        the page.
       operationId: ListServiceAccounts
+      parameters:
+      - description: 'A filter expression over the reserved keys name, email, status,
+          created_at and updated_at using the SigNoz filter grammar: comparisons such
+          as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, RFC3339 timestamps
+          in quotes for created_at and updated_at, combined with AND, OR and NOT,
+          for example name CONTAINS ''ci'' AND status = ''active''. A bare or quoted
+          token without a key matches name or email case-insensitively. At most 1024
+          characters. Empty matches every service account.'
+        in: query
+        name: query
+        schema:
+          description: 'A filter expression over the reserved keys name, email, status,
+            created_at and updated_at using the SigNoz filter grammar: comparisons
+            such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, RFC3339
+            timestamps in quotes for created_at and updated_at, combined with AND,
+            OR and NOT, for example name CONTAINS ''ci'' AND status = ''active''.
+            A bare or quoted token without a key matches name or email case-insensitively.
+            At most 1024 characters. Empty matches every service account.'
+          type: string
+      - description: 'The sort column: created_at (default), updated_at or name.'
+        in: query
+        name: sort
+        schema:
+          allOf:
+          - $ref: '#/components/schemas/ServiceaccounttypesServiceAccountListSort'
+          description: 'The sort column: created_at (default), updated_at or name.'
+      - description: 'The sort order: asc or desc (default).'
+        in: query
+        name: order
+        schema:
+          allOf:
+          - $ref: '#/components/schemas/ServiceaccounttypesServiceAccountListOrder'
+          description: 'The sort order: asc or desc (default).'
+      - description: The page size; defaults to 20 and is capped at 200.
+        in: query
+        name: limit
+        schema:
+          description: The page size; defaults to 20 and is capped at 200.
+          type: integer
+      - description: The number of service accounts to skip; defaults to 0.
+        in: query
+        name: offset
+        schema:
+          description: The number of service accounts to skip; defaults to 0.
+          type: integer
       responses:
         "200":
           content:
@@ -17534,9 +17869,7 @@ paths:
               schema:
                 properties:
                   data:
-                    items:
-                      $ref: '#/components/schemas/ServiceaccounttypesServiceAccount'
-                    type: array
+                    $ref: '#/components/schemas/ServiceaccounttypesListableServiceAccount'
                   status:
                     type: string
                 required:
@@ -17544,6 +17877,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -24790,9 +25129,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - organization:read
       - tokenizer:
-        - ADMIN
+        - organization:read
       summary: Get my organization
       tags:
       - orgs
@@ -24841,9 +25180,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - organization:update
       - tokenizer:
-        - ADMIN
+        - organization:update
       summary: Update my organization
       tags:
       - orgs
@@ -25530,56 +25869,6 @@ paths:
       - rules
       x-signoz-stability: alpha
   /api/v2/rules:
-    get:
-      deprecated: true
-      description: 'This endpoint lists all alert rules with their current evaluation
-        state. Deprecated: use ListRulesV3, which supports filtering, sorting and
-        pagination.'
-      operationId: ListRules
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/RuletypesRule'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: List alert rules
-      tags:
-      - rules
-      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a new alert rule
@@ -25669,7 +25958,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               logs_threshold:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
@@ -25736,7 +26024,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_anomaly:
                 description: Wraps a builder query in the `anomaly` function with
                   daily seasonality, so SigNoz compares each point against the forecast
@@ -25753,7 +26040,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -25809,7 +26095,6 @@ paths:
                       interval: 4h
                   ruleType: anomaly_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
@@ -25865,7 +26150,6 @@ paths:
                       interval: 1h
                   ruleType: promql_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_formula:
                 description: Computes disk utilization as (1 - available/capacity)
                   * 100 by combining two disabled base queries with a builder_formula.
@@ -25957,7 +26241,6 @@ paths:
                       interval: 2h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
                   CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
@@ -26026,7 +26309,6 @@ paths:
                       interval: 4h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               notification_settings:
                 description: 'Demonstrates the full notificationSettings surface:
                   `groupBy` merges alerts across labels to cut noise, `newGroupEvalDelay`
@@ -26125,7 +26407,6 @@ paths:
                     usePolicy: false
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
                   with its own target, op, matchType, and channels so warnings and
@@ -26225,7 +26506,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_error_rate_formula:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
@@ -26315,7 +26595,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
@@ -26384,7 +26663,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
             schema:
               $ref: '#/components/schemas/RuletypesPostableRule'
       responses:
@@ -26428,9 +26706,23 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Create alert rule
       tags:
       - rules
@@ -26475,9 +26767,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:delete
       - tokenizer:
-        - EDITOR
+        - rule:delete
       summary: Delete alert rule
       tags:
       - rules
@@ -26533,9 +26825,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get alert rule by ID
       tags:
       - rules
@@ -26635,7 +26927,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               logs_threshold:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
@@ -26702,7 +26993,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_anomaly:
                 description: Wraps a builder query in the `anomaly` function with
                   daily seasonality, so SigNoz compares each point against the forecast
@@ -26719,7 +27009,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -26775,7 +27064,6 @@ paths:
                       interval: 4h
                   ruleType: anomaly_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
@@ -26831,7 +27119,6 @@ paths:
                       interval: 1h
                   ruleType: promql_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_formula:
                 description: Computes disk utilization as (1 - available/capacity)
                   * 100 by combining two disabled base queries with a builder_formula.
@@ -26923,7 +27210,6 @@ paths:
                       interval: 2h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
                   CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
@@ -26992,7 +27278,6 @@ paths:
                       interval: 4h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               notification_settings:
                 description: 'Demonstrates the full notificationSettings surface:
                   `groupBy` merges alerts across labels to cut noise, `newGroupEvalDelay`
@@ -27091,7 +27376,6 @@ paths:
                     usePolicy: false
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
                   with its own target, op, matchType, and channels so warnings and
@@ -27191,7 +27475,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_error_rate_formula:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
@@ -27281,7 +27564,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
@@ -27350,7 +27632,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
             schema:
               $ref: '#/components/schemas/RuletypesPostableRule'
       responses:
@@ -27400,9 +27681,27 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Patch alert rule
       tags:
       - rules
@@ -27502,7 +27801,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               logs_threshold:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
@@ -27569,7 +27867,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_anomaly:
                 description: Wraps a builder query in the `anomaly` function with
                   daily seasonality, so SigNoz compares each point against the forecast
@@ -27586,7 +27883,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -27642,7 +27938,6 @@ paths:
                       interval: 4h
                   ruleType: anomaly_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
@@ -27698,7 +27993,6 @@ paths:
                       interval: 1h
                   ruleType: promql_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_formula:
                 description: Computes disk utilization as (1 - available/capacity)
                   * 100 by combining two disabled base queries with a builder_formula.
@@ -27790,7 +28084,6 @@ paths:
                       interval: 2h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
                   CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
@@ -27859,7 +28152,6 @@ paths:
                       interval: 4h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               notification_settings:
                 description: 'Demonstrates the full notificationSettings surface:
                   `groupBy` merges alerts across labels to cut noise, `newGroupEvalDelay`
@@ -27958,7 +28250,6 @@ paths:
                     usePolicy: false
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
                   with its own target, op, matchType, and channels so warnings and
@@ -28058,7 +28349,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_error_rate_formula:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
@@ -28148,7 +28438,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
@@ -28217,7 +28506,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
             schema:
               $ref: '#/components/schemas/RuletypesPostableRule'
       responses:
@@ -28255,9 +28543,27 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Update alert rule
       tags:
       - rules
@@ -28324,9 +28630,25 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:read
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:read
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Clone alert rule
       tags:
       - rules
@@ -28614,13 +28936,22 @@ paths:
             where it is case-sensitive and % and _ act as wildcards. For keys, a context
             prefix such as resource.service.name sets fieldContext when it is empty.'
           type: string
-      - description: The key whose values to return, such as service.name. A context
-          prefix such as resource.service.name sets fieldContext when it is empty.
+      - description: 'The key whose values to return, such as service.name. With fieldContext
+          set, it is the stored name as is. Otherwise a context prefix such as resource.service.name
+          sets the context and a type suffix such as service.name:string sets fieldDataType
+          when that is empty; as in filter expressions, a prefixed name also matches
+          a key stored under the full name, whose values come first: log.level returns
+          values of a key named log.level, then of the log field level.'
         in: query
         name: name
         schema:
-          description: The key whose values to return, such as service.name. A context
-            prefix such as resource.service.name sets fieldContext when it is empty.
+          description: 'The key whose values to return, such as service.name. With
+            fieldContext set, it is the stored name as is. Otherwise a context prefix
+            such as resource.service.name sets the context and a type suffix such
+            as service.name:string sets fieldDataType when that is empty; as in filter
+            expressions, a prefixed name also matches a key stored under the full
+            name, whose values come first: log.level returns values of a key named
+            log.level, then of the log field level.'
           type: string
       - description: Filter expression already applied in the explorer. When set,
           relatedValues lists the values seen on data matching it.
@@ -29131,7 +29462,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               logs_threshold:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
@@ -29198,7 +29528,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_anomaly:
                 description: Wraps a builder query in the `anomaly` function with
                   daily seasonality, so SigNoz compares each point against the forecast
@@ -29215,7 +29544,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -29271,7 +29599,6 @@ paths:
                       interval: 4h
                   ruleType: anomaly_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
@@ -29327,7 +29654,6 @@ paths:
                       interval: 1h
                   ruleType: promql_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_formula:
                 description: Computes disk utilization as (1 - available/capacity)
                   * 100 by combining two disabled base queries with a builder_formula.
@@ -29419,7 +29745,6 @@ paths:
                       interval: 2h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
                   CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
@@ -29488,7 +29813,6 @@ paths:
                       interval: 4h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               notification_settings:
                 description: 'Demonstrates the full notificationSettings surface:
                   `groupBy` merges alerts across labels to cut noise, `newGroupEvalDelay`
@@ -29587,7 +29911,6 @@ paths:
                     usePolicy: false
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
                   with its own target, op, matchType, and channels so warnings and
@@ -29687,7 +30010,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_error_rate_formula:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
@@ -29777,7 +30099,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
@@ -29846,7 +30167,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
             schema:
               $ref: '#/components/schemas/RuletypesPostableRule'
       responses:
@@ -29890,9 +30210,23 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Test alert rule
       tags:
       - rules
@@ -31889,7 +32223,7 @@ paths:
       deprecated: false
       description: Returns a page of alert rules with their current evaluation state,
         trimmed to the fields the list page renders. Supports a filter DSL (`query`),
-        a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`),
+        a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`thresholds`),
         order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). In the
         filter DSL, a non-reserved key is matched as a rule label directly (`team
         = infra`); a key that collides with a reserved keyword matches either interpretation
@@ -31917,14 +32251,16 @@ paths:
             type: string
           type: array
       - description: 'The field to sort by: updated_at (the default), created_at,
-          name, state or severity.'
+          name, state or thresholds. Sorting by thresholds ranks each rule by its
+          first threshold name.'
         in: query
         name: sort
         schema:
           allOf:
           - $ref: '#/components/schemas/RuletypesListSort'
           description: 'The field to sort by: updated_at (the default), created_at,
-            name, state or severity.'
+            name, state or thresholds. Sorting by thresholds ranks each rule by its
+            first threshold name.'
       - description: 'The sort direction: asc or desc (the default).'
         in: query
         name: order
@@ -31987,9 +32323,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: List alert rules (v3)
       tags:
       - rules

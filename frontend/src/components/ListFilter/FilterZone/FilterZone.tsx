@@ -7,10 +7,11 @@ import type { DslGrammar, SuggestionSource } from '../dsl/types';
 import SearchBar from '../SearchBar/SearchBar';
 import type {
 	CreatorOption,
+	ExtraFiltersApi,
 	FilterAppliedPayload,
 	FilterAppliedType,
 } from '../types';
-import FilterChips from './FilterChips';
+import FilterChips, { type CreatedByProps } from './FilterChips';
 import { useFilterZoneDraft } from './useFilterZoneDraft';
 
 import styles from './FilterZone.module.scss';
@@ -20,23 +21,22 @@ interface Props {
 	query: string;
 	grammar: DslGrammar;
 	// Ids: `${testIdPrefix}-search-zone`, `-list-search*`, `-filter-zone`,
-	// `-filter-clear`, `-filter-created-by`, `-filter-updated`, `-query-error`.
+	// `-filter-clear`, `-filter-created-by`, `-filter-updated`.
 	testIdPrefix: string;
-	creatorOptions: CreatorOption[];
+	// Omitted when the entity has no creator, which drops the Created-by chip.
+	creatorOptions?: CreatorOption[];
 	source: SuggestionSource;
 	// Commit (run) the draft — the only path that triggers a fetch.
 	onQueryChange: (value: string) => void;
 	placeholder?: string;
 	// Rendered at the end of the search row (e.g. the New Dashboard action).
 	rightSlot?: ReactNode;
-	// Rendered in the filters row after the chips.
-	extraFilters?: ReactNode;
+	// Rendered in the filters row before the chips. A function receives the draft.
+	extraFilters?: ReactNode | ((api: ExtraFiltersApi) => ReactNode);
 	// Shows Clear even when the query is empty.
 	hasExtraFilters?: boolean;
 	// Called by Clear after it empties the query.
 	onClearAll?: () => void;
-	// Shown under the search row.
-	error?: string;
 	// Wraps the search box and the filter controls (e.g. in an authz tooltip).
 	wrapControl?: (node: ReactElement) => ReactElement;
 	onSubmitted?: (hasQuery: boolean) => void;
@@ -65,7 +65,6 @@ function FilterZone({
 	extraFilters,
 	hasExtraFilters = false,
 	onClearAll,
-	error,
 	wrapControl = identity,
 	onSubmitted,
 	onFilterApplied,
@@ -79,9 +78,10 @@ function FilterZone({
 		dirty,
 		isEmpty,
 		run,
+		applyDraft,
 		handleCreatedByChange,
 		handleUpdatedChange,
-		handleClearCreatedBy,
+		handleCreatedByCommit,
 		handleClear,
 	} = useFilterZoneDraft({
 		query,
@@ -90,6 +90,15 @@ function FilterZone({
 		onCleared,
 		onClearAll,
 	});
+
+	const createdByProps: CreatedByProps = creatorOptions
+		? {
+				creatorOptions,
+				createdBy: reflected.createdBy,
+				onCreatedByChange: handleCreatedByChange,
+				onCreatedByCommit: handleCreatedByCommit,
+			}
+		: {};
 
 	return (
 		<div className={styles.filterZone}>
@@ -115,33 +124,35 @@ function FilterZone({
 				)}
 				{rightSlot}
 			</div>
-			{error && (
-				<Typography.Text
-					className={styles.error}
-					testId={`${testIdPrefix}-query-error`}
-				>
-					{error}
-				</Typography.Text>
-			)}
 			<div className={styles.filtersRow}>
-				<Typography.Text className={styles.filtersLabel}>Filters</Typography.Text>
+				<Typography
+					variant="uppercase"
+					size="small"
+					weight="medium"
+					color="secondary"
+					as="span"
+					display="inline-block"
+					marginRight={1}
+					textOverflow="wrap"
+				>
+					Filters
+				</Typography>
 				{wrapControl(
 					<div
 						className={styles.filterControls}
 						data-testid={`${testIdPrefix}-filter-zone`}
 					>
+						{typeof extraFilters === 'function'
+							? extraFilters({ draft, applyDraft, setDraft })
+							: extraFilters}
 						<FilterChips
-							createdBy={reflected.createdBy}
+							{...createdByProps}
 							updated={reflected.updated}
-							creatorOptions={creatorOptions}
 							testIdPrefix={testIdPrefix}
-							onCreatedByChange={handleCreatedByChange}
 							onUpdatedChange={handleUpdatedChange}
 							onApply={run}
-							onClearCreatedBy={handleClearCreatedBy}
 							disabled={disabled}
 						/>
-						{extraFilters}
 						{(!isEmpty || hasExtraFilters) && (
 							<Button
 								disabledTooltip={undefined}

@@ -23,7 +23,6 @@ import (
 
 type PromRule struct {
 	*BaseRule
-	version    string
 	prometheus prometheus.Prometheus
 }
 
@@ -47,7 +46,6 @@ func NewPromRule(
 
 	p := PromRule{
 		BaseRule:   baseRule,
-		version:    postableRule.Version,
 		prometheus: prometheus,
 	}
 
@@ -203,9 +201,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		lb := ruletypes.NewBuilder(result.Metric...).Del(ruletypes.MetricNameLabel)
 		resultLabels := ruletypes.NewBuilder(result.Metric...).Del(ruletypes.MetricNameLabel).Labels()
 
-		for name, value := range r.labels.Map() {
-			lb.Set(name, expand(value))
-		}
+		lb.SetRuleLabels(r.labels.Map(), expand)
 
 		lb.Set(ruletypes.AlertNameLabel, r.Name())
 		lb.Set(ruletypes.AlertRuleIDLabel, r.ID())
@@ -356,12 +352,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 func (r *PromRule) String() string {
 	ar := ruletypes.PostableRule{
-		AlertName:         valuer.NewDisplayName(r.name),
-		RuleCondition:     r.ruleCondition,
-		EvalWindow:        r.evalWindow,
-		Labels:            r.labels.Map(),
-		Annotations:       r.annotations.Map(),
-		PreferredChannels: r.preferredChannels,
+		AlertName:     valuer.NewDisplayName(r.name),
+		RuleCondition: r.ruleCondition,
+		Labels:        r.labels.Map(),
+		Annotations:   r.annotations.Map(),
 	}
 
 	byt, err := json.Marshal(ar)

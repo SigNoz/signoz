@@ -6,9 +6,8 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { toast } from '@signozhq/ui/sonner';
-import { Form } from 'antd';
-import { FormInstance } from 'antd/lib';
+import { toast } from '@signozhq/ui/toast';
+import { Form, FormInstance } from 'antd';
 import { useUpdateAccount } from 'api/generated/services/cloudintegration';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { CloudAccount } from 'container/Integrations/types';
@@ -108,7 +107,8 @@ export function useAccountSettingsDrawer({
 						});
 					},
 					onError: (error) => {
-						toast.error('Failed to update account settings', {
+						toast.danger('Failed to update account settings', {
+							action: { label: 'Dismiss' },
 							description: error?.message,
 							position: 'bottom-right',
 						});

@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type HTMLAttributes, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { SolidAlertTriangle } from '@signozhq/icons';
-import { Flex } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
@@ -40,9 +40,9 @@ function ServiceMetricTable({
 	const { isFetchingActiveLicense, trialInfo } = useAppContext();
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
-	const queries = useGetQueriesRange(queryRangeRequestData, ENTITY_VERSION_V4, {
+	const queries = useGetQueriesRange(queryRangeRequestData, ENTITY_VERSION_V5, {
 		queryKey: [
-			`GetMetricsQueryRange-${queryRangeRequestData[0].selectedTime}-${globalSelectedInterval}`,
+			`GetMetricsQueryRange-${queryRangeRequestData[0]?.selectedTime}-${globalSelectedInterval}`,
 			maxTime,
 			minTime,
 			globalSelectedInterval,
@@ -102,13 +102,25 @@ function ServiceMetricTable({
 			`${range[0]}-${range[1]} of ${total} items`,
 	};
 	return (
-		<div className="service-metric-table-container" data-testid="services-table">
+		<div
+			className="service-metric-table-container"
+			data-testid="services-table"
+			aria-busy={isLoading}
+		>
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
-					<Typography.Title level={5} color="warning" style={{ marginTop: 0 }}>
+					<Typography
+						variant="paragraph"
+						size="medium"
+						weight="bold"
+						color="warning"
+						as="h5"
+						marginBottom={4}
+						textOverflow="wrap"
+					>
 						<SolidAlertTriangle size="md" /> {getText('rps_over_100')}
 						<a href="mailto:cloud-support@signoz.io">email</a>
-					</Typography.Title>
+					</Typography>
 				</Flex>
 			)}
 
@@ -121,6 +133,11 @@ function ServiceMetricTable({
 				dataSource={services}
 				rowKey="serviceName"
 				className="service-metrics-table"
+				onRow={(
+					record: ServicesList,
+				): HTMLAttributes<HTMLElement> & { 'data-testid': string } => ({
+					'data-testid': `services-table-row-${record.serviceName}`,
+				})}
 			/>
 		</div>
 	);

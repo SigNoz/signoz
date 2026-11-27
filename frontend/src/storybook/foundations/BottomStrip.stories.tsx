@@ -1,23 +1,25 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
-import { toast } from '@signozhq/ui/sonner';
-import { screen, userEvent } from 'storybook/test';
 
 import type { GlobalMockArgs } from '../globals';
+import {
+	openAddCardModal,
+	openNozChatTabs,
+	openNozHistory,
+	openNozPanel,
+	raiseToast,
+} from './__story_mockdata__/bottomStrip.play';
 
 /** A page that puts nothing in the strip, so the shell is all there is. */
 function EmptyPage(): JSX.Element {
 	return <div />;
 }
 
-/** The shell renders its entry points after the global config and the license settle. */
-const untilLoaded = { timeout: 10_000 };
-
 /**
  * The strip along the foot of the shell: what the page puts on the left, the
- * build version when it puts nothing, and the shell's own Ask Noz and Support
- * on the right. Support follows the chat support the workspace has, the way
- * the floating bubble it replaces did.
+ * build version when it puts nothing, and the shell's own Noz chat tabs, Ask
+ * Noz, Noz history and Support on the right. Support follows the chat support
+ * the workspace has, the way the floating bubble it replaces did.
  *
  * Route: every page inside the app shell; these stories use `/home`.
  */
@@ -54,22 +56,53 @@ export const AddCard: Story = {
 /** The Add Credit Card modal, opened from the strip's Support. */
 export const AddCardModal: Story = {
 	args: { noz: true, support: 'add-card' },
-	play: async (): Promise<void> => {
-		await userEvent.click(
-			await screen.findByTestId('bottom-strip-support', undefined, untilLoaded),
-		);
-		await screen.findByRole('dialog', {
-			name: /Add Credit Card for Chat Support/i,
-		});
-	},
+	play: openAddCardModal,
 };
 
 /**
- * The pulsing dot beside Ask Noz while conversations wait on an approval. The
- * top nav's Noz entry carries the same count.
+ * A dot on the tab of a chat waiting on an approval, beside one with an unseen
+ * reply. The top nav's Noz entry counts the waiting chats.
  */
 export const NozAwaitingYou: Story = {
-	args: { noz: true, nozAwaiting: 2, support: 'pylon' },
+	args: {
+		noz: true,
+		nozChats: 3,
+		nozAwaiting: 1,
+		nozUnread: 1,
+		support: 'pylon',
+	},
+};
+
+/** The Noz chat opened from Ask Noz, floating above the strip; its header drags it. */
+export const NozPanel: Story = {
+	args: { noz: true, support: 'pylon' },
+	play: openNozPanel,
+};
+
+/**
+ * Recent conversations, opened from the history icon beside Ask Noz. Picking
+ * one opens it in the Noz panel; with no saved conversation the icon is gone.
+ */
+export const NozHistory: Story = {
+	args: { noz: true, nozThreads: 6, support: 'pylon' },
+	play: openNozHistory,
+};
+
+/**
+ * Open Noz chats as tabs beside Ask Noz, newest last; a dot marks a reply the
+ * user has not seen yet.
+ */
+export const NozChats: Story = {
+	args: { noz: true, nozChats: 4, nozUnread: 1, support: 'pylon' },
+};
+
+/**
+ * Tabs opened in the Noz panel, the newest then the one before it: the open one
+ * stays highlighted, the newest's dot clears, and each chat opens on its end.
+ */
+export const NozChatOpen: Story = {
+	args: { noz: true, nozChats: 4, nozUnread: 1, support: 'pylon' },
+	play: openNozChatTabs,
 };
 
 /** Every tooltip the strip carries, held open. */
@@ -77,16 +110,7 @@ export const Tooltips: Story = {
 	args: { noz: true, support: 'pylon', tooltipsOpen: true },
 };
 
-/** Raises a toast and waits for it, so the shot is taken with it on screen. */
-const raiseToast: NonNullable<Story['play']> = async () => {
-	toast.success('Service account deleted');
-	await screen.findByText('Service account deleted', undefined, untilLoaded);
-};
-
-/**
- * A toast above the strip. Sonner pins itself to the foot of the viewport, so
- * without an offset it lands on top of Ask Noz and Support.
- */
+/** A toast in the top-right corner, where the toaster puts it, clear of the strip. */
 export const WithToast: Story = {
 	args: { noz: true, support: 'pylon' },
 	play: raiseToast,

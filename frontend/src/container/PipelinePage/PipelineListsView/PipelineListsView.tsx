@@ -78,7 +78,14 @@ function PipelinesListEmptyState(): JSX.Element {
 						title={t('learn_more')}
 					/>
 					<div>
-						<Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							{t('learn_more')}&nbsp;
 							<a
 								href="https://signoz.io/docs/logs-pipelines/introduction/?utm_source=product&utm_medium=pipelines-tab"
@@ -177,7 +184,11 @@ function PipelineListsView({
 				title: <AlertModalTitle>{title}</AlertModalTitle>,
 				icon: <CircleAlert size="xl" className="modal-icon-container" />,
 				content: <AlertContentWrapper>{descrition}</AlertContentWrapper>,
-				okText: <span className={`${className}-ok-text`}>{buttontext}</span>,
+				okText: (
+					<span className={`${className}-ok-text`} data-testid="pipeline-alert-ok">
+						{buttontext}
+					</span>
+				),
 				cancelText: <span>{t('cancel')}</span>,
 				onOk,
 				className,
@@ -535,6 +546,7 @@ function PipelineListsView({
 		({
 			index,
 			moveRow: movePipelineRow,
+			'data-testid': 'pipeline-row',
 		}) as React.HTMLAttributes<unknown>;
 
 	const expandableConfig: ExpandableConfig<PipelineData> = {

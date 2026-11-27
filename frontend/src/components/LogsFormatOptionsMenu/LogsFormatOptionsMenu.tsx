@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Popover, Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
-import { InputNumber } from '@signozhq/ui/input-number';
+import { Input } from '@signozhq/ui/input';
 import cx from 'classnames';
 import {
 	LogViewMode,
@@ -12,6 +12,8 @@ import {
 	Check,
 	ChevronLeft,
 	ChevronRight,
+	Minus,
+	Plus,
 	SlidersVertical,
 } from '@signozhq/icons';
 
@@ -126,7 +128,9 @@ function OptionsMenu({
 							>
 								<span className="menu-row">
 									{size}
-									{fontSizeValue === size && <Check size={14} />}
+									{fontSizeValue === size && (
+										<Check size={14} data-testid="font-size-option-check" />
+									)}
 								</span>
 							</Button>
 						))}
@@ -154,7 +158,7 @@ function OptionsMenu({
 						</Button>
 					</div>
 					<div className="horizontal-line" />
-					<div className="menu-container">
+					<div className="menu-container" data-testid="format-options-menu">
 						<div className="title">FORMAT</div>
 
 						<div className="menu-items">
@@ -168,7 +172,9 @@ function OptionsMenu({
 									<div className={cx('item-label')}>
 										{item.label}
 
-										{selectedItem === item.key && <Check size={12} />}
+										{selectedItem === item.key && (
+											<Check size={12} data-testid="format-check-icon" />
+										)}
 									</div>
 								</div>
 							))}
@@ -180,20 +186,36 @@ function OptionsMenu({
 							<div className="horizontal-line" />
 							<div className="max-lines-per-row">
 								<div className="title"> max lines per row </div>
-								<InputNumber
-									controls
-									mode="spinner"
-									size="small"
-									min={MIN_LINES_PER_ROW}
-									max={MAX_LINES_PER_ROW}
-									precision={0}
-									value={maxLinesPerRow}
-									onChange={handleLinesPerRowChange}
-									aria-label="Max lines per row"
-									decrementAriaLabel="Fewer lines per row"
-									incrementAriaLabel="More lines per row"
-									testId="max-lines-per-row"
-								/>
+								<div className="raw-format max-lines-per-row-input">
+									<button
+										type="button"
+										className="periscope-btn"
+										aria-label="Fewer lines per row"
+										onClick={(): void => handleLinesPerRowChange(maxLinesPerRow - 1)}
+									>
+										<Minus size={12} />
+									</button>
+									<Input.Number
+										size="sm"
+										min={MIN_LINES_PER_ROW}
+										max={MAX_LINES_PER_ROW}
+										format={{ maximumFractionDigits: 0 }}
+										value={maxLinesPerRow}
+										onChange={handleLinesPerRowChange}
+										controls={false}
+										noFocusRing
+										aria-label="Max lines per row"
+										testId="max-lines-per-row"
+									/>
+									<button
+										type="button"
+										className="periscope-btn"
+										aria-label="More lines per row"
+										onClick={(): void => handleLinesPerRowChange(maxLinesPerRow + 1)}
+									>
+										<Plus size={12} />
+									</button>
+								</div>
 							</div>
 						</>
 					)}

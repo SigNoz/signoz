@@ -1,5 +1,5 @@
-import { Trash2 } from '@signozhq/icons';
-import { ConfirmDialog } from '@signozhq/ui/dialog';
+import { SolidAlertCircle, Trash2 } from '@signozhq/icons';
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { Typography } from '@signozhq/ui/typography';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import APIError from 'types/api/error';
@@ -11,7 +11,7 @@ interface DeleteRoleModalProps {
 	roleName: string;
 	error: APIError | null;
 	onCancel: () => void;
-	onConfirm: () => Promise<boolean>;
+	onConfirm: () => Promise<void>;
 }
 
 function DeleteRoleModal({
@@ -22,37 +22,37 @@ function DeleteRoleModal({
 	onConfirm,
 }: DeleteRoleModalProps): JSX.Element {
 	return (
-		<ConfirmDialog
+		<AlertDialog
 			open={isOpen}
-			onOpenChange={(next): void => {
-				if (!next) {
-					onCancel();
-				}
-			}}
 			title="Delete Role"
 			titleIcon={<Trash2 size={14} />}
 			confirmText="Delete Role"
-			confirmColor="danger"
+			color="danger"
 			cancelText="Cancel"
 			onConfirm={onConfirm}
 			onCancel={onCancel}
-			disableOutsideClick
 			testId="delete-role-modal"
 		>
-			<Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				Are you sure you want to delete the role <strong>{roleName}</strong>? This
 				action cannot be undone.
 			</Typography>
 			{error && (
-				<Callout
-					title="Failed to delete role"
-					color="cherry"
-					className={styles.errorCallout}
-				>
-					<ErrorInPlace error={error} height="auto" padding={0} />
-				</Callout>
+				<div className={styles.errorCallout}>
+					<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
+						Failed to delete role
+						<ErrorInPlace error={error} height="auto" padding={0} />
+					</Callout>
+				</div>
 			)}
-		</ConfirmDialog>
+		</AlertDialog>
 	);
 }
 

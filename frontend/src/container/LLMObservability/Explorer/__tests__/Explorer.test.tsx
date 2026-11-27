@@ -1,3 +1,4 @@
+import type { QuickFiltersLayoutProps } from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -14,6 +15,19 @@ import { act, screen, userEvent } from 'tests/test-utils';
 
 import Explorer from '../Explorer';
 
+jest.mock(
+	'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout',
+	() => ({
+		__esModule: true,
+		default: ({ children }: QuickFiltersLayoutProps): JSX.Element => (
+			<div>{children}</div>
+		),
+	}),
+);
+jest.mock('../QuerySection/QuerySection', () => ({
+	__esModule: true,
+	default: (): null => null,
+}));
 jest.mock('../ListView/ListView', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="ai-list-view" />,
@@ -61,7 +75,7 @@ describe('AI observability Explorer', () => {
 	});
 
 	it('clears the url columns of the panel being left', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const traceColumns = [{ name: 'span_count' }];
 		localStorage.setItem(
 			LOCALSTORAGE.AI_OBSERVABILITY_PANEL_COLUMNS,
@@ -74,9 +88,18 @@ describe('AI observability Explorer', () => {
 			)}`,
 		);
 
+		expect(screen.getByTestId('ai-trace-view')).toBeInTheDocument();
+		expect(
+			JSON.parse(urlParam(history, URL_OPTIONS) ?? '').selectColumns,
+		).toStrictEqual(traceColumns);
+
 		await user.click(screen.getByTestId('search-view'));
 
 		expect(screen.getByTestId('ai-list-view')).toBeInTheDocument();
+		expect(screen.queryByTestId('ai-trace-view')).not.toBeInTheDocument();
+		expect(JSON.parse(urlParam(history, QueryParams.panelTypes) ?? '')).toBe(
+			PANEL_TYPES.LIST,
+		);
 		expect(JSON.parse(urlParam(history, URL_OPTIONS) ?? '')).toStrictEqual({
 			...defaultOptionsQuery,
 			selectColumns: [],

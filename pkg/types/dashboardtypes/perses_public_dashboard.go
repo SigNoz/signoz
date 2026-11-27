@@ -146,13 +146,14 @@ func redactLeafQuery(spec any) any {
 	case qb.ClickHouseQuery:
 		return qb.ClickHouseQuery{Name: s.Name, Legend: s.Legend}
 	case qb.QueryBuilderFormula:
-		return qb.QueryBuilderFormula{Name: s.Name, Expression: s.Expression, Legend: s.Legend}
+		return qb.QueryBuilderFormula{Name: s.Name, Expression: s.Expression, Order: s.Order, Legend: s.Legend}
 	case qb.QueryBuilderTraceOperator:
 		return qb.QueryBuilderTraceOperator{
 			Name:         s.Name,
 			Expression:   s.Expression,
 			Aggregations: s.Aggregations,
 			GroupBy:      s.GroupBy,
+			Order:        s.Order,
 			Legend:       s.Legend,
 		}
 	}
@@ -166,6 +167,7 @@ func redactBuilderQuery[T any](q qb.QueryBuilderQuery[T]) qb.QueryBuilderQuery[T
 		Source:       q.Source,
 		Aggregations: q.Aggregations,
 		GroupBy:      q.GroupBy,
+		Order:        q.Order,
 		Legend:       q.Legend,
 	}
 }
@@ -221,7 +223,7 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 		CompositeQuery: composite,
 		FormatOptions: &qb.FormatOptions{
 			FillGaps:               fillGaps,
-			FormatTableResultForUI: panel.Spec.Plugin.Kind == PanelKindTable || panel.Spec.Plugin.Kind == PanelKindScatterPlot,
+			FormatTableResultForUI: panel.Spec.Plugin.Kind.joinsQueryRowsIntoOneTable(),
 		},
 	}, nil
 }

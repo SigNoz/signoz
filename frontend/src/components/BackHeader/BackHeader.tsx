@@ -44,7 +44,7 @@ function BackHeader({
 				</Button>
 				<div className={styles.title}>{title}</div>
 			</div>
-			<Divider className={styles.divider} />
+			<Divider spacing="10px 16px" />
 		</>
 	);
 }

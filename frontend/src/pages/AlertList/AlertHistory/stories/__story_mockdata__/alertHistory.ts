@@ -88,19 +88,46 @@ export const ruleHistoryStatsResponse = (
 	};
 };
 
+export const RELATED_EXPLORERS = [
+	'logs',
+	'traces',
+	'ai-traces',
+	'none',
+] as const;
+
+export type RelatedExplorer = (typeof RELATED_EXPLORERS)[number];
+
+type RelatedLinks = Pick<
+	RulestatehistorytypesGettableRuleStateHistoryDTO,
+	'relatedLogsLink' | 'relatedTracesLink' | 'relatedAITracesLink'
+>;
+
+// The backend sends one link, picked by the rule's alert type, as explorer query params.
+const RELATED_LINK_PARAMS = 'relativeTime=6h';
+
+const RELATED_LINKS: Record<RelatedExplorer, RelatedLinks> = {
+	logs: { relatedLogsLink: RELATED_LINK_PARAMS },
+	traces: { relatedTracesLink: RELATED_LINK_PARAMS },
+	'ai-traces': { relatedAITracesLink: RELATED_LINK_PARAMS },
+	none: {},
+};
+
+const relatedLinksFor = (explorer: RelatedExplorer): RelatedLinks =>
+	RELATED_LINKS[explorer];
+
 export const TOP_CONTRIBUTOR_MAX = 8;
 
 export const ruleHistoryTopContributorsResponse = (
 	count: number,
 	totalTriggers: number,
+	relatedExplorer: RelatedExplorer,
 ): GetRuleHistoryTopContributors200 => ({
 	status: 'success',
 	data: Array.from({ length: count }, (_unused, index) => ({
 		fingerprint: 100_000 + index,
 		count: Math.max(1, Math.round(totalTriggers / (index + 2))),
 		labels: labelsFor(index),
-		relatedLogsLink: 'http://localhost/logs/logs-explorer',
-		relatedTracesLink: 'http://localhost/traces-explorer',
+		...relatedLinksFor(relatedExplorer),
 	})),
 });
 
@@ -136,6 +163,7 @@ export interface TimelineShape {
 	state?: RuletypesAlertStateDTO;
 	ruleId: string;
 	ruleName: string;
+	relatedExplorer: RelatedExplorer;
 }
 
 const timelineItem = (
@@ -159,8 +187,7 @@ const timelineItem = (
 		stateChanged: index % 2 === 0,
 		unixMilli: shape.end - index * 7 * MINUTE,
 		value: Number((60 + (index % 9) * 4.5).toFixed(2)),
-		relatedLogsLink: 'http://localhost/logs/logs-explorer',
-		relatedTracesLink: 'http://localhost/traces-explorer',
+		...relatedLinksFor(shape.relatedExplorer),
 	};
 };
 

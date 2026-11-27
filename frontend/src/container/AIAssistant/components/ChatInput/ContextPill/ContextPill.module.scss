@@ -1,0 +1,62 @@
+.pill {
+	display: inline-flex;
+	align-items: center;
+	min-width: 24px;
+	max-width: 240px;
+	height: 24px;
+	padding: 0 5.5px 0 3.5px;
+	border-radius: var(--radius-2);
+	background: var(--l3-background-60);
+	color: var(--l2-foreground);
+	font-size: var(--label-small-500-font-size);
+	font-weight: var(--label-small-500-font-weight);
+	line-height: 15px;
+	transition:
+		background-color 0.12s,
+		color 0.12s;
+
+	&:hover,
+	&:focus-within {
+		background: var(--l2-background-hover);
+		color: var(--l1-foreground-hover);
+	}
+
+	// Collapsed rather than hidden, so the keyboard can still reach it and open it up.
+	> [data-slot='button'] {
+		max-width: 0;
+		margin-left: 0;
+		overflow: hidden;
+		opacity: 0;
+		transition:
+			max-width 0.12s,
+			margin-left 0.12s,
+			opacity 0.12s;
+		--button-height: 15px;
+	}
+
+	&:hover > [data-slot='button'],
+	&:focus-within > [data-slot='button'] {
+		max-width: 12px;
+		margin-left: var(--spacing-2);
+		opacity: 1;
+	}
+}
+
+.icon {
+	flex-shrink: 0;
+	box-sizing: content-box;
+	padding: 0 3px;
+}
+
+.category {
+	flex-shrink: 0;
+	margin-right: var(--spacing-2);
+	text-transform: lowercase;
+}
+
+.label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

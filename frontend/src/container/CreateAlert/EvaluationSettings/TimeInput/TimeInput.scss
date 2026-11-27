@@ -1,0 +1,22 @@
+.time-input-container {
+	display: flex;
+	align-items: center;
+	gap: 0;
+
+	// A clock reads as fixed-width digits, and each field is only 40px wide, so the
+	// default padding would clip a two digit value.
+	--input-font-family: 'Space Mono', monospace;
+	--input-padding: 0 4px;
+
+	input {
+		text-align: center;
+	}
+
+	.time-input-separator {
+		color: var(--l2-foreground);
+		font-size: 13px;
+		font-weight: 600;
+		margin: 0 4px;
+		user-select: none;
+	}
+}

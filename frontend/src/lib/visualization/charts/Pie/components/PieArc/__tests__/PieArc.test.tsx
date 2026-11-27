@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from 'tests/test-utils';
 
 import { PieSlice } from 'lib/visualization/charts/types';
 import PieArc from 'lib/visualization/charts/Pie/components/PieArc/PieArc';
@@ -14,12 +14,11 @@ function renderArc(props: Partial<React.ComponentProps<typeof PieArc>> = {}): {
 	onHover: jest.Mock;
 	onLeave: jest.Mock;
 	onClick: jest.Mock;
-	container: HTMLElement;
 } {
 	const onHover = jest.fn();
 	const onLeave = jest.fn();
 	const onClick = jest.fn();
-	const { container } = render(
+	render(
 		<svg>
 			<PieArc
 				slice={SLICE}
@@ -38,13 +37,13 @@ function renderArc(props: Partial<React.ComponentProps<typeof PieArc>> = {}): {
 			/>
 		</svg>,
 	);
-	return { onHover, onLeave, onClick, container };
+	return { onHover, onLeave, onClick };
 }
 
 describe('PieArc', () => {
 	it('renders the arc path with the resolved fill', () => {
-		const { container } = renderArc();
-		const path = container.querySelector('path');
+		renderArc();
+		const path = screen.getByTestId('pie-arc-path');
 		expect(path).toHaveAttribute('d', 'M0,0L1,1');
 		expect(path).toHaveAttribute('fill', '#f00');
 	});
@@ -70,8 +69,8 @@ describe('PieArc', () => {
 	});
 
 	it('fires onHover with the slice on enter and move, and onLeave / onClick', () => {
-		const { onHover, onLeave, onClick, container } = renderArc();
-		const g = container.querySelector('g') as SVGGElement;
+		const { onHover, onLeave, onClick } = renderArc();
+		const g = screen.getByTestId('pie-arc');
 
 		fireEvent.mouseEnter(g);
 		fireEvent.mouseMove(g);

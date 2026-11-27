@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { initialQueryState } from 'constants/queryBuilder';
+import { isAIQueryType } from 'lib/query/builderSlot';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import {
 	IBuilderFormula,
@@ -15,6 +16,7 @@ import {
 	PromQuery,
 	QueryBuilderFormula,
 } from 'types/api/v5/queryRange';
+import { EQueryType } from 'types/common/dashboard';
 import {
 	convertBuilderQueryToIBuilderQuery,
 	convertQueryBuilderFormulaToIBuilderFormula,
@@ -22,6 +24,15 @@ import {
 import { v4 as uuid } from 'uuid';
 
 import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataModel';
+
+/** An AI-typed composite authors in the AI slot; every other type keeps `builder`. */
+const toBuilderSlots = (
+	builder: Query['builder'],
+	queryType: EQueryType,
+): Pick<Query, 'builder' | 'builder_ai_query'> =>
+	isAIQueryType(queryType)
+		? { builder: transformQueryBuilderDataModel({}), builder_ai_query: builder }
+		: { builder };
 
 const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 	const builderQueries: Record<
@@ -37,6 +48,7 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 	> = {};
 	const promQueries: IPromQLQuery[] = [];
 	const clickhouseQueries: IClickHouseQuery[] = [];
+	const isAIQuery = isAIQueryType(compositeQuery.queryType);
 
 	compositeQuery.queries?.forEach((q) => {
 		const spec = q.spec as BuilderQuery | PromQuery | ClickHouseQuery;
@@ -49,10 +61,13 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 			}
 		} else if (q.type === 'builder_ai_query') {
 			if (spec.name) {
-				builderQueries[spec.name] = {
-					...convertBuilderQueryToIBuilderQuery(spec as BuilderQuery),
-					builderQueryType: 'builder_ai_query',
-				};
+				const builderQuery = convertBuilderQueryToIBuilderQuery(
+					spec as BuilderQuery,
+				);
+				// Only AI queries kept in `builder` (alerts) need the tag; the AI slot marks its own.
+				builderQueries[spec.name] = isAIQuery
+					? builderQuery
+					: { ...builderQuery, builderQueryType: 'builder_ai_query' };
 				builderQueryTypes[spec.name] = 'builder_ai_query';
 			}
 		} else if (q.type === 'builder_formula') {
@@ -87,8 +102,13 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 			});
 		}
 	});
+
+	const builder = transformQueryBuilderDataModel(
+		builderQueries,
+		builderQueryTypes,
+	);
 	return {
-		builder: transformQueryBuilderDataModel(builderQueries, builderQueryTypes),
+		...toBuilderSlots(builder, compositeQuery.queryType),
 		promql: promQueries,
 		clickhouse_sql: clickhouseQueries,
 		queryType: compositeQuery.queryType,
@@ -118,7 +138,7 @@ const mapQueryFromV3 = (compositeQuery: ICompositeMetricQuery): Query => {
 		: initialQueryState.clickhouse_sql;
 
 	return {
-		builder,
+		...toBuilderSlots(builder, compositeQuery.queryType),
 		promql: promql as IPromQLQuery[],
 		clickhouse_sql: clickhouseSql as IClickHouseQuery[],
 		queryType: compositeQuery.queryType,

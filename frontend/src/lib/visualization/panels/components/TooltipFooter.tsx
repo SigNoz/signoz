@@ -9,6 +9,7 @@ import { Events } from 'constants/events';
 
 interface TooltipFooterProps {
 	id: string;
+	canPin?: boolean;
 	pinKey?: string;
 	isPinned: boolean;
 	canDrilldown?: boolean;
@@ -17,6 +18,7 @@ interface TooltipFooterProps {
 
 export default function TooltipFooter({
 	id,
+	canPin = true,
 	pinKey = DEFAULT_PIN_TOOLTIP_KEY,
 	isPinned,
 	canDrilldown = true,
@@ -38,26 +40,28 @@ export default function TooltipFooter({
 				{isPinned ? (
 					<div className={Styles.hint}>
 						<span>Press</span>
-						<Kbd active>{pinKey.toUpperCase()}</Kbd>
+						<Kbd value={pinKey} testId="uplot-tooltip-pin-key" />
 						<span>or</span>
-						<Kbd active>Esc</Kbd>
+						<Kbd value="Escape" testId="uplot-tooltip-escape-key" />
 						<span>to unpin</span>
 					</div>
 				) : (
 					<div className={Styles.hintList}>
 						{canDrilldown && (
 							<div className={Styles.hint} data-active="false">
-								<Kbd>
+								<span className={Styles.pointerKey} aria-hidden="true">
 									<MousePointerClick size={12} />
-								</Kbd>
+								</span>
 								<span>Click to drilldown</span>
 							</div>
 						)}
-						<div className={Styles.hint} data-active="false">
-							<span>Press</span>
-							<Kbd>{pinKey.toUpperCase()}</Kbd>
-							<span>to pin the tooltip</span>
-						</div>
+						{canPin && (
+							<div className={Styles.hint} data-active="false">
+								<span>Press</span>
+								<Kbd value={pinKey} testId="uplot-tooltip-pin-key" />
+								<span>to pin the tooltip</span>
+							</div>
+						)}
 					</div>
 				)}
 			</div>

@@ -1,0 +1,6 @@
+@mixin selection {
+	& ::selection {
+		background: var(--accent-primary);
+		color: var(--l1-background);
+	}
+}

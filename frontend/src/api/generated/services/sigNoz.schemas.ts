@@ -829,32 +829,25 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
 	jira = 'jira',
 }
-export interface AlertmanagertypesChannelJiraCloudAuthDTO {
+export interface AlertmanagertypesChannelJiraAuthDTO {
 	/**
 	 * @type string
 	 * @format password
-	 * @description The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list.
+	 * @description The Atlassian API token paired with email. Required when deployment is cloud. A secret; returned by create, update and fetch by ID, never by list.
 	 */
-	apiToken: string;
+	apiToken?: string;
 	/**
 	 * @type string
-	 * @description The Atlassian account email used for basic auth.
+	 * @description The Atlassian account email used for basic auth. Required when deployment is cloud.
 	 */
-	email: string;
-}
-
-export interface AlertmanagertypesChannelJiraSelfHostedAuthDTO {
+	email?: string;
 	/**
 	 * @type string
 	 * @format password
-	 * @description The Jira personal access token, sent as a Bearer header. A secret; returned by create, update and fetch by ID, never by list.
+	 * @description The Jira personal access token, sent as a Bearer header. Required when deployment is selfhosted. A secret; returned by create, update and fetch by ID, never by list.
 	 */
-	pat: string;
+	pat?: string;
 }
-
-export type AlertmanagertypesChannelJiraAuthDTO =
-	| AlertmanagertypesChannelJiraCloudAuthDTO
-	| AlertmanagertypesChannelJiraSelfHostedAuthDTO;
 
 export enum AlertmanagertypesJiraDeploymentDTO {
 	cloud = 'cloud',
@@ -3611,6 +3604,7 @@ export enum CoretypesKindDTO {
 	'logs-field' = 'logs-field',
 	'traces-field' = 'traces-field',
 	'metrics-field' = 'metrics-field',
+	'llm-pricing-rule' = 'llm-pricing-rule',
 }
 export enum CoretypesTypeDTO {
 	user = 'user',
@@ -5290,6 +5284,7 @@ export interface TelemetrytypesTelemetryFieldKeyDTO {
 }
 
 export enum TelemetrytypesSourceDTO {
+	audit = 'audit',
 	meter = 'meter',
 	'' = '',
 }
@@ -5665,6 +5660,13 @@ export interface DashboardtypesBasicVisualizationDTO {
 	 */
 	timePreference?: DashboardtypesTimePreferenceDTO;
 }
+
+/**
+ * @minimum 1
+ * @maximum 64
+ * @nullable
+ */
+export type DashboardtypesBubbleRadiusDTO = number | null;
 
 export interface Querybuildertypesv5LogAggregationDTO {
 	/**
@@ -6949,6 +6951,303 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesScatterPlotPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTOKind {
+	'signoz/GeoMapPanel' = 'signoz/GeoMapPanel',
+}
+/**
+ * Radius of the largest circle, in CSS pixels from 1 to 64. Null means 8 on the points layer, 28 otherwise.
+ */
+export type DashboardtypesGeoMapBubblesDTOMaxRadius = DashboardtypesBubbleRadiusDTO | null;
+
+/**
+ * Radius of the smallest circle, in CSS pixels from 1 to 64. Null means 2 on the points layer, 3 otherwise.
+ */
+export type DashboardtypesGeoMapBubblesDTOMinRadius = DashboardtypesBubbleRadiusDTO | null;
+
+export interface DashboardtypesGeoMapBubblesDTO {
+	/**
+	 * @description Radius of the largest circle, in CSS pixels from 1 to 64. Null means 8 on the points layer, 28 otherwise.
+	 */
+	maxRadius?: DashboardtypesGeoMapBubblesDTOMaxRadius;
+	/**
+	 * @description Radius of the smallest circle, in CSS pixels from 1 to 64. Null means 2 on the points layer, 3 otherwise.
+	 */
+	minRadius?: DashboardtypesGeoMapBubblesDTOMinRadius;
+}
+
+export interface DashboardtypesGeoMapColorsDTO {
+	/**
+	 * @type string
+	 * @description The hex color varied in opacity mode. Empty uses the default fill.
+	 */
+	fill?: string;
+	/**
+	 * @type number,null
+	 * @description The value mapped to the highest color. Null uses the highest value in the data.
+	 */
+	max?: number | null;
+	/**
+	 * @type number,null
+	 * @description The value mapped to the lowest color. Null uses the lowest value in the data. Must not exceed max.
+	 */
+	min?: number | null;
+	/**
+	 * @description How values are colored: palette (default) picks a hue from palette, opacity varies the opacity of fill.
+	 */
+	mode?: DashboardtypesHeatmapColorModeDTO;
+	/**
+	 * @description The named color ramp used in palette mode, such as lava (default), ice or ember.
+	 */
+	palette?: DashboardtypesHeatmapPaletteDTO;
+	/**
+	 * @description How values map onto the color range: log (default), sqrt or linear.
+	 */
+	scale?: DashboardtypesHeatmapColorScaleDTO;
+	/**
+	 * @type integer
+	 * @description The number of distinct color steps, 2 to 128. 0 uses the chart default.
+	 */
+	steps?: number;
+}
+
+export interface DashboardtypesGeoMapChartAppearanceDTO {
+	/**
+	 * @description The circle radius range of the bubbles and points layers.
+	 */
+	bubbles?: DashboardtypesGeoMapBubblesDTO;
+	/**
+	 * @description The color scale applied to the colorBy values.
+	 */
+	colors?: DashboardtypesGeoMapColorsDTO;
+	/**
+	 * @type boolean,null
+	 * @description Shows country and state names once each fits inside its shape. Null shows them.
+	 */
+	labels?: boolean | null;
+}
+
+export enum DashboardtypesGeoMapCountryFormatDTO {
+	auto = 'auto',
+	alpha2 = 'alpha2',
+	alpha3 = 'alpha3',
+	name = 'name',
+}
+export enum DashboardtypesGeoMapLocationModeDTO {
+	auto = 'auto',
+	country = 'country',
+	subdivision = 'subdivision',
+	coordinates = 'coordinates',
+}
+export interface DashboardtypesGeoMapLocationDTO {
+	/**
+	 * @type string
+	 * @description Group-by key holding the country, for the country and subdivision modes. Empty detects it by name, such as geo.country.iso_code.
+	 */
+	country?: string;
+	/**
+	 * @description How country values are written: auto (default) detects it, alpha2, alpha3 or name.
+	 */
+	countryFormat: DashboardtypesGeoMapCountryFormatDTO;
+	/**
+	 * @type string
+	 * @description Group-by key holding the latitude, for the coordinates mode. Empty detects it by name.
+	 */
+	lat?: string;
+	/**
+	 * @type string
+	 * @description Group-by key holding the longitude, for the coordinates mode. Empty detects it by name.
+	 */
+	lon?: string;
+	/**
+	 * @description How rows are placed: auto (default) detects it from the group-by keys, country, subdivision or coordinates.
+	 */
+	mode: DashboardtypesGeoMapLocationModeDTO;
+	/**
+	 * @type string
+	 * @description Group-by key holding the ISO 3166-2 region code (e.g. geo.region.iso_code), for the subdivision mode. Empty detects it by name.
+	 */
+	region?: string;
+}
+
+export enum DashboardtypesGeoMapLayerDTO {
+	regions = 'regions',
+	bubbles = 'bubbles',
+	points = 'points',
+}
+export enum DashboardtypesGeoMapProjectionDTO {
+	mercator = 'mercator',
+	equal_earth = 'equal_earth',
+	natural_earth = 'natural_earth',
+}
+export enum DashboardtypesGeoMapViewDTO {
+	world = 'world',
+	fit = 'fit',
+	africa = 'africa',
+	asia = 'asia',
+	europe = 'europe',
+	north_america = 'north_america',
+	south_america = 'south_america',
+	oceania = 'oceania',
+	country = 'country',
+}
+export interface DashboardtypesGeoMapSettingsDTO {
+	/**
+	 * @type string
+	 * @description Value column key, as in a Table panel, that sets the color. Empty uses the first value column.
+	 */
+	colorBy?: string;
+	/**
+	 * @description What is drawn: regions (default) fills each shape, bubbles draws a circle per region, points a circle per coordinate.
+	 */
+	layer: DashboardtypesGeoMapLayerDTO;
+	/**
+	 * @description The map projection: mercator (default), equal_earth or natural_earth.
+	 */
+	projection: DashboardtypesGeoMapProjectionDTO;
+	/**
+	 * @type string
+	 * @description Value column key, as in a Table panel, that sets the bubble or point size. Empty uses colorBy.
+	 */
+	sizeBy?: string;
+	/**
+	 * @description The area shown: world (default), fit to the data, a continent, or country with viewCountry.
+	 */
+	view: DashboardtypesGeoMapViewDTO;
+	/**
+	 * @type string
+	 * @description Uppercase ISO 3166-1 alpha-2 code of the country the country view shows.
+	 */
+	viewCountry?: string;
+}
+
+export interface DashboardtypesGeoMapThresholdDTO {
+	/**
+	 * @type string
+	 * @description The CSS color of the shape, bubble or point while the threshold is active, for example #F1575F; CSS named colors such as red also work.
+	 */
+	color: string;
+	/**
+	 * @description The comparison that activates the threshold: above (default), below, above_or_equal, below_or_equal, equal or not_equal.
+	 */
+	operator?: DashboardtypesComparisonOperatorDTO;
+	/**
+	 * @type string
+	 * @description The unit id of value, such as ms or percent. Empty means the colorBy column's unit.
+	 */
+	unit?: string;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The value compared against, in unit.
+	 */
+	value: number;
+}
+
+export interface DashboardtypesGeoMapPanelSpecDTO {
+	/**
+	 * @description Color scale, bubble size and labels.
+	 */
+	chartAppearance?: DashboardtypesGeoMapChartAppearanceDTO;
+	/**
+	 * @description Per-column units and decimal precision.
+	 */
+	formatting?: DashboardtypesTableFormattingDTO;
+	/**
+	 * @description Legend placement.
+	 */
+	legend?: DashboardtypesLegendDTO;
+	/**
+	 * @description The group-by columns that place each row on the map.
+	 */
+	location?: DashboardtypesGeoMapLocationDTO;
+	/**
+	 * @description Layer, view, projection and the value columns drawn.
+	 */
+	map?: DashboardtypesGeoMapSettingsDTO;
+	/**
+	 * @type array,null
+	 * @description Rules that recolor a shape, bubble or point when its value compares to a threshold as specified.
+	 */
+	thresholds?: DashboardtypesGeoMapThresholdDTO[] | null;
+	/**
+	 * @description The time range the values are computed over.
+	 */
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTO {
+	/**
+	 * @enum signoz/GeoMapPanel
+	 * @type string
+	 * @description The panel kind.
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTOKind;
+	/**
+	 * @description The options for this panel kind. {} accepts every default.
+	 */
+	spec: DashboardtypesGeoMapPanelSpecDTO;
+}
+
+/**
+ * The panel kind.
+ */
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind {
+	'signoz/TopListPanel' = 'signoz/TopListPanel',
+}
+export interface DashboardtypesTopListAppearanceDTO {
+	/**
+	 * @type string
+	 * @description Hex color of every bar; a matching background threshold overrides it.
+	 */
+	barColor: string;
+	/**
+	 * @type boolean
+	 * @description Numbers each row by its position in the list.
+	 */
+	showRank?: boolean;
+	/**
+	 * @type boolean
+	 * @description Shows each row's share of the listed rows' total.
+	 */
+	showShare?: boolean;
+}
+
+export interface DashboardtypesTopListPanelSpecDTO {
+	/**
+	 * @description Rank, share and bar color options.
+	 */
+	appearance?: DashboardtypesTopListAppearanceDTO;
+	/**
+	 * @description Unit and decimal precision of the values.
+	 */
+	formatting?: DashboardtypesPanelFormattingDTO;
+	/**
+	 * @type array,null
+	 * @description Rules that recolor a row when its value compares to a threshold as specified.
+	 */
+	thresholds?: DashboardtypesComparisonThresholdDTO[] | null;
+	/**
+	 * @description The time range the rows are computed over.
+	 */
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTO {
+	/**
+	 * @enum signoz/TopListPanel
+	 * @type string
+	 * @description The panel kind.
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind;
+	/**
+	 * @description The options for this panel kind. {} accepts every default.
+	 */
+	spec: DashboardtypesTopListPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -6960,7 +7259,9 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -7742,7 +8043,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
-	 * @description The default time range, as a Prometheus duration such as 1h or 7d. Stored, but not applied by the UI.
+	 * @description The default time range, as a Prometheus duration such as 1h or 7d. The UI opens the dashboard on it, rounded up to whole minutes, when neither the URL nor the viewer's last pick sets a time range.
 	 */
 	duration?: string;
 	/**
@@ -8247,6 +8548,8 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TextPanel' = 'signoz/TextPanel',
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
+	'signoz/GeoMapPanel' = 'signoz/GeoMapPanel',
+	'signoz/TopListPanel' = 'signoz/TopListPanel',
 }
 /**
  * The RFC 6902 operations, applied in order against the dashboard's postable shape.
@@ -12715,7 +13018,7 @@ export enum RuletypesListSortDTO {
 	created_at = 'created_at',
 	name = 'name',
 	state = 'state',
-	severity = 'severity',
+	thresholds = 'thresholds',
 }
 /**
  * The labels attached to alerts the rule fires.
@@ -12775,6 +13078,11 @@ export interface RuletypesListableRuleDTO {
 	 */
 	state: RuletypesAlertStateDTO;
 	/**
+	 * @type array
+	 * @description The rule's threshold names in lowercase, deduplicated and ordered critical, error, warning, info, then other names. An alert carries the name of the threshold that fired as its severity. Read-only.
+	 */
+	thresholds: string[];
+	/**
 	 * @type string
 	 * @format date-time
 	 */
@@ -12796,7 +13104,7 @@ export interface RuletypesRuleViewDataDTO {
 	 */
 	query?: string;
 	/**
-	 * @description The field to sort by: updated_at (the default), created_at, name, state or severity.
+	 * @description The field to sort by: updated_at (the default), created_at, name, state or thresholds. Sorting by thresholds ranks each rule by its first threshold name.
 	 */
 	sort?: RuletypesListSortDTO;
 	/**
@@ -12913,7 +13221,7 @@ export interface RuletypesNotificationSettingsDTO {
 export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
 
 /**
- * Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
+ * Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. A label named after one the engine writes, such as severity or threshold.name, is ignored.
  */
 export type RuletypesPostableRuleDTOLabels = { [key: string]: string };
 
@@ -12967,22 +13275,9 @@ export interface RuletypesRuleConditionDTO {
 	 */
 	alertOnAbsent?: boolean;
 	/**
-	 * @type string
-	 * @description anomaly_rule only: the anomaly detection algorithm. The supported value is standard.
-	 */
-	algorithm?: string;
-	/**
 	 * @description The queries whose result is compared against the thresholds.
 	 */
 	compositeQuery: RuletypesAlertCompositeQueryDTO;
-	/**
-	 * @description schemaVersion v1 only: which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'. Required for v1; v2alpha1 sets matchType on each threshold.
-	 */
-	matchType?: RuletypesMatchTypeDTO;
-	/**
-	 * @description schemaVersion v1 only: how the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the legacy codes as strings, '1' to '7'. Required for v1; v2alpha1 sets op on each threshold.
-	 */
-	op?: RuletypesCompareOperatorDTO;
 	/**
 	 * @type boolean
 	 * @description Whether a series is skipped until it has at least requiredNumPoints points in the window. Defaults to false.
@@ -13002,17 +13297,6 @@ export interface RuletypesRuleConditionDTO {
 	 * @description The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery.
 	 */
 	selectedQueryName: string;
-	/**
-	 * @type number,null
-	 * @format double
-	 * @description schemaVersion v1 only: the value compared against, in targetUnit. Required for v1; v2alpha1 sets target on each threshold.
-	 */
-	target?: number | null;
-	/**
-	 * @type string
-	 * @description schemaVersion v1 only: the unit of target, such as percent or ms. Converted to compositeQuery.unit before comparison when the two differ.
-	 */
-	targetUnit?: string;
 	/**
 	 * @description The thresholds to evaluate, as a kind and spec.
 	 */
@@ -13049,33 +13333,18 @@ export interface RuletypesPostableRuleDTO {
 	 */
 	disabled?: boolean;
 	/**
-	 * @type string
-	 * @description The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	evalWindow?: string;
-	/**
 	 * @description The evaluation window, as a kind and spec.
 	 */
 	evaluation: RuletypesEvaluationEnvelopeDTO;
 	/**
-	 * @type string
-	 * @description How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	frequency?: string;
-	/**
 	 * @type object
-	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
+	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. A label named after one the engine writes, such as severity or threshold.name, is ignored.
 	 */
 	labels?: RuletypesPostableRuleDTOLabels;
 	/**
 	 * @description Grouping, re-notification and routing behaviour.
 	 */
 	notificationSettings: RuletypesNotificationSettingsDTO;
-	/**
-	 * @type array
-	 * @description The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
-	 */
-	preferredChannels?: string[];
 	/**
 	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries.
 	 */
@@ -13086,16 +13355,6 @@ export interface RuletypesPostableRuleDTO {
 	 * @description The rule payload schema.
 	 */
 	schemaVersion: RuletypesPostableRuleDTOSchemaVersion;
-	/**
-	 * @type string
-	 * @description The URL of the page the rule was created from. Informational; it is not used for evaluation.
-	 */
-	source?: string;
-	/**
-	 * @type string
-	 * @description The query payload version. Nothing reads it.
-	 */
-	version?: string;
 }
 
 export interface RuletypesPostableRuleViewDTO {
@@ -13112,7 +13371,7 @@ export interface RuletypesPostableRuleViewDTO {
 export type RuletypesRuleDTOAnnotations = { [key: string]: string };
 
 /**
- * Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
+ * Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. A label named after one the engine writes, such as severity or threshold.name, is ignored.
  */
 export type RuletypesRuleDTOLabels = { [key: string]: string };
 
@@ -13161,19 +13420,9 @@ export interface RuletypesRuleDTO {
 	 */
 	disabled?: boolean;
 	/**
-	 * @type string
-	 * @description The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	evalWindow?: string;
-	/**
 	 * @description The evaluation window, as a kind and spec.
 	 */
 	evaluation: RuletypesEvaluationEnvelopeDTO;
-	/**
-	 * @type string
-	 * @description How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	frequency?: string;
 	/**
 	 * @type string
 	 * @description The unique identifier of the rule.
@@ -13181,18 +13430,13 @@ export interface RuletypesRuleDTO {
 	id: string;
 	/**
 	 * @type object
-	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
+	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. A label named after one the engine writes, such as severity or threshold.name, is ignored.
 	 */
 	labels?: RuletypesRuleDTOLabels;
 	/**
 	 * @description Grouping, re-notification and routing behaviour.
 	 */
 	notificationSettings: RuletypesNotificationSettingsDTO;
-	/**
-	 * @type array
-	 * @description The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
-	 */
-	preferredChannels?: string[];
 	/**
 	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries.
 	 */
@@ -13203,11 +13447,6 @@ export interface RuletypesRuleDTO {
 	 * @description The rule payload schema.
 	 */
 	schemaVersion: RuletypesRuleDTOSchemaVersion;
-	/**
-	 * @type string
-	 * @description The URL of the page the rule was created from. Informational; it is not used for evaluation.
-	 */
-	source?: string;
 	/**
 	 * @description The current evaluation state: inactive, pending, recovering, firing, nodata or disabled.
 	 */
@@ -13221,11 +13460,6 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 */
 	updatedBy?: string;
-	/**
-	 * @type string
-	 * @description The query payload version. Nothing reads it.
-	 */
-	version?: string;
 }
 
 export enum RuletypesThresholdKindDTO {
@@ -13383,6 +13617,13 @@ export interface SavedviewtypesUpdatableSavedViewDTO {
 	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
+export enum ServiceaccounttypesDSLKeyDTO {
+	created_at = 'created_at',
+	email = 'email',
+	name = 'name',
+	status = 'status',
+	updated_at = 'updated_at',
+}
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -13429,6 +13670,59 @@ export interface ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO {
 	key: string;
 }
 
+export enum ServiceaccounttypesServiceAccountStatusDTO {
+	active = 'active',
+	deleted = 'deleted',
+}
+export interface ServiceaccounttypesServiceAccountDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	status: ServiceaccounttypesServiceAccountStatusDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface ServiceaccounttypesListableServiceAccountDTO {
+	/**
+	 * @type array
+	 * @description The filter keys the query accepts.
+	 */
+	reservedKeywords: ServiceaccounttypesDSLKeyDTO[];
+	/**
+	 * @type array
+	 * @description The service accounts on this page.
+	 */
+	serviceAccounts: ServiceaccounttypesServiceAccountDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description The number of service accounts the filter matches across all pages.
+	 */
+	total: number;
+}
+
 export interface ServiceaccounttypesPostableFactorAPIKeyDTO {
 	/**
 	 * @type integer
@@ -13459,39 +13753,15 @@ export interface ServiceaccounttypesPostableServiceAccountRoleDTO {
 	serviceAccountId: string;
 }
 
-export interface ServiceaccounttypesServiceAccountDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	email: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 */
-	status: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
+export enum ServiceaccounttypesServiceAccountListOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
 }
-
+export enum ServiceaccounttypesServiceAccountListSortDTO {
+	created_at = 'created_at',
+	updated_at = 'updated_at',
+	name = 'name',
+}
 export interface ServiceaccounttypesServiceAccountRoleDTO {
 	/**
 	 * @type string
@@ -13523,7 +13793,7 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: string;
+	createdAt: string;
 	/**
 	 * @type string
 	 */
@@ -13544,15 +13814,12 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type array,null
 	 */
 	serviceAccountRoles: ServiceaccounttypesServiceAccountRoleDTO[] | null;
-	/**
-	 * @type string
-	 */
-	status: string;
+	status: ServiceaccounttypesServiceAccountStatusDTO;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: string;
+	updatedAt: string;
 }
 
 export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
@@ -15352,7 +15619,7 @@ export type GetFieldsValuesParams = {
 	searchText?: string;
 	/**
 	 * @type string
-	 * @description The key whose values to return, such as service.name. A context prefix such as resource.service.name sets fieldContext when it is empty.
+	 * @description The key whose values to return, such as service.name. With fieldContext set, it is the stored name as is. Otherwise a context prefix such as resource.service.name sets the context and a type suffix such as service.name:string sets fieldDataType when that is empty; as in filter expressions, a prefixed name also matches a key stored under the full name, whose values come first: log.level returns values of a key named log.level, then of the log field level.
 	 */
 	name?: string;
 	/**
@@ -15600,11 +15867,34 @@ export type GetServiceAccountRole200 = {
 	status: string;
 };
 
-export type ListServiceAccounts200 = {
+export type ListServiceAccountsParams = {
 	/**
-	 * @type array
+	 * @type string
+	 * @description A filter expression over the reserved keys name, email, status, created_at and updated_at using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at and updated_at, combined with AND, OR and NOT, for example name CONTAINS 'ci' AND status = 'active'. A bare or quoted token without a key matches name or email case-insensitively. At most 1024 characters. Empty matches every service account.
 	 */
-	data: ServiceaccounttypesServiceAccountDTO[];
+	query?: string;
+	/**
+	 * @description The sort column: created_at (default), updated_at or name.
+	 */
+	sort?: ServiceaccounttypesServiceAccountListSortDTO;
+	/**
+	 * @description The sort order: asc or desc (default).
+	 */
+	order?: ServiceaccounttypesServiceAccountListOrderDTO;
+	/**
+	 * @type integer
+	 * @description The page size; defaults to 20 and is capped at 200.
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description The number of service accounts to skip; defaults to 0.
+	 */
+	offset?: number;
+};
+
+export type ListServiceAccounts200 = {
+	data: ServiceaccounttypesListableServiceAccountDTO;
 	/**
 	 * @type string
 	 */
@@ -16783,17 +17073,6 @@ export type UpdateRuleView200 = {
 	status: string;
 };
 
-export type ListRules200 = {
-	/**
-	 * @type array
-	 */
-	data: RuletypesRuleDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type CreateRule201 = {
 	data: RuletypesRuleDTO;
 	/**
@@ -16957,7 +17236,7 @@ export type GetRuleHistoryFilterValuesParams = {
 	searchText?: string;
 	/**
 	 * @type string
-	 * @description The key whose values to return, such as service.name. A context prefix such as resource.service.name sets fieldContext when it is empty.
+	 * @description The key whose values to return, such as service.name. With fieldContext set, it is the stored name as is. Otherwise a context prefix such as resource.service.name sets the context and a type suffix such as service.name:string sets fieldDataType when that is empty; as in filter expressions, a prefixed name also matches a key stored under the full name, whose values come first: log.level returns values of a key named log.level, then of the log field level.
 	 */
 	name?: string;
 	/**
@@ -17367,7 +17646,7 @@ export type ListRulesV3Params = {
 	 */
 	states?: string[];
 	/**
-	 * @description The field to sort by: updated_at (the default), created_at, name, state or severity.
+	 * @description The field to sort by: updated_at (the default), created_at, name, state or thresholds. Sorting by thresholds ranks each rule by its first threshold name.
 	 */
 	sort?: RuletypesListSortDTO;
 	/**

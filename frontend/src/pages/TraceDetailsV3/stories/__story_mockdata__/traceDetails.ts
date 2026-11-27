@@ -372,6 +372,36 @@ const buildSpans = ({
 	return built;
 };
 
+const stacktraceOf = (span: BuiltSpan): string =>
+	[
+		`UpstreamUnavailable: ${span.template.service} refused the request`,
+		`    at ${span.template.name} (/app/src/${span.template.service}/client.ts:88:13)`,
+		'    at retry (/app/src/lib/retry.ts:41:18)',
+		'    at processTicksAndRejections (node:internal/process/task_queues:95:5)',
+		'    at async handle (/app/src/checkout/handler.ts:127:22)',
+	].join('\n');
+
+const UPSTREAM =
+	'payments-authorisation-worker.production-us-east-2.svc.cluster.local';
+
+/**
+ * Event attributes too long for the panel. `endpoint` stays at 100 characters
+ * or fewer, so it renders plain; a longer value goes behind the preview popover.
+ */
+export const LONG_EVENT_ATTRIBUTES = {
+	endpointKey: `upstream.${UPSTREAM}.authorisation.endpoint.url`,
+	endpoint: `https://${UPSTREAM}:8443/v2/authorise?r=3`,
+	responseKey: `upstream.${UPSTREAM}.authorisation.response.body`,
+};
+
+const UPSTREAM_RESPONSE = JSON.stringify({
+	error: 'circuit_open',
+	upstream: 'payments-authorisation-worker',
+	retry_after_ms: 1500,
+	attempts: 3,
+	region: 'us-east-2',
+});
+
 const eventsOf = (span: BuiltSpan): SpantypesWaterfallSpanDTO['events'] =>
 	span.hasError
 		? [
@@ -383,11 +413,34 @@ const eventsOf = (span: BuiltSpan): SpantypesWaterfallSpanDTO['events'] =>
 					attributeMap: {
 						'exception.type': 'UpstreamUnavailable',
 						'exception.message': `${span.template.service} refused the request`,
+						'exception.stacktrace': stacktraceOf(span),
+						[LONG_EVENT_ATTRIBUTES.endpointKey]: LONG_EVENT_ATTRIBUTES.endpoint,
+						[LONG_EVENT_ATTRIBUTES.responseKey]: UPSTREAM_RESPONSE,
 					},
 					isError: true,
 				},
 			]
 		: [];
+
+/** Events on the span the panel opens on, which is what its Events tab lists. */
+export const focusSpanEventCount = (options: TraceOptions): number => {
+	const span =
+		buildSpans(options)[focusSpanIndex(options.scenario, options.spans)];
+
+	return span ? (eventsOf(span)?.length ?? 0) : 0;
+};
+
+/** Whether any span carries an event, and with it a dot on its waterfall bar. */
+export const traceHasEvents = (options: TraceOptions): boolean =>
+	buildSpans(options).some((span) => (eventsOf(span)?.length ?? 0) > 0);
+
+export const focusSpanAttributes = (
+	scenario: TraceScenario,
+	spans: number,
+): SpanTemplate['attributes'] =>
+	SCENARIO_TEMPLATES[scenario][
+		focusSpanIndex(scenario, spans) % SCENARIO_TEMPLATES[scenario].length
+	].attributes;
 
 const resourceOf = (span: BuiltSpan): Record<string, string> => ({
 	'service.name': span.template.service,
@@ -684,18 +737,24 @@ export const spanLogRows = (
 };
 
 /**
- * Span ids for the header's span search. Every span answers, so a filter typed
- * in the story highlights the whole trace rather than nothing.
+ * Span ids for the header's span search. Every span answers a typed filter, so
+ * it highlights the whole trace rather than nothing; `has_error = true`, which
+ * Highlight errors writes, answers with the failing spans alone.
  */
-export const spanMatchRows = (options: TraceOptions): RawRow[] =>
-	buildSpans(options).map((span) => ({
-		timestamp: new Date(span.startMs).toISOString(),
-		data: {
-			span_id: span.spanId,
-			spanID: span.spanId,
-			timestamp: Math.round(span.startMs * 1_000_000),
-		},
-	}));
+export const spanMatchRows = (
+	options: TraceOptions,
+	expression: string,
+): RawRow[] =>
+	buildSpans(options)
+		.filter((span) => !/has_error\s*=\s*true/.test(expression) || span.hasError)
+		.map((span) => ({
+			timestamp: new Date(span.startMs).toISOString(),
+			data: {
+				span_id: span.spanId,
+				spanID: span.spanId,
+				timestamp: Math.round(span.startMs * 1_000_000),
+			},
+		}));
 
 const TRACE_FIELD_KEYS = [
 	'service.name',

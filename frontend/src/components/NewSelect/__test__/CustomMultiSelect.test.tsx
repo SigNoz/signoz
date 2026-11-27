@@ -4,9 +4,10 @@ import {
 	render,
 	RenderResult,
 	screen,
+	userEvent,
 	waitFor,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+	within,
+} from 'tests/test-utils';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 
@@ -156,6 +157,7 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('removes a tag when clicked', async () => {
+		const user = userEvent.setup();
 		const handleChange = jest.fn();
 		renderWithVirtuoso(
 			<CustomMultiSelect
@@ -166,10 +168,7 @@ describe('CustomMultiSelect Component', () => {
 		);
 
 		// Find close button on Option 1 tag and click it
-		const closeButtons = document.querySelectorAll(
-			'.ant-select-selection-item-remove',
-		);
-		fireEvent.click(closeButtons[0]);
+		await user.click(screen.getByLabelText('Remove tag option1'));
 
 		// Verify onChange was called with remaining option
 		expect(handleChange).toHaveBeenCalledWith(
@@ -179,39 +178,24 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('filters options when searching', async () => {
+		const user = userEvent.setup();
 		renderWithVirtuoso(<CustomMultiSelect options={mockOptions} />);
 
 		// Open dropdown
 		const selectElement = screen.getByRole('combobox');
-		fireEvent.mouseDown(selectElement);
+		await user.click(selectElement);
 
-		// Type into search box - get input directly
-		const inputElement = selectElement.querySelector('input');
-		if (inputElement) {
-			fireEvent.change(inputElement, { target: { value: '2' } });
-		}
+		// Type into search box - the combobox is the search input
+		await user.type(selectElement, '2');
 
-		// Wait for the dropdown filtering to happen
-		await waitFor(() => {
-			// Check that the dropdown is present
-			const dropdownElement = document.querySelector(
-				'.custom-multiselect-dropdown',
-			);
-			expect(dropdownElement).toBeInTheDocument();
-
-			// Verify Option 2 is visible in the dropdown
-			const options = document.querySelectorAll('.option-label-text');
-			let foundOption2 = false;
-
-			options.forEach((option) => {
-				const text = option.textContent || '';
-				if (text.includes('Option 2')) {
-					foundOption2 = true;
-				}
-			});
-
-			expect(foundOption2).toBe(true);
-		});
+		await waitFor(() =>
+			expect(screen.queryByTestId('option-item-option1')).not.toBeInTheDocument(),
+		);
+		expect(
+			within(screen.getByTestId('custom-multiselect-dropdown'))
+				.getAllByTestId(/^option-item-/)
+				.map((option) => option.dataset.testid),
+		).toStrictEqual(['option-item-2', 'option-item-option2']);
 	});
 
 	it('renders grouped options correctly', async () => {

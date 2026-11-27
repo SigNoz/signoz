@@ -149,10 +149,8 @@ describe('EntityOverview', () => {
 	it('keeps the locked scope out of the editable filter', async () => {
 		renderOverview();
 
-		// The chip leads with the relation and counts the scope behind it
 		const chip = await screen.findByTestId('overview-locked-scope');
-		expect(chip).toHaveTextContent("k8s.node.name = 'node-1'");
-		expect(chip).toHaveTextContent('+1');
+		expect(chip).toHaveTextContent(LOCKED_EXPRESSION);
 
 		// The editor is handed the user's own expression, never the locked scope
 		const lastProps = mockQuerySearchProps.mock.calls.at(-1)?.[0];

@@ -92,9 +92,16 @@ function VolumeControlStats({
 
 	return (
 		<div className={styles.statsSection}>
-			<Typography.Text size="small" color="muted">
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				Last 1 hour
-			</Typography.Text>
+			</Typography>
 			<div className={styles.stats} data-testid="volume-control-stats">
 				{items.map((item) => (
 					<div
@@ -104,13 +111,16 @@ function VolumeControlStats({
 						})}
 					>
 						<div className={styles.statCardLabelRow}>
-							<Typography.Text
-								size="sm"
-								color="muted"
-								className={styles.statCardLabel}
+							<Typography
+								variant="uppercase"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
 							>
 								{item.label}
-							</Typography.Text>
+							</Typography>
 							<Tooltip title={item.tooltip}>
 								<Info size={12} className={styles.statCardInfo} />
 							</Tooltip>
@@ -119,35 +129,55 @@ function VolumeControlStats({
 							<Skeleton.Button active size="small" className={styles.statCardValue} />
 						)}
 						{!isLoading && isError && (
-							<Typography.Text
-								as="div"
+							<Typography
+								variant="code"
 								size="small"
+								weight="regular"
 								color="danger"
-								className={styles.statCardValue}
+								as="div"
+								display="inline"
+								textOverflow="wrap"
 							>
 								Failed to load
-							</Typography.Text>
+							</Typography>
 						)}
 						{!isLoading && !isError && (
-							<Typography.Text
-								as="div"
+							<Typography
+								variant="label"
 								size="large"
-								weight="semibold"
-								color={item.valueGood ? 'success' : undefined}
-								className={styles.statCardValue}
+								weight="bold"
+								color={item.valueGood ? 'success' : 'inherit'}
+								as="div"
+								display="inline"
+								textOverflow="wrap"
+								tabularNumbers
 							>
 								{item.value}
 								{item.delta && (
-									<Typography.Text size="small" weight="semibold" color="success">
+									<Typography
+										variant="paragraph"
+										size="small"
+										weight="bold"
+										color="success"
+										as="span"
+										textOverflow="wrap"
+									>
 										{item.delta}
-									</Typography.Text>
+									</Typography>
 								)}
 								{item.unit && (
-									<Typography.Text size="small" weight="medium" color="muted">
+									<Typography
+										variant="paragraph"
+										size="small"
+										weight="medium"
+										color="secondary"
+										as="span"
+										textOverflow="wrap"
+									>
 										{item.unit}
-									</Typography.Text>
+									</Typography>
 								)}
-							</Typography.Text>
+							</Typography>
 						)}
 					</div>
 				))}

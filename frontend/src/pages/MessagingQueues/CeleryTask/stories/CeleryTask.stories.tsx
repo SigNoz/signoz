@@ -1,14 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { celeryTaskMocks } from './CeleryTask.stories.mocks';
+import {
+	type CeleryTaskArgs,
+	celeryTaskMocks,
+} from './CeleryTask.stories.mocks';
+import {
+	openStateDrawer,
+	showFailedTasks,
+} from './__story_mockdata__/celeryTask.play';
 
 import MessagingQueuesMainPage from '../../MessagingQueuesMainPage';
-
-type CeleryTaskArgs = PageStoryArgs<typeof celeryTaskMocks>;
 
 const pageStory = storyMocks(celeryTaskMocks, { layout: 'app' });
 
@@ -30,9 +33,6 @@ export default meta;
 
 type Story = StoryObj<CeleryTaskArgs>;
 
-/** The counters fetch before the tabs settle, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
 /**
  * The celery tab: flower's per-worker metrics up top, then the span-based view
  * of every task run, split by state and broken down per worker.
@@ -47,18 +47,12 @@ export const FailingTasks: Story = {
 /** The state graph narrowed to the runs that failed, over the same range. */
 export const FailedTasksOnly: Story = {
 	args: { health: 'failing' },
-	play: async ({ canvasElement }): Promise<void> => {
-		const canvas = within(canvasElement);
+	play: showFailedTasks,
+};
 
-		await userEvent.click(
-			await canvas.findByText('Failed', undefined, untilLoaded),
-		);
-		// The panel the tab opens carries the same label as the tab itself.
-		await waitFor(
-			() => expect(canvas.getAllByText('Failed')).toHaveLength(2),
-			untilLoaded,
-		);
-	},
+/** A click on the state graph opens the drawer for that state: its slowest tasks over the clicked minute. */
+export const StateDrawer: Story = {
+	play: openStateDrawer,
 };
 
 /** Flower not scraped: the worker card counts nothing and its charts are empty. */

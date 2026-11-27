@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { useRef, useState } from 'react';
+import { render } from '@testing-library/react';
+import { screen, userEvent } from 'tests/test-utils';
+import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider as ReduxProvider } from 'react-redux';
@@ -22,8 +22,6 @@ import { usePanelEditorQuerySync } from '../hooks/usePanelEditorQuerySync';
 import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder/PanelEditorQueryBuilder';
-import { useQueryModeChange } from '../hooks/useQueryModeChange';
-import type { BuildersByVariant } from 'types/api/queryBuilder/queryBuilderData';
 
 // jest.config maps the real hook to a no-op mock; this suite needs real navigation.
 jest.mock('hooks/useSafeNavigate', () => {
@@ -81,17 +79,10 @@ function EditorRoute({ panelId }: { panelId: string }): JSX.Element {
 		savedQueries: panel.spec.queries,
 	});
 	const panelDefinition = requireQueryPanelDefinition('signoz/TimeSeriesPanel');
-	const parkedBuilders = useRef<BuildersByVariant>({});
-	const onChangeQueryMode = useQueryModeChange({
-		panelType: PANEL_TYPES.TIME_SERIES,
-		supportedQueryModesKindMap: panelDefinition.supportedQueryModesKindMap,
-		parkedBuilders,
-	});
 
 	return (
 		<PanelEditorQueryBuilder
 			panelDefinition={panelDefinition}
-			onChangeQueryMode={onChangeQueryMode}
 			isLoadingQueries={false}
 			onStageRunQuery={noop}
 			onCancelQuery={noop}
@@ -158,7 +149,7 @@ const renderHarness = (): void => {
 
 describe('Panel editor route, PromQL panels', () => {
 	it('opens on the edited panel query, not the previously edited one', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderHarness();
 
 		await user.click(screen.getByTestId('edit-a'));

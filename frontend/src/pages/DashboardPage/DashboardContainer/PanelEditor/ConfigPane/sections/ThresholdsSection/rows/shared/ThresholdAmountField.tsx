@@ -25,6 +25,8 @@ interface ThresholdAmountFieldProps {
 	scopeUnit: string | undefined;
 	/** How the scope reads in the mismatch message, e.g. "y-axis unit" / "column unit". */
 	scopeLabel: string;
+	/** Shown when a unit is picked but there is no `scopeUnit` to convert into. */
+	unscopedHint?: string;
 	onUnitChange: (unit: string) => void;
 }
 
@@ -38,6 +40,7 @@ function ThresholdAmountField({
 	unit,
 	scopeUnit,
 	scopeLabel,
+	unscopedHint,
 	onUnitChange,
 }: ThresholdAmountFieldProps): JSX.Element {
 	const [raw, setRaw] = useState(String(value));
@@ -48,7 +51,16 @@ function ThresholdAmountField({
 
 	return (
 		<div className={styles.field}>
-			<Typography.Text className={styles.fieldLabel}>{label}</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
+				{label}
+			</Typography>
 			<div className={styles.amountRow}>
 				<Input
 					data-testid={`${testIdPrefix}-value-${index}`}
@@ -77,11 +89,31 @@ function ThresholdAmountField({
 					data-testid={`${testIdPrefix}-unit-invalid-${index}`}
 				>
 					<TriangleAlert size={13} className={styles.invalidUnitIcon} />
-					<Typography.Text className={styles.invalidUnitText}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{getUniversalNameFromMetricUnit(unit)} can&apos;t be compared with the{' '}
 						{scopeLabel} ({getUniversalNameFromMetricUnit(scopeUnit)}).
-					</Typography.Text>
+					</Typography>
 				</div>
+			)}
+			{unit && !scopeUnit && unscopedHint && (
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+					testId={`${testIdPrefix}-unit-unscoped-${index}`}
+				>
+					{unscopedHint}
+				</Typography>
 			)}
 		</div>
 	);

@@ -40,6 +40,7 @@ var Resources = []Resource{
 	ResourceMetaResourceLogsField,
 	ResourceMetaResourceTracesField,
 	ResourceMetaResourceMetricsField,
+	ResourceMetaResourceLLMPricingRule,
 }
 
 var (
@@ -59,7 +60,7 @@ var (
 	ResourceMetaResourceDashboard                        = NewResourceMetaResource(KindDashboard, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourcePublicDashboard                  = NewResourceMetaResource(KindPublicDashboard)
 	ResourceMetaResourceIngestionKey                     = NewResourceMetaResource(KindIngestionKey)
-	ResourceMetaResourceIngestionLimit                   = NewResourceMetaResource(KindIngestionLimit)
+	ResourceMetaResourceIngestionLimit                   = NewResourceMetaResource(KindIngestionLimit, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourcePipeline                         = NewResourceMetaResource(KindPipeline)
 	ResourceMetaResourceUserPreference                   = NewResourceMetaResource(KindUserPreference)
 	ResourceMetaResourceOrgPreference                    = NewResourceMetaResource(KindOrgPreference)
@@ -69,7 +70,7 @@ var (
 	ResourceMetaResourcePlannedMaintenance               = NewResourceMetaResource(KindPlannedMaintenance)
 	ResourceMetaResourceSavedView                        = NewResourceMetaResource(KindSavedView, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceTraceFunnel                      = NewResourceMetaResource(KindTraceFunnel)
-	ResourceMetaResourceFactorPassword                   = NewResourceMetaResource(KindFactorPassword)
+	ResourceMetaResourceFactorPassword                   = NewResourceMetaResource(KindFactorPassword, VerbCreate, VerbList, VerbRead)
 	ResourceMetaResourceFactorAPIKey                     = NewResourceMetaResource(KindFactorAPIKey, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceLicense                          = NewResourceMetaResource(KindLicense, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceSubscription                     = NewResourceMetaResource(KindSubscription, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
@@ -82,4 +83,5 @@ var (
 	ResourceMetaResourceLogsField                        = NewResourceMetaResource(KindLogsField)
 	ResourceMetaResourceTracesField                      = NewResourceMetaResource(KindTracesField)
 	ResourceMetaResourceMetricsField                     = NewResourceMetaResource(KindMetricsField, VerbList, VerbRead, VerbUpdate)
+	ResourceMetaResourceLLMPricingRule                   = NewResourceMetaResource(KindLLMPricingRule, VerbList, VerbRead, VerbUpdate, VerbDelete)
 )

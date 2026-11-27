@@ -3,7 +3,7 @@ import { render, screen, userEvent } from 'tests/test-utils';
 import ChatInput from '../ChatInput';
 
 function getComposer(): HTMLTextAreaElement {
-	return screen.getByPlaceholderText(/Ask anything/i) as HTMLTextAreaElement;
+	return screen.getByTestId<HTMLTextAreaElement>('ai-chat-input-textarea');
 }
 
 describe('ChatInput — @ mention trigger', () => {
@@ -13,7 +13,7 @@ describe('ChatInput — @ mention trigger', () => {
 		await userEvent.type(getComposer(), 'check @');
 
 		await expect(
-			screen.findByPlaceholderText(/search dashboards/i),
+			screen.findByTestId('ai-context-search'),
 		).resolves.toBeInTheDocument();
 	});
 
@@ -23,8 +23,6 @@ describe('ChatInput — @ mention trigger', () => {
 		await userEvent.type(getComposer(), 'mail user@example.com');
 
 		expect(getComposer()).toHaveValue('mail user@example.com');
-		expect(
-			screen.queryByPlaceholderText(/search dashboards/i),
-		).not.toBeInTheDocument();
+		expect(screen.queryByTestId('ai-context-search')).not.toBeInTheDocument();
 	});
 });

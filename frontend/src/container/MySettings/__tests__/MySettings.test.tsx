@@ -1,4 +1,3 @@
-import userEvent from '@testing-library/user-event';
 import MySettingsContainer from 'container/MySettings';
 import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
 import {
@@ -12,11 +11,12 @@ import {
 	fireEvent,
 	render,
 	screen,
+	userEvent,
 	waitFor,
 	within,
 } from 'tests/test-utils';
 import APIError from 'types/api/error';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 
 jest.mock('hooks/useActiveLicenseKey/useActiveLicenseKey');
 const mockUseActiveLicenseKey = useActiveLicenseKey as jest.MockedFunction<
@@ -29,11 +29,11 @@ const editUserFn = jest.fn();
 const updateMyPasswordFn = jest.fn();
 const showErrorModalFn = jest.fn();
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		danger: jest.fn(),
 	},
 }));
 
@@ -166,6 +166,13 @@ describe('MySettings Flows', () => {
 
 			expect(nameTextbox).toBeInTheDocument();
 			expect(modalUpdateNameButton).toBeInTheDocument();
+		});
+
+		it('Should show the email and not the role', () => {
+			expect(screen.getByTestId('user-info-email')).toHaveTextContent(
+				'does-not-matter@signoz.io',
+			);
+			expect(screen.queryByText('admin')).not.toBeInTheDocument();
 		});
 
 		it('Should update the name on clicking Update button', async () => {
@@ -301,27 +308,22 @@ describe('MySettings Flows', () => {
 		});
 
 		it('Should clear password fields when modal is cancelled', async () => {
+			const user = userEvent.setup();
 			const resetPasswordButtons = screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT);
-			fireEvent.click(resetPasswordButtons[0]);
+			await user.click(resetPasswordButtons[0]);
 
-			act(() => {
-				fireEvent.change(screen.getByTestId(CURRENT_PASSWORD_TEST_ID), {
-					target: { value: 'somePassword' },
-				});
-				fireEvent.change(screen.getByTestId(NEW_PASSWORD_TEST_ID), {
-					target: { value: 'otherPassword' },
-				});
-			});
+			await user.type(
+				screen.getByTestId(CURRENT_PASSWORD_TEST_ID),
+				'somePassword',
+			);
+			await user.type(screen.getByTestId(NEW_PASSWORD_TEST_ID), 'otherPassword');
 
 			expect(screen.getByTestId(CURRENT_PASSWORD_TEST_ID)).toHaveValue(
 				'somePassword',
 			);
 
 			// Close the modal
-			const closeButton = document.querySelector(
-				'.reset-password-modal .ant-modal-close',
-			) as HTMLElement;
-			fireEvent.click(closeButton);
+			await user.click(screen.getByRole('button', { name: 'Close' }));
 
 			// Reopen the modal
 			await waitFor(() => {
@@ -330,7 +332,7 @@ describe('MySettings Flows', () => {
 				).not.toBeInTheDocument();
 			});
 
-			fireEvent.click(screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT)[0]);
+			await user.click(screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT)[0]);
 
 			await waitFor(() => {
 				expect(screen.getByTestId(CURRENT_PASSWORD_TEST_ID)).toHaveValue('');
@@ -462,5 +464,36 @@ describe('MySettings Flows', () => {
 				});
 			});
 		});
+	});
+});
+
+describe('MySettings name update and app context', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		editUserFn.mockResolvedValue({});
+		mockUseActiveLicenseKey.mockReturnValue({
+			licenseKey: 'test-key',
+			isLoading: false,
+		});
+	});
+
+	it('updates the user in the app context with the new name', async () => {
+		const user = userEvent.setup();
+		const updateUser = jest.fn();
+		render(<MySettingsContainer />, undefined, {
+			appContextOverrides: { updateUser },
+		});
+
+		await user.click(screen.getByTestId('update-name-open-btn'));
+		const nameInput = screen.getByTestId('update-name-input');
+		await user.clear(nameInput);
+		await user.type(nameInput, 'New Name');
+		await user.click(screen.getByTestId(UPDATE_NAME_BUTTON_TEST_ID));
+
+		await waitFor(() =>
+			expect(updateUser).toHaveBeenCalledWith(
+				expect.objectContaining({ displayName: 'New Name' }),
+			),
+		);
 	});
 });

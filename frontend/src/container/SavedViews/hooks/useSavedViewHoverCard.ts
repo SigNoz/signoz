@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { usePopoverHandle } from '@signozhq/ui/popover';
 
 import {
 	SAVED_VIEW_HOVER_CARD_CLOSE_DELAY_MS,
 	SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS,
 } from '../constants';
-import {
-	SavedViewHoverCardTarget,
-	UseSavedViewHoverCardResult,
-} from '../types';
+import { UseSavedViewHoverCardResult } from '../types';
 
+// The delays are ours rather than the popover's: the card follows a handle, not a trigger, so
+// the list owns both when it appears and when it survives the pointer crossing into it.
 export function useSavedViewHoverCard(): UseSavedViewHoverCardResult {
-	const [target, setTarget] = useState<SavedViewHoverCardTarget | null>(null);
+	const handle = usePopoverHandle<string>();
 	const openTimer = useRef<ReturnType<typeof setTimeout>>();
 	const closeTimer = useRef<ReturnType<typeof setTimeout>>();
 
@@ -26,20 +26,20 @@ export function useSavedViewHoverCard(): UseSavedViewHoverCardResult {
 	const scheduleClose = useCallback((): void => {
 		cancelClose();
 		closeTimer.current = setTimeout(
-			() => setTarget(null),
+			() => handle.close(),
 			SAVED_VIEW_HOVER_CARD_CLOSE_DELAY_MS,
 		);
-	}, [cancelClose]);
+	}, [cancelClose, handle]);
 
 	const onRowEnter = useCallback(
-		(next: SavedViewHoverCardTarget): void => {
+		(viewId: string, row: HTMLElement): void => {
 			cancelOpen();
 			openTimer.current = setTimeout(() => {
 				cancelClose();
-				setTarget(next);
+				handle.showAt(row, viewId);
 			}, SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS);
 		},
-		[cancelOpen, cancelClose],
+		[cancelOpen, cancelClose, handle],
 	);
 
 	const onRowLeave = useCallback((): void => {
@@ -50,8 +50,8 @@ export function useSavedViewHoverCard(): UseSavedViewHoverCardResult {
 	const close = useCallback((): void => {
 		cancelOpen();
 		cancelClose();
-		setTarget(null);
-	}, [cancelOpen, cancelClose]);
+		handle.close();
+	}, [cancelOpen, cancelClose, handle]);
 
 	useEffect(
 		() => (): void => {
@@ -62,7 +62,7 @@ export function useSavedViewHoverCard(): UseSavedViewHoverCardResult {
 	);
 
 	return {
-		target,
+		handle,
 		onRowEnter,
 		onRowLeave,
 		onCardEnter: cancelClose,

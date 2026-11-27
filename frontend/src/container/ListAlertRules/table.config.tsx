@@ -5,6 +5,7 @@ import type { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
+import styles from './ListAlertRules.module.scss';
 import type { AlertRule } from './types';
 
 const STATE_CONFIG: Record<string, { color: BadgeColorType; label: string }> = {
@@ -62,30 +63,32 @@ export function getAlertRuleColumns(
 			),
 		},
 		{
-			id: 'severity',
-			header: 'Severity',
-			accessorFn: (row) => row.labels?.severity ?? '',
-			width: { fixed: '120px' },
+			id: 'thresholds',
+			header: 'Thresholds',
+			accessorKey: 'thresholds',
+			width: { fixed: '160px' },
 			enableSort: true,
 			enableMove: false,
 			cell: ({ row, value }): JSX.Element => {
-				const severity = String(value ?? '').toLowerCase();
-				if (!severity) {
-					return (
-						<TanStackTable.Text data-testid={`alert-row-${row.id ?? ''}-severity`}>
-							-
-						</TanStackTable.Text>
-					);
+				const testId = `alert-row-${row.id ?? ''}-thresholds`;
+				const thresholds = (value as string[] | undefined) ?? [];
+				if (!thresholds.length) {
+					return <TanStackTable.Text data-testid={testId}>-</TanStackTable.Text>;
 				}
 				return (
-					<Badge
-						textTransform="none"
-						color={SEVERITY_BADGE_COLORS[severity] ?? 'secondary'}
-						variant="outlined"
-						testId={`alert-row-${row.id ?? ''}-severity`}
-					>
-						{severity}
-					</Badge>
+					<div className={styles.thresholds} data-testid={testId}>
+						{thresholds.map((threshold) => (
+							<Badge
+								key={threshold}
+								textTransform="none"
+								color={SEVERITY_BADGE_COLORS[threshold] ?? 'secondary'}
+								variant="outlined"
+								testId={`${testId}-${threshold}`}
+							>
+								{threshold}
+							</Badge>
+						))}
+					</div>
 				);
 			},
 		},
@@ -96,19 +99,24 @@ export function getAlertRuleColumns(
 			width: { default: '100%' },
 			enableSort: false,
 			enableMove: false,
-			cell: ({ value }): JSX.Element => {
+			cell: ({ row, value }): JSX.Element => {
 				const labels = value as Record<string, string> | undefined;
 				if (!labels) {
 					return <TanStackTable.Text>-</TanStackTable.Text>;
 				}
 
-				const tagKeys = Object.keys(labels).filter((k) => k !== 'severity');
+				const tagKeys = Object.keys(labels);
 				if (!tagKeys.length) {
 					return <TanStackTable.Text>-</TanStackTable.Text>;
 				}
 
 				return (
-					<LabelColumn labels={tagKeys} value={labels} color="highlight-danger" />
+					<LabelColumn
+						labels={tagKeys}
+						value={labels}
+						color="secondary"
+						testId={`alert-row-${row.id ?? ''}-labels`}
+					/>
 				);
 			},
 		},

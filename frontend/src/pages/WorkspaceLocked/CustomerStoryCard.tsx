@@ -1,5 +1,6 @@
 import { Avatar } from '@signozhq/ui/avatar';
-import { Card, Space } from 'antd';
+import { Card } from 'antd';
+import Space from 'periscope/components/Space/Space';
 
 import './customerStoryCard.styles.scss';
 
@@ -23,7 +24,9 @@ function CustomerStoryCard({
 			<Card className="customer-story-card">
 				<Space size="middle" direction="vertical">
 					<Card.Meta
-						avatar={<Avatar size="xl" src={avatar} />}
+						avatar={
+							<Avatar name={personName} size="md" color="secondary" src={avatar} />
+						}
 						title={personName}
 						description={role}
 					/>

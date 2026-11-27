@@ -1,4 +1,5 @@
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import {
 	fireEvent,
@@ -10,11 +11,11 @@ import {
 
 import DisplayName from '../index';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		danger: jest.fn(),
 	},
 }));
 
@@ -25,6 +26,7 @@ const defaultProps = { index: 0, id: 'does-not-matter-id' };
 describe('DisplayName', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
@@ -34,25 +36,33 @@ describe('DisplayName', () => {
 	it('renders form pre-filled with org displayName from context', async () => {
 		render(<DisplayName {...defaultProps} />);
 
-		const input = await screen.findByRole('textbox');
+		const input = await screen.findByTestId('org-display-name-input-field');
 		expect(input).toHaveValue('Pentagon');
 
-		expect(screen.getByRole('button', { name: /submit/i })).toBeDisabled();
+		await waitFor(() =>
+			expect(screen.getByTestId('org-display-name-submit')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		);
 	});
 
 	it('enables submit and calls PUT when display name is changed', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		server.use(rest.put(ORG_ME_ENDPOINT, (_, res, ctx) => res(ctx.status(200))));
 
 		render(<DisplayName {...defaultProps} />);
 
-		const input = await screen.findByRole('textbox');
+		const input = await screen.findByTestId('org-display-name-input-field');
+		await waitFor(() => expect(input).toBeEnabled());
 		await user.clear(input);
 		await user.type(input, 'New Org Name');
 
-		const submitBtn = screen.getByRole('button', { name: /submit/i });
-		expect(submitBtn).toBeEnabled();
+		const submitBtn = screen.getByTestId('org-display-name-submit');
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 
 		await user.click(submitBtn);
 
@@ -62,15 +72,15 @@ describe('DisplayName', () => {
 	});
 
 	it('shows validation error when display name is cleared and submitted', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<DisplayName {...defaultProps} />);
 
-		const input = await screen.findByRole('textbox');
+		const input = await screen.findByTestId('org-display-name-input-field');
+		await waitFor(() => expect(input).toBeEnabled());
 		await user.clear(input);
 
-		const form = input.closest('form') as HTMLFormElement;
-		fireEvent.submit(form);
+		fireEvent.submit(screen.getByTestId('org-display-name-form'));
 
 		await waitFor(() => {
 			expect(screen.getByText(/missing display name/i)).toBeInTheDocument();

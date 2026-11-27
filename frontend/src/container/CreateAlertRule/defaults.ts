@@ -1,10 +1,11 @@
-import { ENTITY_VERSION_V5 } from 'constants/app';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import {
+	initialQueryAIWithType,
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { AlertDetectionTypes } from 'container/FormAlertRules';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	AlertDef,
@@ -28,7 +29,6 @@ const defaultAnnotations = {
 
 export const alertDefaults: AlertDef = {
 	alertType: AlertTypes.METRICS_BASED_ALERT,
-	version: ENTITY_VERSION_V5,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -62,8 +62,7 @@ export const alertDefaults: AlertDef = {
 
 export const anamolyAlertDefaults: AlertDef = {
 	alertType: AlertTypes.METRICS_BASED_ALERT,
-	version: ENTITY_VERSION_V5,
-	ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
+	ruleType: RuletypesRuleTypeDTO.anomaly_rule,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -107,7 +106,6 @@ export const anamolyAlertDefaults: AlertDef = {
 
 export const logAlertDefaults: AlertDef = {
 	alertType: AlertTypes.LOGS_BASED_ALERT,
-	version: ENTITY_VERSION_V5,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -139,7 +137,6 @@ export const logAlertDefaults: AlertDef = {
 
 export const traceAlertDefaults: AlertDef = {
 	alertType: AlertTypes.TRACES_BASED_ALERT,
-	version: ENTITY_VERSION_V5,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -171,7 +168,6 @@ export const traceAlertDefaults: AlertDef = {
 
 export const exceptionAlertDefaults: AlertDef = {
 	alertType: AlertTypes.EXCEPTIONS_BASED_ALERT,
-	version: ENTITY_VERSION_V5,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -201,12 +197,19 @@ export const exceptionAlertDefaults: AlertDef = {
 	alert: '',
 };
 
-export const ALERTS_VALUES_MAP: Record<AlertTypes, AlertDef> = {
-	[AlertTypes.ANOMALY_BASED_ALERT]: anamolyAlertDefaults,
-	[AlertTypes.METRICS_BASED_ALERT]: alertDefaults,
-	[AlertTypes.LOGS_BASED_ALERT]: logAlertDefaults,
-	[AlertTypes.TRACES_BASED_ALERT]: traceAlertDefaults,
-	[AlertTypes.EXCEPTIONS_BASED_ALERT]: exceptionAlertDefaults,
+export const aiTraceAlertDefaults: AlertDef = {
+	...traceAlertDefaults,
+	alertType: AlertTypes.AI_TRACES_BASED_ALERT,
+	condition: {
+		...traceAlertDefaults.condition,
+		compositeQuery: {
+			...traceAlertDefaults.condition.compositeQuery,
+			builderQueries: {
+				A: getActiveBuilder(initialQueryAIWithType).queryData[0],
+			},
+			queryType: EQueryType.AI_QUERY_BUILDER,
+		},
+	},
 };
 
 export const ALERT_TYPE_BREADCRUMB_TITLE: Record<AlertTypes, string> = {
@@ -215,4 +218,5 @@ export const ALERT_TYPE_BREADCRUMB_TITLE: Record<AlertTypes, string> = {
 	[AlertTypes.LOGS_BASED_ALERT]: 'Log-Based Alert',
 	[AlertTypes.TRACES_BASED_ALERT]: 'Traces-Based Alert',
 	[AlertTypes.EXCEPTIONS_BASED_ALERT]: 'Exceptions-Based Alert',
+	[AlertTypes.AI_TRACES_BASED_ALERT]: 'AI Traces-Based Alert',
 };

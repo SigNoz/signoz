@@ -13,28 +13,11 @@
 		max-width: 736px;
 
 		.title {
-			color: var(--l1-foreground);
-			font-size: var(--font-size-lg);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 28px;
-			letter-spacing: -0.09px;
-
 			width: 72%; // arbitrary number to match input width
 			display: flex;
 			align-items: center;
 			gap: 8px;
 			justify-content: space-between;
-		}
-
-		.subtitle {
-			color: var(--l2-foreground);
-			font-size: var(--font-size-sm);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 20px;
-			/* 142.857% */
-			letter-spacing: -0.07px;
 		}
 
 		.ingestion-keys-search-add-new {
@@ -43,6 +26,14 @@
 			gap: 12px;
 
 			padding: 16px 0;
+
+			.ingestion-keys-add-new {
+				flex-shrink: 0;
+			}
+		}
+
+		.ingestion-keys-search-auth-trigger {
+			width: 100%;
 		}
 
 		.ant-table-row {
@@ -77,9 +68,9 @@
 
 							.ant-typography {
 								color: var(--l2-foreground);
-								font-size: var(--font-size-sm);
+								font-size: var(--paragraph-base-500-font-size);
 								font-style: normal;
-								font-weight: var(--font-weight-medium);
+								font-weight: var(--paragraph-base-500-font-weight);
 								line-height: 20px;
 								letter-spacing: -0.07px;
 							}
@@ -97,10 +88,10 @@
 
 							.ant-typography {
 								color: var(--l2-foreground);
-								font-size: var(--font-size-xs);
+								font-size: var(--code-small-500-font-size);
 								font-family: 'Space Mono', monospace;
 								font-style: normal;
-								font-weight: var(--font-weight-medium);
+								font-weight: var(--code-small-500-font-weight);
 								line-height: 20px;
 								letter-spacing: -0.07px;
 							}
@@ -132,7 +123,7 @@
 
 						display: flex;
 						align-items: center;
-						background-color: var(--card);
+						background-color: var(--surface-2);
 					}
 
 					.ant-collapse-content {
@@ -168,12 +159,6 @@
 						.tag-text {
 							color: var(--l2-foreground);
 							leading-trim: both;
-							text-edge: cap;
-							font-size: 10px;
-							font-style: normal;
-							font-weight: var(--font-weight-normal);
-							line-height: normal;
-							letter-spacing: -0.05px;
 						}
 					}
 
@@ -188,9 +173,9 @@
 
 						.ant-typography {
 							color: var(--l2-foreground);
-							font-size: var(--font-size-sm);
+							font-size: var(--paragraph-base-400-font-size);
 							font-style: normal;
-							font-weight: var(--font-weight-normal);
+							font-weight: var(--paragraph-base-400-font-weight);
 							line-height: 18px;
 							/* 128.571% */
 							letter-spacing: -0.07px;
@@ -205,8 +190,6 @@
 					}
 
 					.ingestion-key-expires-in {
-						font-style: normal;
-						font-weight: 400;
 						line-height: 18px;
 
 						display: flex;
@@ -254,9 +237,9 @@
 					'salt' on,
 					'case' on,
 					'cpsp' on;
-				font-size: var(--font-size-sm);
+				font-size: var(--paragraph-base-400-font-size);
 				font-style: normal;
-				font-weight: var(--font-weight-normal);
+				font-weight: var(--paragraph-base-400-font-weight);
 				line-height: 20px;
 				/* 142.857% */
 			}
@@ -267,9 +250,9 @@
 
 			> a {
 				color: var(--foreground) !important;
-				font-size: var(--font-size-sm);
+				font-size: var(--paragraph-base-500-font-size);
 				font-style: normal;
-				font-weight: var(--font-weight-medium);
+				font-weight: var(--paragraph-base-500-font-weight);
 				line-height: 20px;
 			}
 		}
@@ -371,6 +354,7 @@
 
 							.subtitle {
 								font-size: 11px;
+								color: var(--l2-foreground);
 							}
 
 							padding: 4px 0px;
@@ -566,9 +550,9 @@
 
 			.ant-typography {
 				color: var(--l2-foreground);
-				font-size: var(--font-size-sm);
+				font-size: var(--paragraph-base-400-font-size);
 				font-style: normal;
-				font-weight: var(--font-weight-normal);
+				font-weight: var(--paragraph-base-400-font-weight);
 				line-height: 20px;
 				letter-spacing: -0.07px;
 			}
@@ -613,9 +597,9 @@
 
 	.title {
 		color: var(--l1-foreground);
-		font-size: var(--font-size-sm);
+		font-size: var(--paragraph-base-500-font-size);
 		font-style: normal;
-		font-weight: var(--font-weight-medium);
+		font-weight: var(--paragraph-base-500-font-weight);
 		line-height: 20px;
 		/* 142.857% */
 	}
@@ -724,7 +708,7 @@
 			}
 
 			.ant-tabs-nav-list {
-				background: var(--card);
+				background: var(--surface-2);
 				border-radius: 2px;
 				border: 1px solid var(--l1-border);
 				background: var(--l2-background);
@@ -794,7 +778,6 @@
 		width: 100%;
 
 		.ingestion-key-url-label {
-			font-size: 13px;
 			font-weight: 500;
 			color: var(--bg-robin-300);
 		}
@@ -803,7 +786,6 @@
 			display: flex;
 			gap: 8px;
 			align-items: center;
-			font-size: 13px;
 			font-weight: 500;
 			color: var(--bg-robin-300);
 
@@ -820,8 +802,6 @@
 		justify-content: space-between;
 
 		.ingestion-data-region-label {
-			font-size: 13px;
-			font-weight: 500;
 			color: var(--bg-robin-300);
 		}
 
@@ -829,8 +809,6 @@
 			display: flex;
 			gap: 8px;
 			align-items: center;
-			font-size: 13px;
-			font-weight: 500;
 			color: var(--bg-robin-300);
 
 			.ingestion-data-region-value-text {
@@ -858,17 +836,5 @@
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
-	}
-
-	.ingestion-url-error-code {
-		font-size: 12px;
-		font-weight: 500;
-		color: var(--bg-amber-500);
-	}
-
-	.ingestion-url-error-message {
-		font-size: 12px;
-		font-weight: 400;
-		color: var(--l2-foreground);
 	}
 }

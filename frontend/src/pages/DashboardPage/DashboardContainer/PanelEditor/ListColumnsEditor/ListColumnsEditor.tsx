@@ -82,7 +82,16 @@ function ListColumnsEditor({
 	return (
 		<div className={styles.editor} data-testid="list-columns-editor">
 			<div className={styles.header}>
-				<Typography.Text className={styles.title}>Columns</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="medium"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
+					Columns
+				</Typography>
 			</div>
 			<div className={styles.body}>
 				<DndContext
@@ -110,9 +119,16 @@ function ListColumnsEditor({
 				/>
 			</div>
 			{fields.length === 0 && (
-				<Typography.Text className={styles.hint}>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="tertiary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Leave empty to show all fields returned by the query.
-				</Typography.Text>
+				</Typography>
 			)}
 		</div>
 	);

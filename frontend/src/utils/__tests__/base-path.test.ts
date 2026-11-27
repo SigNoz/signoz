@@ -3,13 +3,13 @@
  * module with a fresh DOM state using jest.isolateModules + require.
  */
 
+import { addBaseTag, removeBaseTags } from 'tests/baseTag';
+
 type BasePath = typeof import('../basePath');
 
 function loadModule(href?: string): BasePath {
 	if (href !== undefined) {
-		const base = document.createElement('base');
-		base.setAttribute('href', href);
-		document.head.append(base);
+		addBaseTag(href);
 	}
 
 	let mod!: BasePath;
@@ -21,9 +21,7 @@ function loadModule(href?: string): BasePath {
 }
 
 afterEach(() => {
-	for (const el of document.head.querySelectorAll('base')) {
-		el.remove();
-	}
+	removeBaseTags();
 });
 
 describe('at basePath="/"', () => {
@@ -49,6 +47,12 @@ describe('at basePath="/"', () => {
 
 	it('getAbsoluteUrl returns origin + path', () => {
 		expect(m.getAbsoluteUrl('/logs')).toBe(`${window.location.origin}/logs`);
+	});
+
+	it('stripBasePath is a no-op for any internal path', () => {
+		expect(m.stripBasePath('/logs')).toBe('/logs');
+		expect(m.stripBasePath('/logs/explorer')).toBe('/logs/explorer');
+		expect(m.stripBasePath('/')).toBe('/');
 	});
 
 	it('getBaseUrl returns bare origin', () => {
@@ -83,6 +87,39 @@ describe('at basePath="/signoz/"', () => {
 		expect(m.withBasePath('https://example.com/foo')).toBe(
 			'https://example.com/foo',
 		);
+	});
+
+	it('stripBasePath removes the prefix', () => {
+		expect(m.stripBasePath('/signoz/logs')).toBe('/logs');
+		expect(m.stripBasePath('/signoz/logs/explorer')).toBe('/logs/explorer');
+	});
+
+	it('stripBasePath maps the prefix itself to "/"', () => {
+		expect(m.stripBasePath('/signoz/')).toBe('/');
+		expect(m.stripBasePath('/signoz')).toBe('/');
+	});
+
+	it('stripBasePath is idempotent, so safe to call twice', () => {
+		expect(m.stripBasePath(m.stripBasePath('/signoz/logs'))).toBe('/logs');
+	});
+
+	it('stripBasePath leaves a path that only looks like the prefix alone', () => {
+		expect(m.stripBasePath('/signozzz/logs')).toBe('/signozzz/logs');
+	});
+
+	it('stripBasePath matches the prefix case-insensitively, as the router does', () => {
+		expect(m.stripBasePath('/SigNoz/logs')).toBe('/logs');
+		expect(m.stripBasePath('/SIGNOZ')).toBe('/');
+	});
+
+	it('stripBasePath passes through external URLs', () => {
+		expect(m.stripBasePath('https://example.com/signoz/foo')).toBe(
+			'https://example.com/signoz/foo',
+		);
+	});
+
+	it('stripBasePath round-trips withBasePath', () => {
+		expect(m.stripBasePath(m.withBasePath('/logs?a=1'))).toBe('/logs?a=1');
 	});
 
 	it('getAbsoluteUrl returns origin + prefixed path', () => {

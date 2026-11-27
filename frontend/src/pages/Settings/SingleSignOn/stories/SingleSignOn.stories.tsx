@@ -1,10 +1,25 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import { singleSignOnMocks } from './SingleSignOn.stories.mocks';
+import {
+	createDomain,
+	deleteDomain,
+	expandAttributeMapping,
+	expandRoleMappings,
+	expandWorkspaceGroups,
+	expectViewerAccess,
+	openAddDomain,
+	openConfigureDomain,
+	openDeleteDomain,
+	openProviderSelector,
+	saveConfiguredDomain,
+	submitEmptyProvider,
+	toggleEnforcement,
+	updateDisplayName,
+} from './__story_mockdata__/singleSignOn.play';
 
 import SettingsPage from '../../Settings';
 
@@ -14,13 +29,14 @@ const pageStory = storyMocks(singleSignOnMocks, { layout: 'app' });
 
 /**
  * SAML and OIDC domains for the org, whether SSO is enforced, and the role a new
- * user lands on.
+ * user lands on. Gated on authz permissions: the domain list, delete and the
+ * display name; saving a domain is checked by the backend.
  *
  * Route: `/settings/org-settings`.
  */
 const meta = {
-	title: 'Pages/Settings/Single Sign-on',
-	tags: ['play'],
+	title: 'Pages/Settings/Single Sign-on/Overview',
+	tags: ['authz', 'play'],
 	component: SettingsPage,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -29,23 +45,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<SingleSignOnArgs>;
-
-/** The table fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
-/** Row actions repeat per domain, so a story that opens one takes the first. */
-const clickFirst = async (
-	canvasElement: HTMLElement,
-	testId: string,
-): Promise<void> => {
-	const [action] = await within(canvasElement).findAllByTestId(
-		testId,
-		undefined,
-		untilLoaded,
-	);
-
-	await userEvent.click(action);
-};
 
 /**
  * The org's display name and the email domains that sign in through an identity
@@ -75,88 +74,55 @@ export const SsoNotEnforced: Story = {
 
 /** The form behind a domain's provider: what SigNoz sends the IdP and reads back. */
 export const ConfigureDomain: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickFirst(canvasElement, 'auth-domain-configure');
-		await screen.findByText(/attribute mapping/i, undefined, untilLoaded);
-	},
+	play: openConfigureDomain,
 };
 
 /** Adding a domain: the provider chosen first decides the rest of the form. */
 export const AddDomain: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'auth-domain-add',
-				undefined,
-				untilLoaded,
-			),
-		);
-	},
+	play: openAddDomain,
 };
 
 /** Interaction: adding a domain opens the real provider selector. */
 export const ProviderSelectorOpen: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'auth-domain-add',
-				undefined,
-				untilLoaded,
-			),
-		);
-		await screen.findByText(
-			/configure authentication method/i,
-			undefined,
-			untilLoaded,
-		);
-	},
+	play: openProviderSelector,
 };
 
 /** Interaction: advanced role mappings expand from a configured identity provider. */
 export const RoleMappingsExpanded: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickFirst(canvasElement, 'auth-domain-configure');
-		await userEvent.click(
-			await screen.findByTestId('role-mapping-header', undefined, untilLoaded),
-		);
-		await screen.findByText(/group to role mappings/i, undefined, untilLoaded);
-	},
+	play: expandRoleMappings,
+};
+
+/**
+ * Interaction: the SAML attribute mapping open on a configured domain. Set
+ * Identity provider to `oidc` for its claim mapping; Google has neither.
+ */
+export const AttributeMappingExpanded: Story = {
+	play: expandAttributeMapping,
+};
+
+/** Interaction: the OIDC claim mapping open on a configured domain. */
+export const ClaimMappingExpanded: Story = {
+	args: { provider: 'oidc' },
+	play: expandAttributeMapping,
+};
+
+/**
+ * Interaction: the Google form with its Workspace groups open, group fetching on
+ * and the allowed groups listed.
+ */
+export const WorkspaceGroupsExpanded: Story = {
+	args: { provider: 'google' },
+	play: expandWorkspaceGroups,
 };
 
 /** Validation: submitting a new provider without required fields leaves form errors visible. */
 export const CreateDomainValidation: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'auth-domain-add',
-				undefined,
-				untilLoaded,
-			),
-		);
-		await userEvent.click(
-			await screen.findByTestId(
-				'authn-provider-configure-google',
-				undefined,
-				untilLoaded,
-			),
-		);
-		await userEvent.click(
-			await screen.findByTestId('auth-domain-save', undefined, untilLoaded),
-		);
-		await screen.findByText(/domain is required/i, undefined, untilLoaded);
-	},
+	play: submitEmptyProvider,
 };
 
 /** What removing a domain warns about before its members lose SSO. */
 export const DeleteDomain: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickFirst(canvasElement, 'auth-domain-delete');
-		await screen.findByTestId(
-			'auth-domain-delete-confirm',
-			undefined,
-			untilLoaded,
-		);
-	},
+	play: openDeleteDomain,
 };
 
 /**
@@ -164,22 +130,7 @@ export const DeleteDomain: Story = {
  * update to `error` or `loading` to see the modal instead.
  */
 export const DisplayNameUpdatedToast: Story = {
-	play: async ({ canvasElement, args }): Promise<void> => {
-		const input = await within(canvasElement).findByLabelText(
-			/display name/i,
-			undefined,
-			untilLoaded,
-		);
-
-		await userEvent.clear(input);
-		await userEvent.type(input, 'Night Watch');
-		await userEvent.click(
-			await within(canvasElement).findByRole('button', { name: /^submit$/i }),
-		);
-		if (args.displayNameUpdate === 'success') {
-			await waitFor(() => expect(screen.getByText(/^success$/i)).toBeVisible());
-		}
-	},
+	play: updateDisplayName,
 };
 
 /**
@@ -187,19 +138,47 @@ export const DisplayNameUpdatedToast: Story = {
  * `loading` to see the modal instead.
  */
 export const DomainDeletedToast: Story = {
-	play: async ({ canvasElement, args }): Promise<void> => {
-		await clickFirst(canvasElement, 'auth-domain-delete');
-		await userEvent.click(
-			await screen.findByTestId(
-				'auth-domain-delete-confirm',
-				undefined,
-				untilLoaded,
-			),
-		);
-		if (args.domainDelete === 'success') {
-			await waitFor(() =>
-				expect(screen.getByText(/domain deleted successfully/i)).toBeVisible(),
-			);
-		}
-	},
+	play: deleteDomain,
+};
+
+/**
+ * A viewer: the tab is listed for every role, but the domain list is denied and
+ * the display name is locked.
+ */
+export const Viewer: Story = {
+	args: { access: 'viewer' },
+	play: expectViewerAccess,
+};
+
+/**
+ * Adding a domain whose save the backend rejects: the error modal opens and the
+ * filled form stays. Set Domain save to `success` for the created toast.
+ */
+export const DomainCreateFailed: Story = {
+	args: { domainSave: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: createDomain,
+};
+
+/**
+ * Saving a configured domain the backend rejects: the error modal opens over the
+ * form. Set Domain save to `success` for the updated toast.
+ */
+export const DomainUpdateFailed: Story = {
+	args: { domainSave: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: saveConfiguredDomain,
+};
+
+/**
+ * The enforce SSO switch flipped on a domain the backend rejects: the error modal
+ * opens and the switch returns to where it was.
+ */
+export const EnforceSsoFailed: Story = {
+	args: { domainSave: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: toggleEnforcement,
 };

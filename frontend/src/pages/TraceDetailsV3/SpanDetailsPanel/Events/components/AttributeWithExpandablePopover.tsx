@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import { Popover, Tooltip } from 'antd';
+import { Popover } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { Fullscreen } from '@signozhq/icons';
 
@@ -35,17 +35,29 @@ function AttributeWithExpandablePopover({
 
 	return (
 		<div className={styles.attributeContainer} key={attributeKey}>
-			<Tooltip title={attributeKey}>
-				<Typography.Text className={styles.attributeKey} truncate={1}>
-					{attributeKey}
-				</Typography.Text>
-			</Tooltip>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="p"
+				textOverflow="ellipsis"
+			>
+				{attributeKey}
+			</Typography>
 
 			<div className={styles.wrapper}>
 				<Popover content={popoverContent} trigger="hover" placement="topRight">
-					<Typography.Text className={styles.attributeValue} truncate={1}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="main"
+						as="p"
+						textOverflow="ellipsis"
+					>
 						{attributeValue}
-					</Typography.Text>
+					</Typography>
 				</Popover>
 			</div>
 		</div>

@@ -31,12 +31,14 @@ describe('PermissionDeniedCallout', () => {
 		const deniedPermissions = [
 			buildPermission('read', buildObjectString('serviceaccount', '*')),
 		];
-		const { container } = render(
+		render(
 			<PermissionDeniedCallout
 				deniedPermissions={deniedPermissions}
 				className="custom-class"
 			/>,
 		);
-		expect(container.firstChild).toHaveClass('custom-class');
+		expect(screen.getByTestId('permission-denied-callout-wrapper')).toHaveClass(
+			'custom-class',
+		);
 	});
 });

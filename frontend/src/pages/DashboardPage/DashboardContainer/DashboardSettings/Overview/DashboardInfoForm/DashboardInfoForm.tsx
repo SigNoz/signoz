@@ -35,7 +35,16 @@ function DashboardInfoForm({
 		<div className={settingsStyles.settingsCard}>
 			<div className={styles.formSpace}>
 				<div className={styles.infoItemContainer}>
-					<Typography className={styles.infoTitle}>Dashboard Name</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Dashboard Name
+					</Typography>
 					<section className={styles.nameIconInput}>
 						<DashboardImagePicker
 							image={image}
@@ -43,18 +52,28 @@ function DashboardInfoForm({
 							triggerClassName={styles.dashboardImageInput}
 						/>
 
-						<Input
-							testId="dashboard-name"
-							className={styles.dashboardNameInput}
-							value={title}
-							maxLength={DASHBOARD_NAME_MAX_LENGTH}
-							onChange={(e): void => onTitleChange(e.target.value)}
-						/>
+						<div className={styles.dashboardNameInput}>
+							<Input
+								testId="dashboard-name"
+								value={title}
+								maxLength={DASHBOARD_NAME_MAX_LENGTH}
+								onChange={(e): void => onTitleChange(e.target.value)}
+							/>
+						</div>
 					</section>
 				</div>
 
 				<div className={styles.infoItemContainer}>
-					<Typography className={styles.infoTitle}>Description</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Description
+					</Typography>
 					<AntdInput.TextArea
 						data-testid="dashboard-desc"
 						rows={6}
@@ -65,7 +84,16 @@ function DashboardInfoForm({
 				</div>
 
 				<div className={styles.infoItemContainer}>
-					<Typography className={styles.infoTitle}>Tags</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Tags
+					</Typography>
 					<TagKeyValueInput tags={tags} onTagsChange={onTagsChange} />
 				</div>
 			</div>

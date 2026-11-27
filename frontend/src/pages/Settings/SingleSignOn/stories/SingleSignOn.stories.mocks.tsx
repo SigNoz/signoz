@@ -4,14 +4,24 @@
  */
 
 import ROUTES from 'constants/routes';
+import {
+	AuthDomainListPermission,
+	buildAuthDomainDeletePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/auth-domain.permissions';
+import {
+	buildOrganizationReadPermission,
+	buildOrganizationUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/organization.permissions';
 import { rest } from 'msw';
 
+import { grantsAll } from '@/storybook/access/access';
 import {
 	choiceControl,
 	countControl,
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	AUTHN_PROVIDERS,
@@ -122,3 +132,25 @@ export const singleSignOnMocks = defineStoryMocks({
 	],
 	config: () => ({ route: ROUTES.ORG_SETTINGS }),
 });
+
+export type SingleSignOnArgs = PageStoryArgs<typeof singleSignOnMocks>;
+
+export const canReadDisplayName = (args: SingleSignOnArgs): boolean =>
+	grantsAll(args, buildOrganizationReadPermission('*'));
+
+export const canEditDisplayName = (args: SingleSignOnArgs): boolean =>
+	canReadDisplayName(args) &&
+	grantsAll(args, buildOrganizationUpdatePermission('*'));
+
+export const canListDomains = (args: SingleSignOnArgs): boolean =>
+	grantsAll(args, AuthDomainListPermission);
+
+export const canDeleteDomain = (args: SingleSignOnArgs): boolean =>
+	grantsAll(args, buildAuthDomainDeletePermission('*'));
+
+/** Rows come from the domains handler, which State can hold back or fail. */
+export const listsDomains = (args: SingleSignOnArgs): boolean =>
+	canListDomains(args) &&
+	args.dataState === 'loaded' &&
+	authDomainsResponse(args.domains, args.provider, args.enforced).data.length >
+		0;

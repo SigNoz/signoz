@@ -21,7 +21,6 @@
 
 		.metric-value {
 			font-size: 24px;
-			font-weight: 400;
 
 			&.red {
 				color: var(--bg-cherry-400);
@@ -43,7 +42,6 @@
 
 		.metric-reference {
 			color: var(--muted-foreground);
-			font-size: 12px;
 		}
 
 		.trace-button {

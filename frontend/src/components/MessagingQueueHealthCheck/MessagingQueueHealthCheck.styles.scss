@@ -17,10 +17,7 @@
 
 			.ant-modal-title {
 				color: var(--l1-foreground);
-				font-family: Inter;
 				font-size: 13px;
-				font-style: normal;
-				font-weight: 600;
 				line-height: 22px;
 				letter-spacing: 0.52px;
 			}
@@ -58,11 +55,6 @@
 
 			.tree-text {
 				color: var(--l2-foreground);
-				font-family: 'Geist Mono';
-				font-size: 12px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 16px;
 				width: 328px;
 			}
 
@@ -85,7 +77,7 @@
 							align-items: center;
 							gap: 6px;
 
-							font-family: 'Geist Mono';
+							font-family: var(--code-small-400-font-family);
 							font-size: 12px;
 							font-style: normal;
 							font-weight: 400;

@@ -4,7 +4,7 @@ import {
 	RetryActionDTO,
 	type ErrorBodyDTO,
 	type ErrorResponseDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 
 export interface AssistantErrorResolution {
 	/** User-facing copy: code-specific FE copy → backend message → caller fallback. */

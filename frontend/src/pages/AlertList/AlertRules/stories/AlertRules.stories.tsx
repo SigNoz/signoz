@@ -1,9 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { alertRulesMocks } from './AlertRules.stories.mocks';
+import {
+	alertRulesMocks,
+	type AlertRulesArgs,
+} from './AlertRules.stories.mocks';
 import {
 	cloneAlert,
 	copyLabel,
@@ -12,16 +14,15 @@ import {
 	openDeleteViewConfirm,
 	openDisabledRuleActions,
 	openQuerySuggestions,
-	openRenameViewPopover,
+	openRenameViewDialog,
 	openRowActions,
-	openSaveViewPopover,
+	openSaveViewDialog,
+	openStatesFilter,
 	toggleAlert,
 } from './__story_mockdata__/alertRules.play';
 
 import AlertList from '../../index';
 import { RULE_MAX } from '../../stories/__story_mockdata__/alerts';
-
-type AlertRulesArgs = PageStoryArgs<typeof alertRulesMocks>;
 
 const pageStory = storyMocks(alertRulesMocks, { layout: 'app' });
 
@@ -47,7 +48,7 @@ type Story = StoryObj<AlertRulesArgs>;
 
 /**
  * Every alert rule the org has configured, with the state each one evaluated to
- * on its last run and the severity it fires at.
+ * on its last run and the thresholds it fires at, firing rules first.
  */
 export const Default: Story = {};
 
@@ -63,7 +64,7 @@ export const NoMatchingRules: Story = {
 	},
 };
 
-/** The query the list was asked for does not parse: the server's message sits under the search box. */
+/** The query the list was asked for does not parse: the Invalid query state, with the server's message, replaces the list. */
 export const InvalidQuery: Story = {
 	args: { invalidQuery: 'rule_list_filter_invalid' },
 	parameters: {
@@ -80,6 +81,27 @@ export const InvalidQuery: Story = {
  */
 export const QuerySuggestions: Story = {
 	play: openQuerySuggestions,
+};
+
+/** The Enabled view: every rule that is not disabled, whatever it evaluated to. */
+export const EnabledView: Story = {
+	args: { view: 'enabled' },
+};
+
+/**
+ * Recently viewed: the rules this browser opened from the list, in the order they
+ * were opened, whatever the sort.
+ */
+export const RecentlyViewed: Story = {
+	args: { view: 'recent' },
+};
+
+/**
+ * Recently viewed before any rule was opened: the search stays, and the view says
+ * how it fills instead of offering the first-rule page.
+ */
+export const NoRecentlyViewed: Story = {
+	args: { view: 'recent', recentRules: 0 },
 };
 
 /** A workspace with no saved view yet, where the rail says how to make one. */
@@ -119,14 +141,14 @@ export const RailCollapsed: Story = {
 	args: { railCollapsed: true },
 };
 
-/** The popover that names the current filters as a new saved view. */
-export const SaveViewPopover: Story = {
-	play: openSaveViewPopover,
+/** The dialog that names the current filters as a new saved view. */
+export const SaveView: Story = {
+	play: openSaveViewDialog,
 };
 
-/** A saved view's rename popover, opened from its row. */
-export const RenameViewPopover: Story = {
-	play: openRenameViewPopover,
+/** A saved view's rename dialog, opened from its row. */
+export const RenameView: Story = {
+	play: openRenameViewDialog,
 };
 
 /** Deleting a saved view asks first, because every teammate loses it too. */
@@ -177,6 +199,11 @@ export const RowActionsDisabledRule: Story = {
 /** The columns the table can show, including the audit ones it hides by default. */
 export const ColumnPicker: Story = {
 	play: openColumnPicker,
+};
+
+/** The Status dropdown, open with a status picked. */
+export const StateFilterOpen: Story = {
+	play: openStatesFilter,
 };
 
 /**

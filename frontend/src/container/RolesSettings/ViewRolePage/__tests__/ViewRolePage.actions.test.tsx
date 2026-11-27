@@ -98,7 +98,7 @@ describe('ViewRolePage - Actions', () => {
 			screen.findByText(/Are you sure you want to delete the role/),
 		).resolves.toBeInTheDocument();
 
-		const modal = screen.getByRole('dialog');
+		const modal = screen.getByRole('alertdialog');
 		const modalConfirmBtn = within(modal).getByRole('button', {
 			name: /Delete Role/i,
 		});

@@ -31,6 +31,7 @@ import {
 	HEATMAP_COUNT_RANGES,
 	HEATMAP_FIXED_COUNTS,
 	HEATMAP_PALETTES,
+	HEATMAP_SOURCES,
 	HEATMAP_Y_SCALES,
 	LEGEND_POSITIONS,
 	LINE_STYLES,
@@ -43,6 +44,7 @@ import {
 	STACK_MODES,
 	TEXT_ALIGNS,
 	TEXT_SAMPLES,
+	TOP_LIST_AGGREGATIONS,
 	UNITS,
 	Y_SCALES,
 } from './__story_mockdata__/constants';
@@ -60,6 +62,7 @@ import type {
 	BucketWidth,
 	Gaps,
 	HeatmapCountRange,
+	HeatmapSource,
 	PanelArgs,
 	PanelKind,
 	PanelResult,
@@ -67,6 +70,7 @@ import type {
 	PieSlices,
 	SpanGaps,
 	TextSample,
+	TopListAggregation,
 	YScale,
 } from './__story_mockdata__/types';
 
@@ -98,7 +102,7 @@ export const panelsMocks = defineStoryMocks({
 		thresholds: toggleControl('Thresholds', {
 			group: PANEL,
 			description:
-				'A dashed labelled line on Time Series, Bar and Area; a background colour on Number when the value is above it; a filled `A` cell on Table rows above it, never a `B` cell. Other kinds have none.',
+				'A dashed labelled line on Time Series, Bar and Area; a background colour on Number when the value is above it; a filled `A` cell on Table rows above it, never a `B` cell; a recoloured bar on Top List rows above it. Other kinds have none.',
 			value: false,
 		}),
 		unit: choiceControl<PanelUnit>('Unit', {
@@ -132,6 +136,13 @@ export const panelsMocks = defineStoryMocks({
 			description: `The colour bar's bounds: from 0 to the busiest cell, or fixed at ${HEATMAP_FIXED_COUNTS.min}–${HEATMAP_FIXED_COUNTS.max}.`,
 			options: HEATMAP_COUNT_RANGES,
 			value: 'auto',
+		}),
+		heatmapSource: choiceControl<HeatmapSource>('Heatmap source', {
+			group: PANEL,
+			description:
+				'The signal the heatmap buckets: a metric, a log field (`attribute.queue_depth`), a span field (`duration_nano`), or a traces query whose field was cleared, which the panel does not run.',
+			options: HEATMAP_SOURCES,
+			value: 'metrics',
 		}),
 		bucketWidth: choiceControl<BucketWidth>('Histogram bucket width', {
 			group: PANEL,
@@ -187,6 +198,26 @@ export const panelsMocks = defineStoryMocks({
 			description: 'Formats the Table value column in the Unit above.',
 			value: false,
 		}),
+		showRank: toggleControl('Top list rank', {
+			group: PANEL,
+			description: 'Numbers each Top List row by its position.',
+			value: false,
+		}),
+		showShare: toggleControl('Top list share', {
+			group: PANEL,
+			description: "Each Top List row's share of the listed total.",
+			value: false,
+		}),
+		topListAggregation: choiceControl<TopListAggregation>(
+			'Top list aggregation',
+			{
+				group: PANEL,
+				description:
+					'`sum` adds up across services; `p99` does not, so showing shares of it warns in the panel header.',
+				options: TOP_LIST_AGGREGATIONS,
+				value: 'sum',
+			},
+		),
 		result: choiceControl<PanelResult>('Query result', {
 			group: DATA,
 			description:
@@ -197,7 +228,7 @@ export const panelsMocks = defineStoryMocks({
 		series: countControl('Series', {
 			group: DATA,
 			description:
-				'Series on the charts, groups on the heatmap, slices on the pie, rows on the table.',
+				'Series on the charts, groups on the heatmap, slices on the pie, rows on the table and the top list.',
 			value: 4,
 			max: MAX_SERIES,
 		}),
@@ -226,6 +257,12 @@ export const panelsMocks = defineStoryMocks({
 			group: DATA,
 			description:
 				'`use_json_body`: the List panel’s log bodies arrive as objects, every third one with keys beside `message`.',
+			value: false,
+		}),
+		listWideRows: toggleControl('List wide rows', {
+			group: DATA,
+			description:
+				'Every log carries 24 attributes, so the List panel opens with a column each beside the body.',
 			value: false,
 		}),
 	},
@@ -275,6 +312,7 @@ export const panelsMocks = defineStoryMocks({
 						series: values.series,
 						listRows: values.listRows,
 						listJsonBody: values.listJsonBody,
+						listWideRows: values.listWideRows,
 						gaps: values.gaps,
 						pieSlices: values.pieSlices,
 					});

@@ -3,6 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { Color } from '@signozhq/design-tokens';
 import {
 	DashboardtypesHeatmapPaletteDTO as HeatmapPalette,
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
@@ -29,6 +30,7 @@ export const PANEL_KINDS = [
 	'Table',
 	'List',
 	'Text',
+	'TopList',
 ] as const;
 
 export const PANEL_RESULTS = ['data', 'empty', 'warning'] as const;
@@ -52,6 +54,19 @@ export const HEATMAP_Y_SCALES = Object.values(HeatmapYScale);
 
 export const HEATMAP_COUNT_RANGES = ['auto', 'fixed'] as const;
 
+export const HEATMAP_SOURCES = [
+	'metrics',
+	'logs',
+	'traces',
+	'no field',
+] as const;
+
+/** The field a logs or traces heatmap buckets. */
+export const HEATMAP_FIELDS = {
+	logs: 'attribute.queue_depth',
+	traces: 'duration_nano',
+} as const;
+
 /** The colour bar's bounds under the `fixed` count range. */
 export const HEATMAP_FIXED_COUNTS = { min: 5, max: 250 };
 
@@ -66,6 +81,9 @@ export const Y_SCALES = ['linear', 'log'] as const;
 export const LINE_STYLES = Object.values(LineStyle);
 
 export const GAPS = ['none', 'hole'] as const;
+
+/** `sum` adds up across services; `p99` does not, so its shares get a warning. */
+export const TOP_LIST_AGGREGATIONS = ['sum', 'p99'] as const;
 
 export const PIE_SLICES = ['even', 'long-tail'] as const;
 
@@ -88,7 +106,11 @@ export const PANEL_NAME: Record<PanelKind, string> = {
 	Table: 'Calls by service',
 	List: 'Recent logs',
 	Text: 'Runbook',
+	TopList: 'Busiest services',
 };
+
+/** The bars' fill, unless a threshold recolours the row. */
+export const TOP_LIST_BAR_COLOR = Color.BG_ROBIN_500;
 
 /** A colour no series palette draws in, so a canvas probe for it finds only the line. */
 export const THRESHOLD_COLOR = '#00e5ff';

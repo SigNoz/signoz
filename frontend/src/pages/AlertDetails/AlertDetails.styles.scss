@@ -41,9 +41,10 @@
 }
 
 .alert-details {
+	margin-top: 10px;
+
 	&__divider {
-		--divider-color: var(--l1-border);
-		--divider-margin: 16px 0;
+		margin: 16px 0;
 	}
 	.breadcrumb-divider {
 		margin-top: 10px;
@@ -64,7 +65,7 @@
 		.ant-breadcrumb-separator,
 		.breadcrumb-item--last {
 			color: var(--muted-foreground);
-			font-family: 'Geist Mono';
+			font-family: var(--code-base-400-font-family);
 		}
 	}
 	.tabs-and-filters {

@@ -194,8 +194,8 @@ go.mod @therealpandey
 /frontend/src/pages/EditRules/ @SigNoz/pulse-frontend
 /frontend/src/container/AlertHistory/ @SigNoz/pulse-frontend
 /frontend/src/container/CreateAlertRule/ @SigNoz/pulse-frontend
-/frontend/src/container/CreateAlertV2/ @SigNoz/pulse-frontend
-/frontend/src/container/EditAlertV2/ @SigNoz/pulse-frontend
+/frontend/src/container/CreateAlert/ @SigNoz/pulse-frontend
+/frontend/src/container/EditAlert/ @SigNoz/pulse-frontend
 /frontend/src/container/FormAlertRules/ @SigNoz/pulse-frontend
 /frontend/src/container/ListAlertRules/ @SigNoz/pulse-frontend
 /frontend/src/container/TriggeredAlerts/ @SigNoz/pulse-frontend

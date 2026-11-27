@@ -1,11 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ComponentProps, ComponentType } from 'react';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { withCanvas } from '@/storybook/decorators/withCanvas';
 import type { GlobalMockArgs } from '@/storybook/globals';
 
 import QuickFilters from '../QuickFilters';
+import {
+	dirtySettings,
+	hoverTruncatedTitle,
+	openQueryPicker,
+	openSettings,
+} from './__story_mockdata__/quickFilters.play';
 import {
 	checkboxConfig,
 	fieldApis,
@@ -13,11 +19,14 @@ import {
 	handlers,
 	LONG_FILTER_VALUES,
 	loadingFiltersHandlers,
+	longTitleConfig,
+	MANY_FILTER_VALUES,
 	queryBuilder,
 	selectedServiceQueryBuilder,
 	noSavedFiltersHandler,
+	noSavedTracesFiltersHandler,
 } from './QuickFilters.stories.mocks';
-import { QuickFiltersSource } from '../types';
+import { FiltersType, QuickFiltersSource } from '../types';
 
 const meta = {
 	title: 'Components/Quick Filters',
@@ -47,40 +56,18 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-type TooltipsStory = StoryObj<
+type GlobalArgsStory = StoryObj<
 	ComponentProps<typeof QuickFilters> & GlobalMockArgs
 >;
 
-/**
- * The settings control renders disabled while its permission check is in
- * flight and is swapped for the enabled one once the check answers, so it is
- * looked up again on every attempt; a click on the disabled one is dropped in
- * silence.
- */
-const settingsControl = (canvasElement: HTMLElement): Promise<HTMLElement> =>
-	waitFor(() => {
-		const control = within(canvasElement).getByTestId('settings-icon-container');
-
-		expect(control).not.toHaveAttribute('aria-disabled', 'true');
-
-		return control;
-	});
-
 /** Interaction: the settings panel is opened through the admin settings control. */
-export const SettingsOpen: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(await settingsControl(canvasElement));
-		await screen.findByText('Edit quick filters');
-	},
+export const SettingsOpen: GlobalArgsStory = {
+	play: openSettings,
 };
 
 /** Mutation: changing the settings list reveals the fixed save and discard footer. */
-export const SettingsDirtyFooter: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(await settingsControl(canvasElement));
-		await userEvent.click(await screen.findByRole('button', { name: 'Add' }));
-		await screen.findByRole('button', { name: 'Save changes' });
-	},
+export const SettingsDirtyFooter: GlobalArgsStory = {
+	play: dirtySettings,
 };
 
 /** Loading: dynamic filters are intentionally left pending to display the panel skeleton. */
@@ -100,6 +87,28 @@ export const NoResults: Story = {
 	},
 };
 
+/** A filter with more values than it lists at first: the value search and Show More. */
+export const ShowMoreValues: Story = {
+	parameters: {
+		msw: {
+			handlers: [
+				noSavedFiltersHandler,
+				fieldValuesHandler(MANY_FILTER_VALUES),
+				...handlers,
+			],
+		},
+	},
+};
+
+/** A filter whose attribute has no values in the time range. */
+export const NoValuesFound: Story = {
+	parameters: {
+		msw: {
+			handlers: [noSavedFiltersHandler, fieldValuesHandler([]), ...handlers],
+		},
+	},
+};
+
 /** Selection: an expanded checkbox shows the actual selected service values. */
 export const SelectedExpandedCheckbox: Story = {
 	parameters: {
@@ -110,13 +119,36 @@ export const SelectedExpandedCheckbox: Story = {
 	},
 };
 
+/** The duration min/max row, which a checkbox-only config never reaches. */
+export const DurationFilter: Story = {
+	args: {
+		quickFilterSource: QuickFiltersSource.TRACES_EXPLORER,
+		config: [
+			...checkboxConfig,
+			{
+				attributeKey: {
+					dataType: DataTypes.Float64,
+					key: 'duration_nano',
+					type: '',
+				},
+				defaultOpen: true,
+				title: 'Duration',
+				type: FiltersType.DURATION,
+			},
+		],
+	},
+	parameters: {
+		msw: { handlers: [noSavedTracesFiltersHandler, ...handlers] },
+	},
+};
+
 /**
  * Every tooltip the panel renders, held open: the reveal on each truncated
  * filter value. Nothing bounds those values, so the panel is answered with
  * service names long enough to be cut. The Service name filter carries them, so
  * the workspace's own saved filter list is answered empty.
  */
-export const Tooltips: TooltipsStory = {
+export const Tooltips: GlobalArgsStory = {
 	args: { tooltipsOpen: true },
 	parameters: {
 		msw: {
@@ -129,10 +161,19 @@ export const Tooltips: TooltipsStory = {
 	},
 };
 
+/** A section title too long for the rail: hovering it shows the full title once. */
+export const TruncatedTitle: GlobalArgsStory = {
+	args: { config: longTitleConfig },
+	parameters: {
+		msw: { handlers: [noSavedFiltersHandler, ...handlers] },
+	},
+	play: hoverTruncatedTitle,
+};
+
 const [firstQuery] = queryBuilder.currentQuery.builder.queryData;
 
 /** Interaction: the query picker lists every query the filters can follow. */
-export const QueryPickerOpen: Story = {
+export const QueryPickerOpen: GlobalArgsStory = {
 	parameters: {
 		signoz: {
 			queryBuilder: {
@@ -148,18 +189,5 @@ export const QueryPickerOpen: Story = {
 			},
 		},
 	},
-	play: async ({ canvasElement }): Promise<void> => {
-		const trigger = await waitFor(() => {
-			const element = canvasElement.querySelector<HTMLElement>(
-				'[data-slot="combobox-trigger"]',
-			);
-
-			expect(element).toBeInTheDocument();
-
-			return element as HTMLElement;
-		});
-
-		await userEvent.click(trigger);
-		await screen.findByRole('listbox');
-	},
+	play: openQueryPicker,
 };

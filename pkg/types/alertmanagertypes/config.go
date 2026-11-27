@@ -22,6 +22,9 @@ const (
 	DefaultReceiverName string = "default-receiver"
 	DefaultGroupBy      string = "ruleId"
 	DefaultGroupByAll   string = "__all__"
+
+	// Repeat interval used for rules with re-notify off.
+	NoRenotifyInterval time.Duration = 8760 * time.Hour
 )
 
 var (
@@ -619,10 +622,6 @@ type ConfigStore interface {
 
 	// ListAllChannels returns the list of channels for all organizations.
 	ListAllChannels(context.Context) ([]*Channel, error)
-
-	// GetMatchers gets a list of matchers per organization.
-	// Matchers is an array of ruleId to receiver names.
-	GetMatchers(context.Context, string) (map[string][]string, error)
 }
 
 // MarshalSecretValue if set to true will expose Secret type

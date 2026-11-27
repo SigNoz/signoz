@@ -25,10 +25,6 @@
 }
 
 .filtersLabel {
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-medium);
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
 	color: var(--l2-foreground);
 	margin-right: 2px;
 }
@@ -86,27 +82,22 @@
 	}
 }
 
-// Created-by option: a presentational checkbox + label (antd handles the toggle).
-.creatorOption {
+// Multi-select option: a presentational checkbox + label (antd handles the toggle).
+.checkOption {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 }
 
-.creatorCheck {
+.checkOptionBox {
 	// Flex, not block: a line box would shift with the check mark's baseline.
 	display: flex;
 	flex-shrink: 0;
 	pointer-events: none;
 }
 
-.creatorLabel {
+.checkOptionLabel {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-
-.error {
-	font-size: var(--font-size-xs);
-	color: var(--danger-foreground);
 }

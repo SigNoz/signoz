@@ -2,7 +2,7 @@ import { ReactNode, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useAppParams } from 'lib/router/useAppParams';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { topOperationMetricsDownloadOptions } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
@@ -15,6 +15,7 @@ import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { AppState } from 'store/reducers';
+import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
@@ -70,7 +71,7 @@ function TopOperationMetrics(): JSX.Element {
 			globalSelectedInterval,
 			variables: {},
 		},
-		ENTITY_VERSION_V4,
+		ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				`GetMetricsQueryRange-${keyOperationWidget?.timePreferance}-${globalSelectedInterval}-${keyOperationWidget?.id}`,
@@ -88,7 +89,9 @@ function TopOperationMetrics(): JSX.Element {
 		},
 	);
 
-	const queryTableData = data?.payload?.data?.newResult?.data?.result || [];
+	const queryTableData = (data?.payload?.data?.newResult?.data?.result ||
+		data?.payload?.data?.result ||
+		[]) as QueryDataV3[];
 
 	const renderColumnCell = useMemo(
 		() =>

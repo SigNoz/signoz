@@ -13,11 +13,11 @@ import UnpricedModelsTab from '../UnpricedModelsTab';
 
 const toastSuccess = jest.fn();
 const toastError = jest.fn();
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: (...args: unknown[]): void => toastSuccess(...args),
-		error: (...args: unknown[]): void => toastError(...args),
+		danger: (...args: unknown[]): void => toastError(...args),
 	},
 }));
 
@@ -34,15 +34,26 @@ function setup(): void {
 	);
 }
 
-// Picks a billing model in a row's dropdown: open the combobox, then click the
-// option. The dropdown fetches its options from the rules list (mocked above).
+// Picks a billing model in a row's dropdown: open the combobox, wait for the
+// options (fetched from the rules list mocked above), then arrow down to the
+// option and press Enter. jsdom cannot deliver the pointer click Base UI
+// expects on an option.
 async function selectRule(
 	user: ReturnType<typeof userEvent.setup>,
 	modelName: string,
 	ruleId: string,
 ): Promise<void> {
 	await user.click(screen.getByTestId(`map-to-select-${modelName}`));
-	await user.click(await screen.findByTestId(`map-to-option-${ruleId}`));
+	await screen.findByTestId(`map-to-option-${ruleId}`);
+	const index = screen
+		.getAllByTestId(/^map-to-option-/)
+		.findIndex(
+			(option) => option.getAttribute('data-testid') === `map-to-option-${ruleId}`,
+		);
+	await waitFor(() =>
+		expect(screen.getByTestId(`map-to-select-${modelName}-search`)).toHaveFocus(),
+	);
+	await user.keyboard(`${'{ArrowDown}'.repeat(index + 1)}{Enter}`);
 }
 
 describe('UnpricedModelsTab (integration)', () => {
@@ -58,7 +69,7 @@ describe('UnpricedModelsTab (integration)', () => {
 	});
 
 	it('opens the confirm dialog with the target rule pricing when a model is picked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
@@ -83,7 +94,7 @@ describe('UnpricedModelsTab (integration)', () => {
 	});
 
 	it('reverts the row trigger to the placeholder when the mapping is cancelled', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
@@ -114,7 +125,7 @@ describe('UnpricedModelsTab (integration)', () => {
 			}),
 		);
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
@@ -145,7 +156,7 @@ describe('UnpricedModelsTab (integration)', () => {
 			}),
 		);
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
@@ -162,7 +173,7 @@ describe('UnpricedModelsTab (integration)', () => {
 	});
 
 	it('opens the add-cost drawer prefilled when creating pricing for a model', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
@@ -175,6 +186,6 @@ describe('UnpricedModelsTab (integration)', () => {
 		// The shared add-cost drawer opens with the model name prefilled.
 		const drawerTitle = await screen.findByText('Add model cost');
 		expect(drawerTitle).toBeInTheDocument();
-		expect(screen.getByTestId('drawer-model-id-input')).toHaveValue(MODEL);
+		expect(screen.getByTestId('drawer-model-id-input-field')).toHaveValue(MODEL);
 	});
 });

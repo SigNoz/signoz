@@ -67,18 +67,19 @@ export const AlertType = {
 	TRACES: 'TRACES_BASED_ALERT',
 	EXCEPTIONS: 'EXCEPTIONS_BASED_ALERT',
 	ANOMALY: 'ANOMALY_BASED_ALERT',
+	AI_TRACES: 'AI_TRACES_BASED_ALERT',
 } as const;
 
 export type AlertTypeValue = (typeof AlertType)[keyof typeof AlertType];
 
-/** `AlertDetectionTypes` (`frontend/src/container/FormAlertRules/index.tsx:78-81`). */
+/** `RuletypesRuleTypeDTO` (`frontend/src/api/generated/services/sigNoz.schemas.ts`). */
 export const RuleType = {
 	THRESHOLD: 'threshold_rule',
 	ANOMALY: 'anomaly_rule',
 } as const;
 
 /**
- * `AlertThresholdOperator` (`CreateAlertV2/context/types.ts:97-105`) and its
+ * `AlertThresholdOperator` (`CreateAlert/context/types.ts:97-105`) and its
  * dropdown labels (`context/constants.ts:123-137`).
  *
  * Threshold-alert operators only. Anomaly alerts render a different, shorter
@@ -94,7 +95,7 @@ export const ThresholdOperator = {
 } as const;
 
 /**
- * `AlertThresholdMatchType` (`CreateAlertV2/context/types.ts:105-111`) and its
+ * `AlertThresholdMatchType` (`CreateAlert/context/types.ts:105-111`) and its
  * dropdown labels (`context/constants.ts:136-142`).
  *
  * Watch the plural: the enum *key* is `ALL_THE_TIME` but the wire value is
@@ -124,8 +125,8 @@ export const AlertListTab = {
 } as const;
 
 /**
- * The four cards a stock stack shows, in render order
- * (`CreateAlertRule/SelectAlertType/config.ts:10-31`). Anomaly is `unshift`ed to
+ * The five cards a stock stack shows, in render order
+ * (`CreateAlertRule/SelectAlertType/config.ts:10-38`). Anomaly is `unshift`ed to
  * the **front** of this list when anomaly detection is available (cloud or enterprise license),
  * so both the count and the order change when it is.
  */
@@ -133,6 +134,7 @@ export const STOCK_ALERT_TYPE_CARDS: AlertTypeValue[] = [
 	AlertType.METRICS,
 	AlertType.LOGS,
 	AlertType.TRACES,
+	AlertType.AI_TRACES,
 	AlertType.EXCEPTIONS,
 ];
 

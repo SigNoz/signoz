@@ -6,6 +6,7 @@ import ValueGraph from 'components/ValueGraph';
 import { generateGridTitle } from 'utils/generateGridTitle';
 import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
+import { isBuilderQueryType } from 'lib/query/builderSlot';
 import { EQueryType } from 'types/common/dashboard';
 
 import {
@@ -67,18 +68,36 @@ function GridValueComponent({
 	if (data.length === 0) {
 		return (
 			<ValueContainer>
-				<Typography>No Data</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					No Data
+				</Typography>
 			</ValueContainer>
 		);
 	}
 
 	const isQueryTypeBuilder =
-		widget?.query?.queryType === EQueryType.QUERY_BUILDER;
+		!!widget && isBuilderQueryType(widget.query.queryType);
 
 	return (
 		<>
 			<TitleContainer isDashboardPage={isDashboardPage}>
-				<Typography>{gridTitle}</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{gridTitle}
+				</Typography>
 			</TitleContainer>
 			<ValueContainer
 				showClickable={enableDrillDown && isQueryTypeBuilder}

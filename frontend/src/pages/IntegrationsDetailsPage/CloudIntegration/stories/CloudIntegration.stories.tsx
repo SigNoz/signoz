@@ -22,6 +22,13 @@ import {
 	updateGcpProjects,
 	updateTaggedAccount,
 } from './CloudIntegration.stories.mocks';
+import {
+	openAccountSelect,
+	openAccountSettings,
+	openConnectDialog,
+	openDisconnectConfirm,
+	openGcpRegionDropdown,
+} from './__story_mockdata__/cloudIntegration.play';
 
 import IntegrationsDetailsPage from '../../index';
 
@@ -82,6 +89,17 @@ export const GoogleCloudPlatform: Story = {
 	args: { provider: 'gcp' },
 };
 
+/** The page while the account list is loading, the account picker a skeleton. */
+export const Loading: Story = {
+	args: { dataState: 'loading' },
+};
+
+/** The account picker open over two connected accounts. */
+export const AccountSelectOpen: Story = {
+	args: { accounts: 2 },
+	play: openAccountSelect,
+};
+
 /** Every log attribute and metric a service collects, as the agent names them. */
 export const DataCollected: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
@@ -117,18 +135,35 @@ export const ConnectAccount: Story = {
 	},
 };
 
+/** Azure's connect dialog, which the AWS regions form does not open. */
+export const AzureConnectAccount: Story = {
+	args: { provider: 'azure', accounts: 0 },
+	play: openConnectDialog,
+};
+
 /** The regions an already-connected account collects from. */
 export const EditAccount: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByText(
-				/edit account/i,
-				undefined,
-				untilLoaded,
-			),
-		);
-		await screen.findByRole('dialog', undefined, untilLoaded);
-	},
+	play: openAccountSettings,
+};
+
+/** The resource groups an already-connected Azure subscription collects from. */
+export const AzureEditAccount: Story = {
+	args: { provider: 'azure' },
+	play: openAccountSettings,
+};
+
+/** The projects an already-connected GCP account collects from. */
+export const GcpEditAccount: Story = {
+	args: { provider: 'gcp' },
+	play: openAccountSettings,
+};
+
+/**
+ * Disconnecting an account, which asks first and names what is removed from the
+ * cloud account and what is left to delete by hand.
+ */
+export const DisconnectConfirm: Story = {
+	play: openDisconnectConfirm,
 };
 
 /**
@@ -321,17 +356,7 @@ export const GcpAccountConnectedToast: Story = {
 /** Interaction: the deployment region menu of the GCP setup drawer. */
 export const GcpRegionOpen: Story = {
 	args: { provider: 'gcp', accounts: 0 },
-	play: async ({ canvasElement }): Promise<void> => {
-		await openConnectFlow(canvasElement);
-		await userEvent.click(
-			await screen.findByTestId(
-				'gcp-deployment-region-select',
-				undefined,
-				untilLoaded,
-			),
-		);
-		await screen.findByRole('listbox');
-	},
+	play: openGcpRegionDropdown,
 };
 
 /**

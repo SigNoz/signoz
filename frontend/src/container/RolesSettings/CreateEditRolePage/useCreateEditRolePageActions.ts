@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { useAppNavigate } from 'lib/router/useAppNavigate';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
@@ -86,6 +86,9 @@ export function useCreateEditRolePageActions(
 	const { mutateAsync: updateRole, isLoading: isUpdating } =
 		useUpdateRolePermissions();
 	const isSaving = isCreating || isUpdating;
+	// Editors read their initial value once, so stay loading until the fetched
+	// role has been copied into local state.
+	const isSeedingFromRole = !!rolePermissionsData && !isInitialized;
 
 	useEffect(() => {
 		if (rolePermissionsData && !isInitialized) {
@@ -229,7 +232,7 @@ export function useCreateEditRolePageActions(
 		setEditorMode: handleModeChange,
 		resources: localResources,
 		setResources: handleResourcesChange,
-		isLoading: isLoadingPermissions,
+		isLoading: isLoadingPermissions || isSeedingFromRole,
 		isSaving,
 		hasUnsavedChanges,
 		handleSave,

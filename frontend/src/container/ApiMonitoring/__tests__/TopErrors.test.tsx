@@ -1,31 +1,40 @@
 import { BuilderQuery } from 'api/v5/v5';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { rest, server } from 'mocks-server/server';
-import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 import TopErrors from '../Explorer/Domains/DomainDetails/TopErrors';
 import { getTopErrorsQueryPayload } from '../utils';
 
-// Mock the EndPointsDropDown component to avoid issues
+interface QueryRangeRequestBody {
+	compositeQuery: { queries: { spec: { filter: { expression: string } } }[] };
+}
+
+// Mock the EndPointPicker component to avoid issues
 jest.mock(
-	'../Explorer/Domains/DomainDetails/components/EndPointsDropDown',
+	'../Explorer/Domains/DomainDetails/components/EndPointPicker',
 	() => ({
 		__esModule: true,
-		default: jest
-			.fn()
-			.mockImplementation(({ setSelectedEndPointName }): JSX.Element => (
-				<div data-testid="endpoints-dropdown-mock">
-					<select
-						data-testid="endpoints-select"
-						onChange={(e): void => setSelectedEndPointName(e.target.value)}
-					>
-						<option value="/api/test">/api/test</option>
-						<option value="/api/new-endpoint">/api/new-endpoint</option>
-					</select>
-				</div>
-			)),
+		default: jest.fn().mockImplementation(({ onChange }): JSX.Element => (
+			<div data-testid="endpoints-dropdown-mock">
+				<select
+					data-testid="endpoints-select"
+					onChange={(e): void => onChange(e.target.value)}
+				>
+					<option value="/api/test">/api/test</option>
+					<option value="/api/new-endpoint">/api/new-endpoint</option>
+				</select>
+			</div>
+		)),
 	}),
 );
 
@@ -34,7 +43,6 @@ jest.mock('components/CeleryTask/useNavigateToExplorer', () => ({
 }));
 
 describe('TopErrors', () => {
-	const TABLE_BODY_SELECTOR = '.ant-table-tbody';
 	const V5_QUERY_RANGE_API_PATH = '*/api/v5/query_range';
 
 	const mockProps = {
@@ -43,26 +51,10 @@ describe('TopErrors', () => {
 			startTime: 1000000000,
 			endTime: 1000010000,
 		},
-		initialFilters: {
-			items: [],
-			op: 'AND',
-		},
+		initialFilterExpression: '',
 	};
 
-	// Helper function to wait for table data to load
-	const waitForTableDataToLoad = async (
-		container: HTMLElement,
-	): Promise<void> => {
-		await waitFor(() => {
-			const tableBody = container.querySelector(TABLE_BODY_SELECTOR);
-			expect(tableBody).not.toBeNull();
-			if (tableBody) {
-				expect(
-					within(tableBody as HTMLElement).queryByText('/api/test'),
-				).toBeInTheDocument();
-			}
-		});
-	};
+	const ROW_TEST_ID = 'top-errors-row-/api/test-500';
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -137,23 +129,18 @@ describe('TopErrors', () => {
 	});
 
 	it('renders component correctly', async () => {
-		const { container } = render(<TopErrors {...mockProps} />);
+		render(<TopErrors {...mockProps} />);
 
 		// Check if the title and toggle are rendered
 		expect(screen.getByText('Errors with Status Message')).toBeInTheDocument();
 		expect(screen.getByText('Status Message Exists')).toBeInTheDocument();
 
 		// Wait for data to load
-		await waitForTableDataToLoad(container);
+		const row = await screen.findByTestId(ROW_TEST_ID);
 
-		// Find the table row and verify content
-		const tableBody = container.querySelector(TABLE_BODY_SELECTOR);
-		if (tableBody) {
-			const row = within(tableBody as HTMLElement).getByRole('row');
-			expect(within(row).getByText('/api/test')).toBeInTheDocument();
-			expect(within(row).getByText('500')).toBeInTheDocument();
-			expect(within(row).getByText('Internal Server Error')).toBeInTheDocument();
-		}
+		expect(within(row).getByText('/api/test')).toBeInTheDocument();
+		expect(within(row).getByText('500')).toBeInTheDocument();
+		expect(within(row).getByText('Internal Server Error')).toBeInTheDocument();
 	});
 
 	it('renders error state when API fails', async () => {
@@ -178,23 +165,17 @@ describe('TopErrors', () => {
 	});
 
 	it('handles row click correctly', async () => {
+		const user = userEvent.setup();
 		const navigateMock = jest.fn();
 		(useNavigateToExplorer as jest.Mock).mockReturnValue(navigateMock);
 
-		const { container } = render(<TopErrors {...mockProps} />);
+		render(<TopErrors {...mockProps} />);
 
 		// Wait for data to load
-		await waitForTableDataToLoad(container);
+		const row = await screen.findByTestId(ROW_TEST_ID);
 
 		// Find and click on the table cell containing the endpoint
-		const tableBody = container.querySelector(TABLE_BODY_SELECTOR);
-		expect(tableBody).not.toBeNull();
-
-		if (tableBody) {
-			const row = within(tableBody as HTMLElement).getByRole('row');
-			const cellWithEndpoint = within(row).getByText('/api/test');
-			fireEvent.click(cellWithEndpoint);
-		}
+		await user.click(within(row).getByText('/api/test'));
 
 		// Check if navigateToExplorer was called with correct params
 		expect(navigateMock).toHaveBeenCalledWith({
@@ -227,22 +208,30 @@ describe('TopErrors', () => {
 		});
 	});
 
-	it('updates endpoint filter when dropdown value changes', async () => {
+	it('scopes the query to the endpoint picked in the picker', async () => {
+		const user = userEvent.setup({ delay: null });
+		const expressions: string[] = [];
+		server.use(
+			rest.post(V5_QUERY_RANGE_API_PATH, async (req) => {
+				const body: QueryRangeRequestBody = await req.json();
+				expressions.push(body.compositeQuery.queries[0].spec.filter.expression);
+			}),
+		);
+
 		render(<TopErrors {...mockProps} />);
+		await waitFor(() => expect(expressions).toHaveLength(1));
+		expect(expressions[0]).not.toContain(`${SPAN_ATTRIBUTES.HTTP_URL} =`);
 
-		// Wait for initial load
+		await user.selectOptions(
+			screen.getByTestId('endpoints-select'),
+			'/api/new-endpoint',
+		);
+
 		await waitFor(() => {
-			expect(screen.getByRole('combobox')).toBeInTheDocument();
+			expect(expressions[expressions.length - 1]).toContain(
+				`${SPAN_ATTRIBUTES.HTTP_URL} = '/api/new-endpoint'`,
+			);
 		});
-
-		// Find the dropdown
-		const dropdown = screen.getByRole('combobox');
-
-		// Mock the change
-		fireEvent.change(dropdown, { target: { value: '/api/new-endpoint' } });
-
-		// Component should re-render with new filter
-		expect(dropdown).toBeInTheDocument();
 	});
 
 	it('handles status message toggle correctly', async () => {
@@ -306,7 +295,7 @@ describe('TopErrors', () => {
 			'test-domain',
 			mockProps.timeRange.startTime,
 			mockProps.timeRange.endTime,
-			{ items: [], op: 'AND' },
+			'',
 			false,
 		);
 

@@ -82,7 +82,16 @@ function JsonView({
 			/>
 			<div className="json-view__footer">
 				<div className="json-view__wrap-toggle">
-					<Typography.Text>Wrap text</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Wrap text
+					</Typography>
 					<Switch
 						color="primary"
 						textPlacement="right"

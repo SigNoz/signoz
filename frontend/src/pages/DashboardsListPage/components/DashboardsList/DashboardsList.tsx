@@ -35,6 +35,7 @@ import DashboardsFilterZone from '../DashboardsFilterZone/DashboardsFilterZone';
 import NewDashboardModal from '../NewDashboardModal/NewDashboardModal';
 import type { ReactElement } from 'react';
 import ListCommandHeader from 'components/ListViews/ListCommandHeader/ListCommandHeader';
+import ListHeaderZone from 'components/ListViews/ListHeaderZone/ListHeaderZone';
 import ListStatusBar from 'components/ListViews/ListStatusBar/ListStatusBar';
 import type { ViewSaveMode } from 'components/ListViews/types';
 import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
@@ -316,6 +317,7 @@ function DashboardsList(): JSX.Element {
 				onDelete={handleRemoveView}
 				onRename={renameView}
 				testIdPrefix="dashboards"
+				viewNamePlaceholder="e.g. Prod dashboards"
 				deleteDescription="This removes the saved view. Your dashboards are not affected."
 				guard={guardViewsRail}
 				onViewSaved={logViewSaved}
@@ -324,59 +326,62 @@ function DashboardsList(): JSX.Element {
 			/>
 			<div className={styles.main}>
 				<div className={styles.mainScroll}>
+					<ListHeaderZone testId="dashboards-header-zone">
+						<ListCommandHeader
+							label={activeLabel}
+							count={total}
+							isCountLoading={isFetching}
+							isModified={isModified}
+							action={
+								isWorkspaceEmpty ? undefined : (
+									<NewDashboardButton onClick={openCreate} />
+								)
+							}
+						/>
+						<DashboardsFilterZone
+							query={query}
+							creatorOptions={creatorOptions}
+							source={source}
+							disabled={!canList}
+							onQueryChange={handleQueryChange}
+						/>
+					</ListHeaderZone>
 					{isWorkspaceEmpty ? (
 						<WorkspaceEmptyState onCreate={openCreate} />
 					) : (
-						<>
-							<div className={styles.headerZone}>
-								<ListCommandHeader
-									label={activeLabel}
-									count={total}
-									isModified={isModified}
-									action={<NewDashboardButton onClick={openCreate} />}
-								/>
-								<DashboardsFilterZone
-									query={query}
-									creatorOptions={creatorOptions}
-									source={source}
-									disabled={!canList}
-									onQueryChange={handleQueryChange}
-								/>
-							</div>
-							<div className={styles.viewContent}>
-								{/* Fails closed, unlike the guard's default: the fetch is
+						<div className={styles.viewContent}>
+							{/* Fails closed, unlike the guard's default: the fetch is
 								    already gated on the same check, so falling open would
 								    render the table shell with nothing in it and no reason
 								    given. */}
-								<AuthZGuardContent checks={LIST_CHECKS} onFailRenderContent={false}>
-									<DashboardsResults
-										isLoading={isLoading}
-										hasError={!!error}
-										isCloudUser={!!isCloudUser}
-										onRetry={(): void => {
-											void refetch();
-										}}
-										errorHttpStatus={errorHttpStatus}
-										errorMessage={errorMessage}
-										dashboards={dashboards}
-										activeViewId={activeViewId}
-										searchValue={query}
-										hasFilters={!filtersEmpty}
-										sortColumn={sortColumn}
-										onSortChange={onSortChange}
-										sortOrder={sortOrder}
-										onOrderChange={onOrderChange}
-										page={page}
-										pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
-										total={total}
-										onPageChange={setPage}
-										showUpdatedAt={visibleColumns.updatedAt}
-										showUpdatedBy={visibleColumns.updatedBy}
-										loading={isFetching}
-									/>
-								</AuthZGuardContent>
-							</div>
-						</>
+							<AuthZGuardContent checks={LIST_CHECKS} onFailRenderContent={false}>
+								<DashboardsResults
+									isLoading={isLoading}
+									hasError={!!error}
+									isCloudUser={!!isCloudUser}
+									onRetry={(): void => {
+										void refetch();
+									}}
+									errorHttpStatus={errorHttpStatus}
+									errorMessage={errorMessage}
+									dashboards={dashboards}
+									activeViewId={activeViewId}
+									searchValue={query}
+									hasFilters={!filtersEmpty}
+									sortColumn={sortColumn}
+									onSortChange={onSortChange}
+									sortOrder={sortOrder}
+									onOrderChange={onOrderChange}
+									page={page}
+									pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
+									total={total}
+									onPageChange={setPage}
+									showUpdatedAt={visibleColumns.updatedAt}
+									showUpdatedBy={visibleColumns.updatedBy}
+									loading={isFetching}
+								/>
+							</AuthZGuardContent>
+						</div>
 					)}
 				</div>
 				<ListStatusBar

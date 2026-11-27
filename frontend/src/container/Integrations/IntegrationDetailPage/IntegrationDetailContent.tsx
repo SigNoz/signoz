@@ -31,7 +31,16 @@ function IntegrationDetailContent(
 					className="integration-tab-btns"
 					icon={<CableCar size={14} />}
 				>
-					<Typography.Text className="typography">Overview</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="main"
+						as="span"
+						textOverflow="wrap"
+					>
+						Overview
+					</Typography>
 				</Button>
 			),
 			children: (
@@ -50,7 +59,16 @@ function IntegrationDetailContent(
 					className="integration-tab-btns"
 					icon={<ConfigureIcon />}
 				>
-					<Typography.Text className="typography">Configure</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="main"
+						as="span"
+						textOverflow="wrap"
+					>
+						Configure
+					</Typography>
 				</Button>
 			),
 			children: (
@@ -68,7 +86,16 @@ function IntegrationDetailContent(
 					className="integration-tab-btns"
 					icon={<Group size={14} />}
 				>
-					<Typography.Text className="typography">Data Collected</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="main"
+						as="span"
+						textOverflow="wrap"
+					>
+						Data Collected
+					</Typography>
 				</Button>
 			),
 			children: (

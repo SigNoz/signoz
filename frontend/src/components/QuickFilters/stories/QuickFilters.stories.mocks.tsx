@@ -17,6 +17,7 @@ import {
 } from '@/storybook/msw/__story_mockdata__/fields';
 import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
 
+import { DEFAULT_VISIBLE_ITEMS_COUNT } from '../FilterRenderers/Checkbox/constants';
 import { FiltersType, QuickFilterCheckboxUseFieldApis } from '../types';
 
 const customFilters = [
@@ -98,10 +99,32 @@ export const noSavedFiltersHandler = rest.get(
 		),
 );
 
+export const noSavedTracesFiltersHandler = rest.get(
+	'http://localhost/api/v2/quick_filters/traces',
+	(_req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json(quickFiltersResponse(QuickfiltertypesSourceDTO.traces, [])),
+		),
+);
+
 export const loadingFiltersHandlers = [
 	rest.get('http://localhost/api/v2/quick_filters/logs', (_req, res, ctx) =>
 		res(ctx.delay('infinite')),
 	),
+];
+
+export const longTitleConfig = [
+	{
+		attributeKey: {
+			dataType: DataTypes.Int64,
+			key: 'http.request.content_length_uncompressed',
+			type: 'tag',
+		},
+		defaultOpen: false,
+		title: 'Http Request Content Length Uncompressed',
+		type: FiltersType.CHECKBOX,
+	},
 ];
 
 export const LONG_FILTER_VALUES = [
@@ -137,3 +160,9 @@ export const selectedServiceQueryBuilder = {
 		},
 	},
 };
+
+/** More values than the checkbox filter shows before Show More. */
+export const MANY_FILTER_VALUES = Array.from(
+	{ length: 2 * DEFAULT_VISIBLE_ITEMS_COUNT + 5 },
+	(_, index) => `service-${String(index + 1).padStart(2, '0')}`,
+);

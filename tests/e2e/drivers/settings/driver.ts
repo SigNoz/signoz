@@ -7,18 +7,20 @@ import type {
 	CoretypesKindDTO,
 	CoretypesTypeDTO,
 	ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO,
-	ServiceaccounttypesServiceAccountDTO,
+	ServiceaccounttypesListableServiceAccountDTO,
 	ServiceaccounttypesServiceAccountWithRolesDTO,
 	TypesOrganizationDTO,
 } from '../schemas';
-import { antdDriver } from '../antd';
 import { apiDriver, type Envelope } from '../api';
+import { comboboxAt } from '../combobox';
+import { inputField, inputFieldsStartingWith } from '../input';
 import {
 	createDashboard,
 	deleteViaApi,
 	type DashboardSeed,
 } from '../dashboards';
 import { driver, type Layer } from '../kit';
+import { toastByText } from '../toast';
 import { usersApi, type UsersApi } from '../users';
 
 /**
@@ -31,9 +33,6 @@ import { usersApi, type UsersApi } from '../users';
 
 export type Theme = 'dark' | 'light' | 'auto';
 export type Scope = 'all' | 'none';
-
-const toastText = (page: Page, text: string): Locator =>
-	page.locator('[data-sonner-toast]').filter({ hasText: text });
 
 /** `n` in base 26, spelled with `a-z` only. */
 const letters = (n: number): string =>
@@ -102,10 +101,13 @@ export interface Settings {
 	org: {
 		goto(): Promise<void>;
 		nameInput(): Locator;
+		nameFrame(): Locator;
 		rename(name: string): Promise<void>;
 		apiName(): Promise<string>;
 		setApiName(name: string): Promise<void>;
+		submitButton(): Locator;
 		authDomainTitle(): Locator;
+		deniedMessage(): Locator;
 	};
 
 	account: {
@@ -130,14 +132,26 @@ export interface Settings {
 		search(text: string): Promise<void>;
 		/** The member's table row. Search for the email first: the list pages at 20. */
 		row(email: string): Locator;
+		inviteButton(): Locator;
+		/** The search Input's frame, which carries its `data-*` attributes. */
+		searchInput(): Locator;
+		resetLinkButton(): Locator;
+		/** The "is not authorized" message a denied list or drawer renders. */
+		deniedMessage(): Locator;
 		openInvite(): Promise<void>;
 		inviteDialog(): Locator;
 		invite(rows: { email: string; role: string }[]): Promise<void>;
 		openMember(email: string): Promise<void>;
 		drawer(): Locator;
+		/** The name Input's frame, which carries its `data-*` attributes. */
+		nameInput(): Locator;
 		roleSelect(): Locator;
 		deleteButton(): Locator;
 		setRoles(roles: string[]): Promise<void>;
+		/** Add a role to the open member without clearing the others. */
+		addRole(role: string): Promise<void>;
+		/** Remove one role from the open member, leaving the others. */
+		removeRole(role: string): Promise<void>;
 		saveMember(): Promise<void>;
 		/** Mint a reset or invite link from the drawer and return it. */
 		generateLink(): Promise<string>;
@@ -236,47 +250,18 @@ export interface Settings {
 
 export function settingsDriver(page: Page): Settings {
 	const api = apiDriver(page);
-	const antd = antdDriver(page);
 	const users = usersApi(page);
 
-	const clearSelect = async (select: Locator): Promise<void> => {
-		const removers = select.locator('.ant-select-selection-item-remove');
-		while ((await removers.count()) > 0) {
-			await removers.first().click();
-		}
+	const pickRole = async (trigger: Locator, name: string): Promise<void> => {
+		const roles = comboboxAt(page, trigger);
+		const before = await roles.chips().count();
+		await roles.pick(name);
+		await expect(roles.chips()).toHaveCount(before + 1);
 	};
-
-	/**
-	 * `antd.pickByName` closes the list with Escape, which also closes the
-	 * enclosing dialog or drawer. Close it by clicking the dialog's title.
-	 */
-	const pickInDialog = async (
-		dialog: Locator,
-		select: Locator,
-		name: string,
-	): Promise<void> => {
-		const before = await antd.selectedTags(select).count();
-		await select.click();
-		await expect(select).toHaveClass(/ant-select-open/);
-		await select.locator('input[role="combobox"]').fill(name);
-		const dropdown = await antd.ownDropdown(select);
-		await dropdown
-			.locator('.ant-select-item-option')
-			.filter({ hasText: name })
-			.first()
-			.click();
-		await dialog.getByRole('heading').first().click();
-		await expect(select).not.toHaveClass(/ant-select-open/);
-		await expect(antd.selectedTags(select)).toHaveCount(before + 1);
-	};
-
-	/** antd renders the select root around the input that carries the id. */
-	const selectById = (id: string): Locator =>
-		page.locator('.ant-select').filter({ has: page.locator(`input#${id}`) });
 
 	const settings: Settings = {
 		users,
-		toast: (text) => toastText(page, text),
+		toast: (text) => toastByText(page, text),
 		pathname: () => new URL(page.url()).pathname,
 		reload: async () => {
 			await page.reload();
@@ -328,7 +313,8 @@ export function settingsDriver(page: Page): Settings {
 
 		org: {
 			goto: () => settings.shell.goto('/settings/org-settings'),
-			nameInput: () => page.getByTestId('org-display-name-input'),
+			nameInput: () => page.getByTestId('org-display-name-input-field'),
+			nameFrame: () => page.getByTestId('org-display-name-input'),
 			rename: async (name) => {
 				await settings.org.nameInput().fill(name);
 				const saved = page.waitForResponse(
@@ -336,7 +322,7 @@ export function settingsDriver(page: Page): Settings {
 						response.request().method() === 'PUT' &&
 						new URL(response.url()).pathname === '/api/v2/orgs/me',
 				);
-				await page.getByTestId('org-display-name-submit').click();
+				await settings.org.submitButton().click();
 				expect((await saved).ok()).toBe(true);
 			},
 			apiName: async () =>
@@ -348,7 +334,9 @@ export function settingsDriver(page: Page): Settings {
 				).data;
 				await api.put('/api/v2/orgs/me', { id: org.id, displayName: name });
 			},
+			submitButton: () => page.getByTestId('org-display-name-submit'),
 			authDomainTitle: () => page.getByTestId('auth-domain-title'),
+			deniedMessage: () => page.getByText(/is not authorized/).first(),
 		},
 
 		account: {
@@ -408,12 +396,16 @@ export function settingsDriver(page: Page): Settings {
 			},
 			heading: () => page.getByRole('heading', { name: 'Members', exact: true }),
 			search: async (text) => {
-				await page.getByTestId('members-search-input').fill(text);
+				await inputField(page, 'members-search-input').fill(text);
 			},
 			// antd keys each row by the member id; the email is what callers hold.
 			row: (email) => page.locator('tr[data-row-key]').filter({ hasText: email }),
+			inviteButton: () => page.getByTestId('invite-member-btn'),
+			searchInput: () => page.getByTestId('members-search-input'),
+			resetLinkButton: () => page.getByTestId('member-reset-link-btn'),
+			deniedMessage: () => page.getByText(/is not authorized/).first(),
 			openInvite: async () => {
-				await page.getByTestId('invite-member-btn').click();
+				await settings.members.inviteButton().click();
 				await expect(settings.members.inviteDialog()).toBeVisible();
 			},
 			inviteDialog: () =>
@@ -421,20 +413,12 @@ export function settingsDriver(page: Page): Settings {
 			invite: async (rows) => {
 				const dialog = settings.members.inviteDialog();
 				for (const [index, { email, role }] of rows.entries()) {
-					if (
-						index >= (await dialog.locator('[data-testid^="invite-email-"]').count())
-					) {
+					const emails = inputFieldsStartingWith(dialog, 'invite-email-');
+					if (index >= (await emails.count())) {
 						await dialog.getByTestId('invite-add-row').click();
 					}
-					await dialog
-						.locator('[data-testid^="invite-email-"]')
-						.nth(index)
-						.fill(email);
-					const select = dialog
-						.locator('.ant-select')
-						.filter({ has: page.locator('input[id^="invite-role-"]') })
-						.nth(index);
-					await pickInDialog(dialog, select, role);
+					await emails.nth(index).fill(email);
+					await pickRole(dialog.locator('[id^="invite-role-"]').nth(index), role);
 				}
 				await page.getByTestId('invite-submit-btn').click();
 				await expect(settings.toast('Invites sent successfully')).toBeVisible();
@@ -447,14 +431,27 @@ export function settingsDriver(page: Page): Settings {
 				await expect(settings.members.drawer().getByText(email)).toBeVisible();
 			},
 			drawer: () => page.getByRole('dialog', { name: 'Member Details' }),
-			roleSelect: () => selectById('member-role'),
+			nameInput: () =>
+				page
+					.locator('[data-slot="input"]')
+					.filter({ has: page.getByPlaceholder('Enter name') }),
+			roleSelect: () => page.getByTestId('member-roles-select'),
 			deleteButton: () => page.getByTestId('member-delete-btn'),
 			setRoles: async (roles) => {
-				const select = settings.members.roleSelect();
-				await clearSelect(select);
+				await comboboxAt(page, settings.members.roleSelect()).clear();
 				for (const role of roles) {
-					await pickInDialog(settings.members.drawer(), select, role);
+					await pickRole(settings.members.roleSelect(), role);
 				}
+			},
+			addRole: async (role) => {
+				await pickRole(settings.members.roleSelect(), role);
+			},
+			removeRole: async (role) => {
+				const chip = comboboxAt(page, settings.members.roleSelect())
+					.chips()
+					.filter({ hasText: role });
+				await chip.locator('[data-slot="combobox-chip-remove"]').click();
+				await expect(chip).toHaveCount(0);
 			},
 			saveMember: async () => {
 				await page.getByTestId('member-save-btn').click();
@@ -470,7 +467,7 @@ export function settingsDriver(page: Page): Settings {
 			},
 			deleteMember: async () => {
 				await settings.members.deleteButton().click();
-				await page.getByTestId('member-delete-confirm-btn').click();
+				await page.getByTestId('member-delete-confirm').click();
 			},
 			filter: async (label) => {
 				await page.getByTestId('members-filter-trigger').click();
@@ -485,7 +482,7 @@ export function settingsDriver(page: Page): Settings {
 			},
 			page: () => page.getByTestId('roles-settings'),
 			search: async (text) => {
-				await page.getByTestId('roles-search-input').fill(text);
+				await inputField(page, 'roles-search-input').fill(text);
 			},
 			row: (name) => page.getByTestId(`role-row-${name}`),
 			section: (label) =>
@@ -495,10 +492,10 @@ export function settingsDriver(page: Page): Settings {
 				await expect(settings.roles.editor()).toBeVisible();
 			},
 			fillName: async (name) => {
-				await page.getByTestId('role-name-input').fill(name);
+				await inputField(page, 'role-name-input').fill(name);
 			},
 			fillDescription: async (text) => {
-				await page.getByTestId('role-description-input').fill(text);
+				await inputField(page, 'role-description-input').fill(text);
 			},
 			grant: async (resource, verb, scope) => {
 				// The view page shares the header testid and can still be mounted.
@@ -565,13 +562,21 @@ export function settingsDriver(page: Page): Settings {
 				page.getByRole('heading', { name: 'Service Accounts', exact: true }),
 			newButton: () => page.getByTestId('new-sa-btn'),
 			search: async (text) => {
-				await page.getByTestId('sa-search-input').fill(text);
+				const search = page.getByTestId('sa-list-search').locator('.cm-content');
+				await search.click();
+				await page.keyboard.press('ControlOrMeta+A');
+				await page.keyboard.insertText(text);
+				await expect(search).toHaveText(text);
+				await page.getByTestId('sa-list-search-submit').click();
+				await page.waitForURL(
+					(url) => (url.searchParams.get('search') ?? '') === text.trim(),
+				);
 			},
 			row: (name) =>
 				page.getByRole('button', { name: `View service account ${name}` }),
 			create: async (name) => {
 				await settings.serviceAccounts.newButton().click();
-				await page.getByTestId('create-sa-name-input').fill(name);
+				await inputField(page, 'create-sa-name-input').fill(name);
 				const created = page.waitForResponse(
 					(response) =>
 						response.request().method() === 'POST' &&
@@ -602,7 +607,7 @@ export function settingsDriver(page: Page): Settings {
 				const { serviceAccountRoles } =
 					await settings.serviceAccounts.apiAccount(id);
 				await expect(
-					antd.selectedTags(settings.serviceAccounts.roleSelect()),
+					comboboxAt(page, settings.serviceAccounts.roleSelect()).chips(),
 				).toHaveCount((serviceAccountRoles ?? []).length);
 			},
 			openKeys: async (id) => {
@@ -613,7 +618,7 @@ export function settingsDriver(page: Page): Settings {
 			},
 			addKey: async (name) => {
 				await page.getByTestId('sa-add-key-btn').click();
-				await page.getByTestId('add-key-name-input').fill(name);
+				await inputField(page, 'add-key-name-input').fill(name);
 				await page.getByTestId('add-key-submit-btn').click();
 				const value = page.getByTestId('created-key-value');
 				await expect(value).not.toBeEmpty();
@@ -637,12 +642,11 @@ export function settingsDriver(page: Page): Settings {
 				await page.getByTestId('revoke-key-confirm-btn').click();
 				await expect(settings.toast('Key revoked successfully')).toBeVisible();
 			},
-			roleSelect: () => selectById('sa-roles'),
+			roleSelect: () => page.getByTestId('sa-roles-select'),
 			setRoles: async (roles) => {
-				const select = settings.serviceAccounts.roleSelect();
-				await clearSelect(select);
+				await comboboxAt(page, settings.serviceAccounts.roleSelect()).clear();
 				for (const role of roles) {
-					await pickInDialog(settings.serviceAccounts.drawer(), select, role);
+					await pickRole(settings.serviceAccounts.roleSelect(), role);
 				}
 			},
 			save: async () => {
@@ -657,8 +661,12 @@ export function settingsDriver(page: Page): Settings {
 				await expect(settings.toast('Service account deleted')).toBeVisible();
 			},
 			filter: async (label) => {
-				await page.getByTestId('sa-filter-trigger').click();
-				await page.getByRole('menuitem', { name: new RegExp(`^${label}`) }).click();
+				await page
+					.getByTestId('sa-filter-status')
+					.locator('.ant-select-selector')
+					.click();
+				await page.locator('.ant-select-item-option', { hasText: label }).click();
+				await page.keyboard.press('Escape');
 			},
 			callWithKey: async (key, path) =>
 				(
@@ -677,10 +685,10 @@ export function settingsDriver(page: Page): Settings {
 			removeApi: (id) => api.tryDel(`/api/v1/service_accounts/${id}`),
 			removeByName: async (name) => {
 				const list = await api.get<
-					Envelope<ServiceaccounttypesServiceAccountDTO[]>
-				>('/api/v1/service_accounts');
+					Envelope<ServiceaccounttypesListableServiceAccountDTO>
+				>(`/api/v1/service_accounts?query=${encodeURIComponent(name)}`);
 				await Promise.all(
-					list.data
+					list.data.serviceAccounts
 						.filter((account) => account.name === name)
 						.map((account) => settings.serviceAccounts.removeApi(account.id)),
 				);

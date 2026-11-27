@@ -15,7 +15,14 @@ import {
 	DashboardtypesListSortDTO,
 	type GetDashboardV2200,
 } from 'api/generated/services/sigNoz.schemas';
+import { parseReflectedClauses } from 'components/ListFilter/dsl/filterQuery';
 import ROUTES from 'constants/routes';
+import {
+	buildDashboardDeletePermission,
+	buildDashboardReadPermission,
+	buildDashboardUpdatePermission,
+	DashboardCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import {
 	expect,
 	mocked,
@@ -25,6 +32,7 @@ import {
 	within,
 } from 'storybook/test';
 
+import { grantsAll } from '@/storybook/access/access';
 import {
 	choiceControl,
 	countControl,
@@ -32,6 +40,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	orgUsersResponse,
@@ -45,6 +54,7 @@ import {
 	dashboardsListResponse,
 	PIN_WRITES,
 	recentDashboardIds,
+	ROW_IMAGES,
 	ROW_MARKERS,
 	savedView,
 	seedPinnedDashboards,
@@ -53,6 +63,7 @@ import {
 	TOOLTIP_TAGS,
 	WRITE_STATES,
 	type PinWrite,
+	type RowImages,
 	type RowMarker,
 	type TemplateRequest,
 	type WriteState,
@@ -67,6 +78,8 @@ import {
 	type DashboardViewId,
 	findBuiltinView,
 } from '../list.config';
+import { LIST_CHECKS } from '../constants/permissions';
+import type { DashboardListItem } from '../utils/helpers';
 
 const LIST = 'Dashboards · list';
 const VIEWS = 'Dashboards · views';
@@ -246,6 +259,13 @@ export const dashboardsListMocks = defineStoryMocks({
 			options: ROW_MARKERS,
 			value: [...ROW_MARKERS],
 		}),
+		images: choiceControl<RowImages>('Row images', {
+			group: LIST,
+			description:
+				'What each row shows beside its name: a bundled icon, or a bundled logo, which dashboard JSON can reference but the icon picker does not offer.',
+			options: ROW_IMAGES,
+			value: 'icons',
+		}),
 		columns: multiChoiceControl<DetailColumn>('Detail columns', {
 			group: LIST,
 			description: 'The optional fields on each row’s second line.',
@@ -343,6 +363,7 @@ export const dashboardsListMocks = defineStoryMocks({
 					limit: Number(req.url.searchParams.get('limit') ?? 20),
 					markers: values.markers,
 					query: req.url.searchParams.get('query') ?? '',
+					images: values.images,
 				}),
 			),
 		),
@@ -528,6 +549,85 @@ export const dashboardsListMocks = defineStoryMocks({
 	},
 });
 
+export type DashboardsListArgs = PageStoryArgs<typeof dashboardsListMocks>;
+
+const PAGE_SIZE = 20;
+
+export const canList = (args: DashboardsListArgs): boolean =>
+	grantsAll(args, ...LIST_CHECKS);
+
+/** `AuthZButton` leaves New dashboard enabled when the check itself fails. */
+export const canCreate = (args: DashboardsListArgs): boolean =>
+	args.authzState === 'error' || grantsAll(args, DashboardCreatePermission);
+
+export const canUpdate = (
+	args: DashboardsListArgs,
+	row: DashboardListItem,
+): boolean =>
+	grantsAll(
+		args,
+		buildDashboardReadPermission(row.id),
+		buildDashboardUpdatePermission(row.id),
+	);
+
+export const canDuplicate = (
+	args: DashboardsListArgs,
+	row: DashboardListItem,
+): boolean =>
+	grantsAll(
+		args,
+		buildDashboardReadPermission(row.id),
+		DashboardCreatePermission,
+	);
+
+export const canDelete = (
+	args: DashboardsListArgs,
+	row: DashboardListItem,
+): boolean =>
+	!row.locked && grantsAll(args, buildDashboardDeletePermission(row.id));
+
+export const listedDashboards = (
+	args: DashboardsListArgs,
+): DashboardListItem[] => {
+	if (args.dataState !== 'loaded' || args.invalidQuery || !canList(args)) {
+		return [];
+	}
+
+	const view = findBuiltinView(args.view);
+	const rows = dashboardsListResponse({
+		count: args.dashboards,
+		offset: 0,
+		limit: view?.clientFilter ? args.dashboards : PAGE_SIZE,
+		markers: args.markers,
+		query:
+			new URL(listRoute(args.view), 'http://localhost').searchParams.get(
+				'query',
+			) ?? '',
+		images: args.images,
+	}).data.dashboards;
+
+	return view?.clientFilter
+		? view.clientFilter(rows, {
+				userEmail: STORY_USER_EMAIL,
+				recent: recentDashboardIds(RECENT_COUNT),
+			})
+		: rows;
+};
+
+/** The view's own filter picks creators, so the Created-by chip opens with a tag. */
+export const showsCreatedByTag = (args: DashboardsListArgs): boolean =>
+	parseReflectedClauses(
+		new URL(listRoute(args.view), 'http://localhost').searchParams.get('query') ??
+			'',
+	).createdBy.length > 0;
+
+export const showsWorkspaceEmpty = (args: DashboardsListArgs): boolean =>
+	args.view === DEFAULT_DASHBOARD_VIEW &&
+	args.dataState === 'loaded' &&
+	!args.invalidQuery &&
+	canList(args) &&
+	args.dashboards === 0;
+
 /** Opens the actions menu of the row at `index`. */
 export const openRowActions = async (
 	canvasElement: HTMLElement,
@@ -541,7 +641,7 @@ export const openRowActions = async (
 	);
 
 	await userEvent.click(triggers[index]);
-	await screen.findByText('Rename');
+	await screen.findByTestId('dashboard-action-delete');
 };
 
 /** Picks a row action, retrying while its permission check still disables it. */
@@ -574,10 +674,11 @@ export const TOAST_TIMEOUT = 10000;
 
 export const openLegacyDialog = async (
 	canvasElement: HTMLElement,
+	index: number,
 ): Promise<void> => {
 	await userEvent.click(
 		await within(canvasElement).findByTestId(
-			'dashboard-title-4',
+			`dashboard-title-${index}`,
 			{},
 			{ timeout: TOAST_TIMEOUT },
 		),
@@ -587,8 +688,9 @@ export const openLegacyDialog = async (
 
 export const retryMigration = async (
 	canvasElement: HTMLElement,
+	index: number,
 ): Promise<void> => {
-	await openLegacyDialog(canvasElement);
+	await openLegacyDialog(canvasElement, index);
 	const retry = await screen.findByTestId('legacy-dashboard-retry-migration');
 
 	await waitFor(
@@ -630,7 +732,7 @@ export const requestTemplate = async (
 	);
 	await userEvent.click(await screen.findByText('From a template'));
 	await userEvent.type(
-		await screen.findByTestId('request-dashboard-name'),
+		await screen.findByTestId('request-dashboard-name-field'),
 		'Redis overview',
 	);
 	await userEvent.click(await screen.findByTestId('request-dashboard-submit'));

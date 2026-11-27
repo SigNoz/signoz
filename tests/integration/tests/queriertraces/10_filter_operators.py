@@ -1,12 +1,12 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 
 import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.querier import BuilderQuery, OrderBy, RequestType, TelemetryFieldKey, get_rows, make_query_request
+from fixtures.querier import BuilderQuery, OrderBy, RequestType, TelemetryFieldKey, get_attribute_backend_now, get_rows, make_query_request
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 # Filter-operator coverage for traces, modelled on the shapes that dominate real
@@ -70,7 +70,6 @@ def test_traces_filter_operators(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     expression: str,
     expected_names: set[str],
@@ -83,9 +82,9 @@ def test_traces_filter_operators(
     Tests:
     Each production-shaped filter operator selects exactly the expected spans.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     # (name, service, deployment.environment, http.request.method, http.response.status_code, latency_ms, has_error_type)
     specs = [
         ("checkout-handler", "checkout", "prod", "GET", "200", 100, False),

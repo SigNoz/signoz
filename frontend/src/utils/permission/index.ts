@@ -2,8 +2,6 @@ import ROUTES from 'constants/routes';
 import { ROLES } from 'types/roles';
 
 export type ComponentTypes =
-	| 'current_org_settings'
-	| 'invite_members'
 	| 'create_new_dashboards'
 	| 'import_dashboard'
 	| 'export_dashboard'
@@ -29,8 +27,6 @@ export type ComponentTypes =
  * If not, you can keep adding to this record.
  */
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
-	current_org_settings: ['ADMIN'],
-	invite_members: ['ADMIN'],
 	create_new_dashboards: ['ADMIN', 'EDITOR'],
 	import_dashboard: ['ADMIN', 'EDITOR'],
 	export_dashboard: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -161,6 +157,7 @@ export const routeWithInitialAuthZSupport = {
 	DASHBOARD: true,
 	DASHBOARD_PANEL_EDITOR: true,
 	MY_SETTINGS: true,
+	ORG_SETTINGS: true,
 	SETTINGS: true,
 	TRACES_EXPLORER: true,
 	TRACE_DETAIL: true,

@@ -13,6 +13,8 @@ import { resolveSignal } from 'pages/DashboardPage/DashboardContainer/Panels/uti
 import type { EQueryType } from 'types/common/dashboard';
 
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
+import type { GeoMapPlacement } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/types';
+
 import type { TableColumnOption } from '../hooks/useTableColumns';
 import ConfigActions from './ConfigActions/ConfigActions';
 import PanelTitleInput from './PanelTitleInput/PanelTitleInput';
@@ -52,6 +54,7 @@ interface ConfigPaneProps {
 	panelId: string;
 	/** Unit the selected metric was sent with; drives the unit selector's mismatch warning. */
 	metricUnit?: string;
+	geoMapPlacement?: GeoMapPlacement;
 }
 
 /**
@@ -74,6 +77,7 @@ function ConfigPane({
 	panel,
 	panelId,
 	metricUnit,
+	geoMapPlacement,
 }: ConfigPaneProps): JSX.Element {
 	const panelKind = spec.plugin.kind;
 	const definition = getPanelDefinition(panelKind);
@@ -102,13 +106,31 @@ function ConfigPane({
 		<div className={styles.config} data-testid="panel-editor-v2-config">
 			<header className={styles.heading}>
 				<span className={styles.marker} />
-				<Typography.Text>Panel Details</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					Panel Details
+				</Typography>
 			</header>
 			<div className={styles.divider} />
 
 			<div className={styles.group}>
 				<div className={styles.field}>
-					<Typography.Text>Title</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Title
+					</Typography>
 					<PanelTitleInput
 						value={spec.display.name}
 						onChange={(value): void => setDisplayField('name', value)}
@@ -116,7 +138,16 @@ function ConfigPane({
 				</div>
 
 				<div className={styles.field}>
-					<Typography.Text>Description</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Description
+					</Typography>
 					<Input.TextArea
 						data-testid="panel-editor-v2-description"
 						value={spec.display.description ?? ''}
@@ -172,6 +203,7 @@ function ConfigPane({
 									queryType={queryType}
 									stepInterval={stepInterval}
 									metricUnit={metricUnit}
+									geoMapPlacement={geoMapPlacement}
 								/>
 							))}
 						</div>

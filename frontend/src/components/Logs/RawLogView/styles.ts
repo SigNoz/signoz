@@ -1,6 +1,8 @@
 import { blue } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
-import { Col, Row, Space } from 'antd';
+import Space from 'periscope/components/Space/Space';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
 import { FontSize } from 'container/OptionsMenu/types';
 import { Info } from '@signozhq/icons';
 import styled from 'styled-components';
@@ -80,7 +82,7 @@ export const ExpandIconWrapper = styled(Col)`
 export const RawLogContent = styled.div<RawLogContentProps>`
 	margin-bottom: 0;
 	font-family: 'SF Mono', monospace;
-	font-family: 'Geist Mono';
+	font-family: var(--code-base-400-font-family);
 	letter-spacing: -0.07px;
 	padding: 4px;
 	text-align: left;

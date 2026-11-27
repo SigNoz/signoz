@@ -5,7 +5,7 @@ import { red } from '@ant-design/colors';
 // eslint-disable-next-line signoz/no-antd-components -- Upload has no @signozhq/ui equivalent yet
 import { Upload, UploadProps } from 'antd';
 import { Button } from '@signozhq/ui/button';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Typography } from '@signozhq/ui/typography';
 import { CircleAlert, MonitorDot, MoveRight } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
@@ -17,6 +17,7 @@ import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import APIError from 'types/api/error';
 
 import { isValidDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
+import { dashboardDurationError } from 'pages/DashboardPage/DashboardContainer/utils/dashboardDuration';
 
 import { normalizeToPostable } from './importUtils';
 import JsonEditor from './JsonEditor';
@@ -46,10 +47,10 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 		reader.onload = (event): void => {
 			try {
 				const target = event.target?.result;
-				if (!target) {
+				if (typeof target !== 'string') {
 					return;
 				}
-				const parsed = JSON.parse(target.toString());
+				const parsed = JSON.parse(target);
 				setEditorValue(JSON.stringify(parsed, null, 2));
 				setIsUploadError(false);
 			} catch {
@@ -63,7 +64,7 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 	const handleImport = async (): Promise<void> => {
 		try {
 			setIsCreating(true);
-			logEvent('Dashboard List V2: Import and next clicked', {});
+			void logEvent('Dashboard List V2: Import and next clicked', {});
 			const parsed = JSON.parse(editorValue) as Record<string, unknown>;
 			const payload = normalizeToPostable(parsed);
 			// Only an icon/logo path or a base64 image is a storable `image`; reject
@@ -73,9 +74,19 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 				void logEvent(DashboardListEvents.ImportFailed, {
 					reason: 'invalid-image',
 				});
-				toast.error(
+				toast.danger(
 					'Dashboard "image" must be an /assets/Icons or /assets/Logos path, or a base64 image',
+					{ action: { label: 'Dismiss' } },
 				);
+				return;
+			}
+			const durationError = dashboardDurationError(payload.spec?.duration);
+			if (durationError) {
+				setIsCreateError(true);
+				void logEvent(DashboardListEvents.ImportFailed, {
+					reason: 'invalid-duration',
+				});
+				toast.danger(durationError, { action: { label: 'Dismiss' } });
 				return;
 			}
 			const response = await createDashboardV2(payload);
@@ -88,8 +99,9 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 			showErrorModal(error as APIError);
 			setIsCreateError(true);
 			void logEvent(DashboardListEvents.ImportFailed, { reason: 'schema' });
-			toast.error(
+			toast.danger(
 				error instanceof Error ? error.message : t('error_loading_json'),
+				{ action: { label: 'Dismiss' } },
 			);
 		} finally {
 			setIsCreating(false);
@@ -98,16 +110,30 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 
 	return (
 		<div className={styles.panel}>
-			<Typography.Text className={styles.importHeader}>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				{t('import_json')}
-			</Typography.Text>
+			</Typography>
 
 			<JsonEditor value={editorValue} onChange={setEditorValue} height="280px" />
 
 			{(isCreateError || isUploadError) && (
 				<div className={styles.jsonError}>
 					<CircleAlert size="md" color={red[7]} />
-					<Typography className={styles.errorText}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="danger"
+						as="span"
+						textOverflow="wrap"
+					>
 						{isUploadError ? t('error_upload_json') : t('error_loading_json')}
 					</Typography>
 				</div>
@@ -129,7 +155,7 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 						prefix={<MonitorDot size={14} />}
 						testId="upload-json-file"
 						onClick={(): void => {
-							logEvent('Dashboard List V2: Upload JSON file clicked', {});
+							void logEvent('Dashboard List V2: Upload JSON file clicked', {});
 						}}
 					>
 						{t('upload_json_file')}

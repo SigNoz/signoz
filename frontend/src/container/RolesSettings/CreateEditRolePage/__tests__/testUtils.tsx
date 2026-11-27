@@ -2,6 +2,8 @@ import { render, screen, userEvent, within } from 'tests/test-utils';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 
+type User = ReturnType<typeof userEvent.setup>;
+
 export async function renderCreateRolePage(): Promise<
 	ReturnType<typeof render>
 > {
@@ -17,5 +19,19 @@ export async function expandResourceCard(resourceId: string): Promise<void> {
 	const card = await screen.findByTestId(`resource-card-${resourceId}`);
 	await user.click(
 		within(card).getByTestId(`resource-card-header-${resourceId}`),
+	);
+}
+
+export async function selectOnlySelected(
+	user: User,
+	resource: string,
+): Promise<void> {
+	await renderCreateRolePage();
+	await expandResourceCard(resource);
+
+	await user.click(
+		screen.getByTestId(
+			`action-toggle-scope-${resource}-read-button-only_selected`,
+		),
 	);
 }

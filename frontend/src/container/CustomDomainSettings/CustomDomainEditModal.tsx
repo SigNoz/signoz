@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { CircleAlert, CircleCheck, LoaderCircle } from '@signozhq/icons';
+import { CircleCheck, LoaderCircle } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
@@ -33,6 +33,7 @@ export default function CustomDomainEditModal({
 	const initialSubdomain = customDomainSubdomain ?? '';
 	const [value, setValue] = useState(initialSubdomain);
 	const [validationError, setValidationError] = useState<string | null>(null);
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		if (isOpen) {
@@ -90,15 +91,21 @@ export default function CustomDomainEditModal({
 
 	const hasError = Boolean(errorMessage);
 
+	// On error the field's own `status` draws the trailing icon, so the prefix only
+	// carries the in-progress and valid states.
 	const statusIcon = ((): JSX.Element | null => {
 		if (isLoading) {
 			return (
-				<LoaderCircle size={16} className="animate-spin edit-modal-status-icon" />
+				<LoaderCircle
+					size={16}
+					className="animate-spin edit-modal-status-icon"
+					data-testid="workspace-url-loading-icon"
+				/>
 			);
 		}
 
 		if (hasError) {
-			return <CircleAlert size={16} color={Color.BG_CHERRY_500} />;
+			return null;
 		}
 
 		return value && value.length >= 3 ? (
@@ -107,16 +114,38 @@ export default function CustomDomainEditModal({
 	})();
 
 	return (
-		<DialogWrapper
-			className="edit-workspace-modal"
+		<Dialog
 			title="Edit Workspace Link"
 			open={isOpen}
-			onOpenChange={(open: boolean): void => {
-				if (!open) {
-					handleClose();
-				}
-			}}
+			onClose={handleClose}
 			width="base"
+			initialFocus={inputRef}
+			footerSuffix={
+				<div className="edit-modal-footer">
+					{is409 ? (
+						<LaunchChatSupport
+							attributes={{ screen: 'Custom Domain Settings' }}
+							eventName="Custom Domain Settings: Facing Issues Updating Custom Domain"
+							message="Hi Team, I need help with updating custom domain"
+							buttonText="Contact Support"
+						/>
+					) : (
+						<Button
+							testId="workspace-url-apply"
+							disabledTooltip="Change the workspace URL first"
+							variant="solid"
+							size="md"
+							color="primary"
+							width="100%"
+							onClick={handleSubmit}
+							disabled={value === initialSubdomain}
+							loading={isLoading}
+						>
+							Apply Changes
+						</Button>
+					)}
+				</div>
+			}
 		>
 			<div className="edit-workspace-modal-content">
 				<p className="edit-modal-description">
@@ -142,25 +171,18 @@ export default function CustomDomainEditModal({
 						Workspace URL
 					</label>
 
-					<div
-						className={`edit-modal-input-wrapper${
-							hasError ? ' edit-modal-input-wrapper--error' : ''
-						}`}
-					>
-						<div className="edit-modal-input-field">
-							{statusIcon}
-							<Input
-								id="workspace-url-input"
-								aria-describedby="workspace-url-helper"
-								aria-invalid={hasError}
-								value={value}
-								onChange={handleChange}
-								onKeyDown={handleKeyDown}
-								autoFocus
-							/>
-						</div>
-						<div className="edit-modal-input-suffix">{dnsSuffix}</div>
-					</div>
+					<Input
+						id="workspace-url-input"
+						ref={inputRef}
+						testId="workspace-url-input"
+						aria-describedby="workspace-url-helper"
+						value={value}
+						onChange={handleChange}
+						onKeyDown={handleKeyDown}
+						status={hasError ? 'danger' : undefined}
+						prefix={statusIcon}
+						suffix={<span className="edit-modal-input-suffix">{dnsSuffix}</span>}
+					/>
 
 					<span
 						id="workspace-url-helper"
@@ -181,31 +203,7 @@ export default function CustomDomainEditModal({
 						credentials for the new URL remain the same.
 					</span>
 				</div>
-
-				<div className="edit-modal-footer">
-					{is409 ? (
-						<LaunchChatSupport
-							attributes={{ screen: 'Custom Domain Settings' }}
-							eventName="Custom Domain Settings: Facing Issues Updating Custom Domain"
-							message="Hi Team, I need help with updating custom domain"
-							buttonText="Contact Support"
-						/>
-					) : (
-						<Button
-							disabledTooltip="Change the workspace URL first"
-							variant="solid"
-							size="md"
-							color="primary"
-							width="100%"
-							onClick={handleSubmit}
-							disabled={value === initialSubdomain}
-							loading={isLoading}
-						>
-							Apply Changes
-						</Button>
-					)}
-				</div>
 			</div>
-		</DialogWrapper>
+		</Dialog>
 	);
 }

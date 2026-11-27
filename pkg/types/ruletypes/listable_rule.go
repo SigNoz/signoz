@@ -21,6 +21,7 @@ type ListableRule struct {
 	RuleType    RuleType          `json:"ruleType" required:"true" description:"The evaluation strategy: threshold_rule, promql_rule or anomaly_rule."`
 	Disabled    bool              `json:"disabled" description:"Whether the rule is paused."`
 	Labels      map[string]string `json:"labels,omitempty" description:"The labels attached to alerts the rule fires."`
+	Thresholds  []string          `json:"thresholds" required:"true" nullable:"false" description:"The rule's threshold names in lowercase, deduplicated and ordered critical, error, warning, info, then other names. An alert carries the name of the threshold that fired as its severity. Read-only."`
 	types.TimeAuditable
 	types.UserAuditable
 }
@@ -33,6 +34,30 @@ type storedRuleData struct {
 	RuleType    RuleType          `json:"ruleType"`
 	Disabled    bool              `json:"disabled"`
 	Labels      map[string]string `json:"labels"`
+	Condition   struct {
+		CompositeQuery struct {
+			QueryType QueryType `json:"queryType"`
+		} `json:"compositeQuery"`
+		Thresholds *RuleThresholdData `json:"thresholds"`
+	} `json:"condition"`
+}
+
+func (data storedRuleData) extractThresholdNames() []string {
+	names := make([]string, 0)
+	if data.Condition.Thresholds != nil {
+		if basic, ok := data.Condition.Thresholds.Spec.(BasicRuleThresholds); ok {
+			for _, threshold := range basic {
+				name := strings.ToLower(threshold.Name)
+				if !slices.Contains(names, name) {
+					names = append(names, name)
+				}
+			}
+		}
+	}
+	slices.SortFunc(names, func(a, b string) int {
+		return cmp.Or(cmp.Compare(severityDisplayRank[b], severityDisplayRank[a]), strings.Compare(a, b))
+	})
+	return names
 }
 
 // ToListableRule leaves State zero; the caller overlays evaluation state.
@@ -40,6 +65,15 @@ func (rule *StorableRule) ToListableRule() (*ListableRule, error) {
 	data := storedRuleData{}
 	if err := json.Unmarshal([]byte(rule.Data), &data); err != nil {
 		return nil, err
+	}
+
+	switch data.Condition.CompositeQuery.QueryType {
+	case QueryTypeBuilder, QueryTypeClickHouseSQL:
+		if data.RuleType.IsZero() {
+			data.RuleType = RuleTypeThreshold
+		}
+	case QueryTypePromQL:
+		data.RuleType = RuleTypeProm
 	}
 
 	return &ListableRule{
@@ -50,6 +84,7 @@ func (rule *StorableRule) ToListableRule() (*ListableRule, error) {
 		RuleType:      data.RuleType,
 		Disabled:      data.Disabled,
 		Labels:        data.Labels,
+		Thresholds:    data.extractThresholdNames(),
 		TimeAuditable: rule.TimeAuditable,
 		UserAuditable: rule.UserAuditable,
 	}, nil
@@ -141,16 +176,22 @@ func compareListableRules(a, b *ListableRule, sortBy ListSort) int {
 		return a.CreatedAt.Compare(b.CreatedAt)
 	case ListSortState:
 		return cmp.Compare(a.State.DisplayRank(), b.State.DisplayRank())
-	case ListSortSeverity:
-		severityA := a.Labels["severity"]
-		severityB := b.Labels["severity"]
-		rankA := severityDisplayRank[strings.ToLower(severityA)]
-		rankB := severityDisplayRank[strings.ToLower(severityB)]
+	case ListSortThresholds:
+		// a rule sorts by its first threshold name, the highest ranked
+		thresholdA, thresholdB := "", ""
+		if len(a.Thresholds) > 0 {
+			thresholdA = a.Thresholds[0]
+		}
+		if len(b.Thresholds) > 0 {
+			thresholdB = b.Thresholds[0]
+		}
+		rankA := severityDisplayRank[strings.ToLower(thresholdA)]
+		rankB := severityDisplayRank[strings.ToLower(thresholdB)]
 		if rankA != rankB {
 			return cmp.Compare(rankA, rankB)
 		}
 		if rankA == 0 {
-			return strings.Compare(strings.ToLower(severityA), strings.ToLower(severityB))
+			return strings.Compare(strings.ToLower(thresholdA), strings.ToLower(thresholdB))
 		}
 		return 0
 	}
