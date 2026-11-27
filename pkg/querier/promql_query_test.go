@@ -18,6 +18,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestRenderVarsFloatPrecision(t *testing.T) {
+	q := &promqlQuery{}
+	for _, variable := range []string{"$threshold", "{{threshold}}", "[[threshold]]"} {
+		t.Run(variable, func(t *testing.T) {
+			got, err := q.renderVars("metric > "+variable, map[string]qbv5.VariableItem{
+				"threshold": {Value: 0.123456789},
+			}, 0, 0)
+			require.NoError(t, err)
+			require.Equal(t, "metric > 0.123456789", got)
+		})
+	}
+}
+
 func TestRemoveAllVarMatchers(t *testing.T) {
 	logger := slog.Default()
 	q := &promqlQuery{logger: logger, parser: prometheus.NewParser()}
