@@ -321,12 +321,12 @@ func (m *module) GetTraceSpan(ctx context.Context, traceID string, spanID string
 	return spantypes.NewSpan(traceID, &rows[0]), nil
 }
 
-func (m *module) ListTraceSpans(ctx context.Context, traceID string, query *spantypes.SpanListQuery) (*spantypes.SpanList, error) {
+func (m *module) ListTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.SpanListQuery) (*spantypes.SpanList, error) {
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
-	skeleton, err := m.store.GetTraceSkeleton(ctx, traceID, bounds)
+	skeleton, err := m.store.GetTraceSkeleton(ctx, orgID, traceID, bounds)
 	if err != nil {
 		return nil, err
 	}

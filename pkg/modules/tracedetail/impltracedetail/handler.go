@@ -183,6 +183,12 @@ func (h *handler) ListTraceSpanAncestors(rw http.ResponseWriter, r *http.Request
 }
 
 func (h *handler) listTraceSpans(rw http.ResponseWriter, r *http.Request, scope spantypes.SpanScope) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	params := new(spantypes.ListTraceSpansParams)
 	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
 		render.Error(rw, err)
@@ -195,7 +201,7 @@ func (h *handler) listTraceSpans(rw http.ResponseWriter, r *http.Request, scope 
 		return
 	}
 
-	result, err := h.module.ListTraceSpans(r.Context(), mux.Vars(r)["traceID"], query)
+	result, err := h.module.ListTraceSpans(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], query)
 	if err != nil {
 		render.Error(rw, err)
 		return
