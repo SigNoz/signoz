@@ -22,6 +22,7 @@ import i18n from '../src/ReactI18';
 // to its loader default and pulls Monaco from cdn.jsdelivr.net, which msw does
 // not report because the requests look like static assets.
 import '../src/lib/monaco/loader';
+import '../src/lib/uPlotStylesheet';
 
 import '../src/styles.scss';
 

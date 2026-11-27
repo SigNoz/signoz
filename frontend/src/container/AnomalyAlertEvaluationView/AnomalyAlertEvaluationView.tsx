@@ -14,7 +14,6 @@ import uPlot from 'uplot';
 
 import tooltipPlugin from './tooltipPlugin';
 
-import 'uplot/dist/uPlot.min.css';
 import './AnomalyAlertEvaluationView.styles.scss';
 
 const { Search } = Input;
