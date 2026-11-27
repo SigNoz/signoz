@@ -52,6 +52,7 @@ import {
 	WorkspaceAccessRestricted,
 	WorkspaceBlocked,
 	WorkspaceSuspended,
+	NeuralOptimizerPage,
 } from './pageComponents';
 
 const routes: AppRoutes[] = [
@@ -406,6 +407,13 @@ const routes: AppRoutes[] = [
 		path: ROUTES.AI_OBSERVABILITY_CONFIGURATION,
 		component: LLMObservabilityPage,
 		key: 'AI_OBSERVABILITY_CONFIGURATION',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.NEURAL_OPTIMIZER,
+		exact: true,
+		component: NeuralOptimizerPage,
+		key: 'NEURAL_OPTIMIZER',
 		isPrivate: true,
 	},
 ];
