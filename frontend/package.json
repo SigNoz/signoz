@@ -210,10 +210,8 @@
     "react-resizable": "3.0.4",
     "redux-mock-store": "1.5.4",
     "sass": "1.97.3",
-    "sharp": "0.35.5",
     "storybook": "10.6.3",
     "stylelint": "17.15.0",
-    "svgo": "4.1.0",
     "topojson-server": "3.0.1",
     "topojson-simplify": "3.0.3",
     "ts-jest": "29.4.15",
@@ -221,7 +219,6 @@
     "use-sync-external-store": "1.6.0",
     "vite-plugin-checker": "0.12.0",
     "vite-plugin-compression": "0.5.1",
-    "vite-plugin-image-optimizer": "2.0.3",
     "vite-tsconfig-paths": "6.1.1"
   },
   "lint-staged": {
