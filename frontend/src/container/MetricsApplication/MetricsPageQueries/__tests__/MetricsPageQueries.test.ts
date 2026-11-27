@@ -102,7 +102,7 @@ describe('service details queries on v5', () => {
 				servicename: 'frontend',
 				tagFilterItems: [],
 				topLevelOperationsRoute: ['GET /'],
-				threashold: 0.5,
+				threshold: 0.5,
 				metricsBuckets: [100, 250, 500, 1000, 2000, 5000],
 			}),
 		);
@@ -151,7 +151,7 @@ describe('service details queries on v5', () => {
 				servicename: 'frontend',
 				tagFilterItems: [],
 				topLevelOperationsRoute: ['GET /'],
-				threashold: 0.5,
+				threshold: 0.5,
 				metricsBuckets: [100, 250, 500, 1000],
 			}),
 		);

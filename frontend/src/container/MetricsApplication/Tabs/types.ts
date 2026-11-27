@@ -72,7 +72,7 @@ export interface ApDexProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
 	topLevelOperationsRoute: string[];
-	threashold: number;
+	threshold: number;
 }
 
 export interface TableRendererProps {
@@ -80,7 +80,7 @@ export interface TableRendererProps {
 	renderFunction: (record: RowData) => ReactNode;
 }
 
-export interface LatencyCountAtOrBelow {
+export interface LatencyAtOrBelowAggregation {
 	key: string;
 	spaceAggregation: MetrictypesSpaceAggregationDTO;
 	param?: MetrictypesComparisonSpaceAggregationParamDTO;

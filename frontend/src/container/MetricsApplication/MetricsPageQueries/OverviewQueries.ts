@@ -29,7 +29,7 @@ import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
 } from './MetricsPageQueriesFactory';
-import { getLatencyCountAtOrBelow } from './utils';
+import { getLatencyAtOrBelowAggregation } from './utils';
 
 export const latency = ({
 	servicename,
@@ -108,12 +108,15 @@ export const apDexMetricsQueryBuilderQueries = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperationsRoute,
-	threashold,
+	threshold,
 	metricsBuckets,
 }: ApDexMetricsQueryBuilderQueriesProps): QueryBuilderData => {
-	const satisfied = getLatencyCountAtOrBelow(threashold * 1000, metricsBuckets);
-	const tolerating = getLatencyCountAtOrBelow(
-		threashold * 1000 * 4,
+	const satisfied = getLatencyAtOrBelowAggregation(
+		threshold * 1000,
+		metricsBuckets,
+	);
+	const tolerating = getLatencyAtOrBelowAggregation(
+		threshold * 1000 * 4,
 		metricsBuckets,
 	);
 

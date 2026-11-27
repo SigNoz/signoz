@@ -1,15 +1,15 @@
 import { MetrictypesSpaceAggregationDTO } from 'api/generated/services/sigNoz.schemas';
 import { WidgetKeys } from '../constant';
-import { LatencyCountAtOrBelow } from '../Tabs/types';
+import { LatencyAtOrBelowAggregation } from '../Tabs/types';
 import { getNearestHighestBucketValue } from '../utils';
 
 // the comparison count stops at the largest finite bucket, so a threshold past it
 // reads the count metric, which is the +Inf bucket
-export const getLatencyCountAtOrBelow = (
-	ms: number,
+export const getLatencyAtOrBelowAggregation = (
+	thresholdMs: number,
 	buckets: number[],
-): LatencyCountAtOrBelow => {
-	const bucket = getNearestHighestBucketValue(ms, buckets);
+): LatencyAtOrBelowAggregation => {
+	const bucket = getNearestHighestBucketValue(thresholdMs, buckets);
 	return bucket === undefined
 		? {
 				key: WidgetKeys.SignozLatencyCount,

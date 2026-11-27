@@ -24,7 +24,6 @@ import { v4 as uuid } from 'uuid';
 import { ApDexMetricsProps } from './types';
 
 function ApDexMetrics({
-	delta,
 	metricsBuckets,
 	thresholdValue,
 	onDragSelect,
@@ -44,8 +43,8 @@ function ApDexMetrics({
 						servicename,
 						tagFilterItems,
 						topLevelOperationsRoute,
-						threashold: thresholdValue || 0,
-						metricsBuckets: metricsBuckets || [],
+						threshold: thresholdValue || 0,
+						metricsBuckets,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -90,10 +89,7 @@ function ApDexMetrics({
 	}, [thresholdValue]);
 
 	const isQueryEnabled =
-		topLevelOperationsRoute.length > 0 &&
-		!!metricsBuckets &&
-		metricsBuckets?.length > 0 &&
-		delta !== undefined;
+		topLevelOperationsRoute.length > 0 && metricsBuckets.length > 0;
 
 	return (
 		<Graph
@@ -107,9 +103,5 @@ function ApDexMetrics({
 		/>
 	);
 }
-
-ApDexMetrics.defaultProps = {
-	delta: undefined,
-};
 
 export default ApDexMetrics;
