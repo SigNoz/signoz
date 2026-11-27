@@ -3,13 +3,11 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	GetQuickFilters200,
-	ListMetrics200,
-	ListSavedViews200,
-	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
 import {
+	type GetQuickFilters200,
+	type ListMetrics200,
+	type ListSavedViews200,
+	type TelemetrytypesTelemetryFieldKeyDTO,
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
@@ -23,15 +21,11 @@ import {
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { EQueryType } from 'types/common/dashboard';
+import { ReduceOperators } from 'types/common/queryBuilder';
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
-import {
-	getLogCountWidgetData,
-	getLogSizeWidgetData,
-	getMetricCountWidgetData,
-	getSpanCountWidgetData,
-	getSpanSizeWidgetData,
-} from 'container/MeterExplorer/Breakdown/graphs';
-import type { Widgets } from 'types/api/widgets/widget';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import type { TimeSeries } from 'types/api/v5/queryRange';
 
@@ -248,20 +242,40 @@ export const meterTimeWindow = (range: MeterTimeRange): MeterTimeWindow => {
 	return relativeWindow(24 * HOUR_IN_MS, '1d');
 };
 
-const EXPLORER_WIDGETS: Record<MeterVolume, () => Widgets> = {
-	'log-count': getLogCountWidgetData,
-	'log-size': getLogSizeWidgetData,
-	'span-count': getSpanCountWidgetData,
-	'span-size': getSpanSizeWidgetData,
-	'metric-datapoints': getMetricCountWidgetData,
-};
+/** The query the explorer starts on: the metric's hourly increase, summed. */
+export const meterExplorerQuery = (volume: MeterVolume): Query => {
+	const metricName = VOLUME_METRICS[volume];
 
-/**
- * The query the explorer starts on, taken from the breakdown widget for the
- * same metric so the story asks for what the page itself would build.
- */
-export const meterExplorerQuery = (volume: MeterVolume): Query =>
-	EXPLORER_WIDGETS[volume]().query;
+	return {
+		queryType: EQueryType.QUERY_BUILDER,
+		promql: [],
+		clickhouse_sql: [],
+		id: `meter-explorer-${volume}`,
+		builder: {
+			queryFormulas: [],
+			queryTraceOperator: [],
+			queryData: [
+				{
+					...initialQueryBuilderFormValuesMap.metrics,
+					// Empty, so the payload builder reads the legacy aggregation fields below.
+					aggregations: [],
+					aggregateAttribute: {
+						dataType: DataTypes.Float64,
+						key: metricName,
+						id: `${metricName}--float64--Sum--true`,
+						type: 'Sum',
+					},
+					aggregateOperator: 'increase',
+					source: 'meter',
+					legend: METRICS[metricName].unit === 'bytes' ? 'size' : 'count',
+					reduceTo: ReduceOperators.SUM,
+					spaceAggregation: 'sum',
+					timeAggregation: 'increase',
+				},
+			],
+		},
+	};
+};
 
 /** The metric picker in the query builder lists what the meter reports. */
 export const meterMetricsListResponse = (

@@ -26,6 +26,14 @@ export const METER_EXPLORER_PATH = '/meter/explorer';
 
 export type MeterSection = 'total' | 'logs' | 'traces' | 'metrics';
 
+// Section ids derive from the first panel id in frontend/src/container/MeterExplorer/Breakdown/dashboard.ts.
+const SECTION_FIRST_PANEL: Record<MeterSection, string> = {
+	total: 'total-log-size',
+	logs: 'log-count',
+	traces: 'span-count',
+	metrics: 'metric-datapoints',
+};
+
 export interface MeterBreakdown {
 	/** Open `/meter` and return the `query_range` responses its widgets fire. */
 	goto(): Promise<Response[]>;
@@ -58,7 +66,8 @@ export function meterDriver(page: Page): Meter {
 			page.off('response', collect);
 			return responses;
 		},
-		section: (name) => page.getByTestId(`meter-breakdown-section-${name}`),
+		section: (name) =>
+			page.getByTestId(`dashboard-section-sec-${SECTION_FIRST_PANEL[name]}`),
 	};
 
 	return {
