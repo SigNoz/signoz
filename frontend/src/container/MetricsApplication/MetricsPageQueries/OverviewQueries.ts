@@ -196,47 +196,13 @@ export const apDexMetricsQueryBuilderQueries = ({
 		...tagFilterItems,
 	];
 
-	const filterItemC: TagFilterItem[] = [
-		{
-			id: '',
-			key: {
-				key: WidgetKeys.StatusCode,
-				dataType: DataTypes.String,
-				type: MetricsType.Tag,
-			},
-			op: OPERATORS['!='],
-			value: 'STATUS_CODE_ERROR',
-		},
-		{
-			id: '',
-			key: {
-				key: WidgetKeys.OTelServiceName,
-				dataType: DataTypes.String,
-				type: MetricsType.Tag,
-			},
-			op: OPERATORS['='],
-			value: servicename,
-		},
-		{
-			id: '',
-			key: {
-				key: WidgetKeys.Operation,
-				dataType: DataTypes.String,
-				type: MetricsType.Tag,
-			},
-			op: OPERATORS.IN,
-			value: [...topLevelOperationsRoute],
-		},
-		...tagFilterItems,
-	];
-
 	const autocompleteData = [
 		autoCompleteDataA,
 		autoCompleteDataB,
 		autoCompleteDataC,
 	];
 
-	const additionalItems = [filterItemA, filterItemB, filterItemC];
+	const additionalItems = [filterItemA, filterItemB, filterItemB];
 	const legends = [GraphTitle.APDEX];
 	const disabled = Array(3).fill(true);
 	const expressions = [FORMULA.APDEX];

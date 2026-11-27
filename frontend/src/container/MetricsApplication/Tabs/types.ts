@@ -9,6 +9,8 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import type { WidgetKeys } from '../constant';
+
 export interface IServiceName {
 	servicename: string;
 }
@@ -81,7 +83,7 @@ export interface TableRendererProps {
 }
 
 export interface LatencyAtOrBelowAggregation {
-	key: string;
+	key: WidgetKeys;
 	spaceAggregation: MetrictypesSpaceAggregationDTO;
 	param?: MetrictypesComparisonSpaceAggregationParamDTO;
 }
