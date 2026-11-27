@@ -634,7 +634,7 @@ export const invalidateGetIngestionKeyLimits = async (
 };
 
 /**
- * This endpoint creates an ingestion key limit.
+ * This endpoint creates an ingestion key limit. Deprecated: use POST /api/v2/gateway/ingestion_limits instead. Send keyId in the request body.
  * @deprecated
  * @summary Create limit for the ingestion key
  */
@@ -736,7 +736,7 @@ export const useCreateIngestionKeyLimit = <
 	return useMutation(getCreateIngestionKeyLimitMutationOptions(options));
 };
 /**
- * This endpoint deletes an ingestion key limit
+ * This endpoint deletes an ingestion key limit. Deprecated: use DELETE /api/v2/gateway/ingestion_limits/{limitId} instead.
  * @deprecated
  * @summary Delete limit for the ingestion key
  */
@@ -818,7 +818,7 @@ export const useDeleteIngestionKeyLimit = <
 	return useMutation(getDeleteIngestionKeyLimitMutationOptions(options));
 };
 /**
- * This endpoint updates an ingestion key limit.
+ * This endpoint updates an ingestion key limit. Deprecated: use PATCH /api/v2/gateway/ingestion_limits/{limitId} instead.
  * @deprecated
  * @summary Update limit for the ingestion key
  */

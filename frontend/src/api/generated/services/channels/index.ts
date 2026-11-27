@@ -597,7 +597,7 @@ export const useTestChannel = <
 	return useMutation(getTestChannelMutationOptions(options));
 };
 /**
- * Deprecated: use /api/v1/channels/test instead
+ * Deprecated: use POST /api/v1/channels/test instead.
  * @deprecated
  * @summary Test notification channel (deprecated)
  */
