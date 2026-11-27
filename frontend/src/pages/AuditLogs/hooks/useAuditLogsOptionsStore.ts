@@ -6,6 +6,8 @@ import { FontSize } from 'container/OptionsMenu/types';
 interface AuditLogsOptionsState {
 	fontSize: FontSize;
 	setFontSize: (fontSize: FontSize) => void;
+	quickFilterCollapsed: boolean;
+	setQuickFilterCollapsed: (newState: boolean) => void;
 }
 
 export const useAuditLogsOptionsStore = create<AuditLogsOptionsState>()(
@@ -14,6 +16,10 @@ export const useAuditLogsOptionsStore = create<AuditLogsOptionsState>()(
 			fontSize: FontSize.SMALL,
 			setFontSize: (fontSize): void => {
 				set({ fontSize });
+			},
+			quickFilterCollapsed: false,
+			setQuickFilterCollapsed: (quickFilterCollapsed: boolean): void => {
+				set({ quickFilterCollapsed });
 			},
 		}),
 		{ name: LOCALSTORAGE.AUDIT_LOGS_OPTIONS },

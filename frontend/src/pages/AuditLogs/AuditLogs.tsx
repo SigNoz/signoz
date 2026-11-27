@@ -1,4 +1,5 @@
 import styles from './AuditLogs.module.scss';
+import { FilterExpandButton } from './components/FilterExpandButton';
 import { OptionsMenu } from './components/OptionsMenu';
 import { OrderBy } from './components/OrderBy';
 import { QueryBar } from './components/QueryBar';
@@ -13,9 +14,13 @@ import { useQueryBuilder } from '@/hooks/queryBuilder/useQueryBuilder';
 import DateTimeSelectionV2 from '@/container/TopNav/DateTimeSelectionV2';
 import { QueryResults } from './components/QueryResults';
 import { useAuditLogsQuery } from './hooks/useAuditLogsQuery';
+import { useAuditLogsOptionsStore } from './hooks/useAuditLogsOptionsStore';
 
 function AuditLogs(): JSX.Element {
 	const [isCancelled, setIsCancelled] = useState(false);
+
+	const { quickFilterCollapsed, setQuickFilterCollapsed } =
+		useAuditLogsOptionsStore();
 
 	const listAuditLogsKeyRef = useRef<any>();
 
@@ -46,16 +51,25 @@ function AuditLogs(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className={styles.auditLogsRoot} data-testid="audit-logs">
-				<QuickFilters />
+				{!quickFilterCollapsed && <QuickFilters />}
 				<div className={styles.auditLogsRightPane}>
 					<div className={styles.queryToolbar}>
-						<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
-						<RunQueryBtn
-							isLoadingQueries={isFetching}
-							handleCancelQuery={handleCancelQuery}
-							onStageRunQuery={onStageRunQuery}
-							testId="audit-logs-run-query-btn"
-						/>
+						<div className={styles.queryToolbarLeft}>
+							{quickFilterCollapsed && (
+								<FilterExpandButton
+									onClick={(): void => setQuickFilterCollapsed(!quickFilterCollapsed)}
+								/>
+							)}
+						</div>
+						<div className={styles.queryToolbarRight}>
+							<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
+							<RunQueryBtn
+								isLoadingQueries={isFetching}
+								handleCancelQuery={handleCancelQuery}
+								onStageRunQuery={onStageRunQuery}
+								testId="audit-logs-run-query-btn"
+							/>
+						</div>
 					</div>
 					<QueryBar />
 					<div className={styles.actionsRow}>
