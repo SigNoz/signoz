@@ -30,13 +30,23 @@ export const getDuration = (
 	const end = dayjs(endTime);
 	const durationMs = end.diff(start);
 
-	const minutes = Math.floor(durationMs / (1000 * 60));
-	const hours = Math.floor(durationMs / (1000 * 60 * 60));
-
-	if (minutes < 60) {
-		return `${minutes} min`;
+	if (durationMs <= 0) {
+		return 'N/A';
 	}
-	return `${hours} hours`;
+
+	const totalMinutes = Math.floor(durationMs / (1000 * 60));
+	const hours = Math.floor(totalMinutes / 60);
+	const remainingMinutes = totalMinutes % 60;
+
+	if (hours === 0) {
+		return `${totalMinutes} min`;
+	}
+
+	if (remainingMinutes === 0) {
+		return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+	}
+
+	return `${hours}h ${remainingMinutes}m`;
 };
 
 export const formatDateTime = (
@@ -91,20 +101,19 @@ export const recurrenceInfo = (
 	return `Repeats - ${repeatType} ${weeklyRepeatString} from ${formattedStartTime} ${formattedEndTime} ${durationString}`;
 };
 
-export const defaultInitialValues: Partial<AlertmanagertypesPlannedMaintenanceDTO> =
-	{
-		name: '',
-		description: '',
-		schedule: {
-			timezone: '',
-			endTime: undefined,
-			recurrence: undefined,
-			startTime: '',
-		},
-		alertIds: [],
-		createdAt: undefined,
-		createdBy: undefined,
-	};
+export const defaultInitialValues: Partial<AlertmanagertypesPlannedMaintenanceDTO> = {
+	name: '',
+	description: '',
+	schedule: {
+		timezone: '',
+		endTime: undefined,
+		recurrence: undefined,
+		startTime: '',
+	},
+	alertIds: [],
+	createdAt: undefined,
+	createdBy: undefined,
+};
 
 type DeleteDowntimeScheduleProps = {
 	deleteDowntimeScheduleAsync: UseMutateAsyncFunction<
