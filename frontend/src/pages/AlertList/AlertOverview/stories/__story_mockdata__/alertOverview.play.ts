@@ -246,7 +246,11 @@ export const expectSavedChannelLocked = async ({
 		untilLoaded,
 	);
 	await waitFor(
-		() => expect(option.title).toMatch(/is not authorized/),
+		() =>
+			expect(option).toHaveAttribute(
+				'aria-description',
+				expect.stringMatching(/is not authorized/),
+			),
 		untilLoaded,
 	);
 	await expect(option).toHaveAttribute('aria-disabled', 'true');
