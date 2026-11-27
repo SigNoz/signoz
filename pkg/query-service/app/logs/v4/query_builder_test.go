@@ -269,6 +269,36 @@ func Test_buildAttributeFilter(t *testing.T) {
 			want: "lower(body) LIKE lower('%test%')",
 		},
 		{
+			name: "build attribute filter like any slice",
+			args: args{
+				item: v3.FilterItem{
+					Key: v3.AttributeKey{
+						Key:      "service.name",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+					Operator: v3.FilterOperatorLike,
+					Value:    []interface{}{"A::%", "B::%"},
+				},
+			},
+			want: "resources_string['service.name'] ILIKE ANY ('A::%', 'B::%')",
+		},
+		{
+			name: "build attribute filter ilike any slice",
+			args: args{
+				item: v3.FilterItem{
+					Key: v3.AttributeKey{
+						Key:      "service.name",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+					Operator: v3.FilterOperatorILikeAny,
+					Value:    []string{"A::%", "B::%"},
+				},
+			},
+			want: "resources_string['service.name'] ILIKE ANY ('A::%', 'B::%')",
+		},
+		{
 			name: "build attribute filter like",
 			args: args{
 				item: v3.FilterItem{

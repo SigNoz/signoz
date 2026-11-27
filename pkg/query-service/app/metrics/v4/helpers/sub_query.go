@@ -288,10 +288,40 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key.Key, fmtVal))
 			case v3.FilterOperatorNotIn:
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorLike:
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorLike, v3.FilterOperatorLikeAny:
+				if sliceVal, ok := item.Value.([]interface{}); ok && len(sliceVal) > 0 {
+					var quoted []string
+					for _, v := range sliceVal {
+						quoted = append(quoted, fmt.Sprintf("'%s'", utils.QuoteEscapedString(fmt.Sprintf("%v", v))))
+					}
+					conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') LIKE ANY (%s)", item.Key.Key, strings.Join(quoted, ", ")))
+				} else if strSliceVal, ok := item.Value.([]string); ok && len(strSliceVal) > 0 {
+					var quoted []string
+					for _, v := range strSliceVal {
+						quoted = append(quoted, fmt.Sprintf("'%s'", utils.QuoteEscapedString(v)))
+					}
+					conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') LIKE ANY (%s)", item.Key.Key, strings.Join(quoted, ", ")))
+				} else {
+					conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				}
 			case v3.FilterOperatorNotLike:
 				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorILike, v3.FilterOperatorILikeAny:
+				if sliceVal, ok := item.Value.([]interface{}); ok && len(sliceVal) > 0 {
+					var quoted []string
+					for _, v := range sliceVal {
+						quoted = append(quoted, fmt.Sprintf("'%s'", utils.QuoteEscapedString(fmt.Sprintf("%v", v))))
+					}
+					conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') ILIKE ANY (%s)", item.Key.Key, strings.Join(quoted, ", ")))
+				} else if strSliceVal, ok := item.Value.([]string); ok && len(strSliceVal) > 0 {
+					var quoted []string
+					for _, v := range strSliceVal {
+						quoted = append(quoted, fmt.Sprintf("'%s'", utils.QuoteEscapedString(v)))
+					}
+					conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') ILIKE ANY (%s)", item.Key.Key, strings.Join(quoted, ", ")))
+				} else {
+					conditions = append(conditions, fmt.Sprintf("ilike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+				}
 			case v3.FilterOperatorRegex:
 				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
 			case v3.FilterOperatorNotRegex:
