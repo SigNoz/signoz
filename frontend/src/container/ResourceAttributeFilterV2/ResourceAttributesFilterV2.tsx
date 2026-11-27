@@ -16,7 +16,6 @@ function ResourceAttributesFilter(): JSX.Element | null {
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
 		query,
-		entityVersion: '',
 	});
 
 	// initialise tab with default query.

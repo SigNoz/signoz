@@ -51,7 +51,7 @@ describe('QueryBuilderV2 provider config sync', () => {
 	it('leaves the data source unset for a bar panel without a static config', () => {
 		const handleSetConfig = mockContext({});
 
-		render(<QueryBuilderV2 panelType={PANEL_TYPES.BAR} version="v3" />);
+		render(<QueryBuilderV2 panelType={PANEL_TYPES.BAR} />);
 
 		expect(handleSetConfig).toHaveBeenCalledWith(PANEL_TYPES.BAR, null);
 	});
@@ -61,7 +61,6 @@ describe('QueryBuilderV2 provider config sync', () => {
 
 		render(
 			<QueryBuilderV2
-				version="v3"
 				panelType={PANEL_TYPES.BAR}
 				config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}
 			/>,
@@ -78,7 +77,6 @@ describe('QueryBuilderV2 provider config sync', () => {
 
 		render(
 			<QueryBuilderV2
-				version="v3"
 				panelType={PANEL_TYPES.BAR}
 				config={{ initialDataSource: DataSource.TRACES, queryVariant: 'static' }}
 			/>,
@@ -98,7 +96,6 @@ describe('QueryBuilderV2 provider config sync', () => {
 
 		render(
 			<QueryBuilderV2
-				version="v3"
 				panelType={PANEL_TYPES.TIME_SERIES}
 				config={{ initialDataSource: DataSource.TRACES, queryVariant: 'static' }}
 			/>,

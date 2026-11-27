@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LIVE_TAIL_GRAPH_INTERVAL } from 'constants/liveTail';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import LogsExplorerChart from 'container/LogsExplorerChart';
@@ -57,7 +57,7 @@ function LiveLogsListChart({
 	const { data, isFetching } = useGetExplorerQueryRange(
 		listChartQuery,
 		PANEL_TYPES.TIME_SERIES,
-		DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 		{
 			enabled: isConnectionOpen,
 			refetchInterval: LIVE_TAIL_GRAPH_INTERVAL,

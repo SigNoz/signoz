@@ -48,10 +48,8 @@ export const getFilterConfig = (
 			({
 				type: getFilterType(att),
 				title: getFilterName(att.name),
-				// The type mapping below exists only for the old v3 attribute-values fetch
-				// (useCheckboxFilterValues), the sole reader of attributeKey.dataType/type.
-				// Once the values fetch moves to fields/values, remove this and reduce
-				// attributeKey to { id, key }.
+				// TODO: nothing reads dataType/type; reduce attributeKey to { id, key }
+				// once the TagFilterItem.key readers are checked.
 				attributeKey: {
 					id: att.name,
 					key: att.name,

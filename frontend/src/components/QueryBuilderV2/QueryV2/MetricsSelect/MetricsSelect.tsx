@@ -29,7 +29,6 @@ export const SOURCE_OPTIONS: SelectOption<string, string>[] = [
 export const MetricsSelect = memo(function MetricsSelect({
 	query,
 	index,
-	version,
 	signalSource,
 	onSignalSourceChange,
 	signalSourceChangeEnabled = false,
@@ -37,7 +36,6 @@ export const MetricsSelect = memo(function MetricsSelect({
 }: {
 	query: IBuilderQuery;
 	index: number;
-	version: string;
 	signalSource: 'meter' | '';
 	onSignalSourceChange: (value: string) => void;
 	signalSourceChangeEnabled: boolean;
@@ -46,7 +44,6 @@ export const MetricsSelect = memo(function MetricsSelect({
 	const { handleChangeAggregatorAttribute } = useQueryOperations({
 		index,
 		query,
-		entityVersion: version,
 	});
 
 	const { updateAllQueriesOperators, handleSetQueryData, panelType } =

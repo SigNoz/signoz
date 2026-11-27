@@ -7,17 +7,12 @@ import {
 } from 'constants/queryBuilder';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { noop } from 'lodash-es';
-import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
-import { server } from 'mocks-server/server';
-import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import LogsExplorer from '../index';
-
-const queryRangeURL = 'http://localhost/api/v3/query_range';
 
 // mocking the graph components in this test as this should be handled separately
 jest.mock(
@@ -94,13 +89,6 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 
 const FREQUENCY_CHART_TOGGLE_TEST_ID = 'logs-frequency-chart-toggle';
 
-const logsQueryServerRequest = (): void =>
-	server.use(
-		rest.post(queryRangeURL, (req, res, ctx) =>
-			res(ctx.status(200), ctx.json(logsQueryRangeSuccessResponse)),
-		),
-	);
-
 describe('Logs Explorer Tests', () => {
 	beforeEach(() => {
 		localStorage.removeItem(LOCALSTORAGE.SHOW_FREQUENCY_CHART);
@@ -160,8 +148,6 @@ describe('Logs Explorer Tests', () => {
 
 	// update this test properly
 	it.skip('Logs Explorer Page should render with data', async () => {
-		// mocking the query range API to return the logs
-		logsQueryServerRequest();
 		const { queryByText, queryByTestId } = render(
 			<PreferenceContextProvider>
 				<VirtuosoMockContext.Provider
@@ -193,8 +179,6 @@ describe('Logs Explorer Tests', () => {
 	});
 
 	it('Multiple Current Queries', async () => {
-		// mocking the query range API to return the logs
-		logsQueryServerRequest();
 		render(
 			<QueryBuilderContext.Provider
 				value={{

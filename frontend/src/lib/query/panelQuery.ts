@@ -21,12 +21,9 @@ import {
 
 // Asks "would saving the current panel change the persisted widget spec?".
 //
-// `adjustQueryForV5` is deliberately not reused here: in addition to stripping
-// the legacy v4 fields, it also resurrects them onto each metric
-// `aggregations[i]`. That migration step is correct on save but bleeds
-// asymmetrically across a comparator — the live query still carries the
-// legacy defaults from `initialQueryBuilderFormValuesMap` while a previously
-// saved widget had them stripped.
+// The legacy v4 fields are stripped from both sides: the live query still
+// carries the legacy defaults from `initialQueryBuilderFormValuesMap` while a
+// saved widget may lack them.
 const stripQueryDataForCompare = (
 	queryData: IBuilderQuery,
 ): Record<string, unknown> => {

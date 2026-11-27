@@ -21,7 +21,6 @@ function QuerySection(): JSX.Element {
 			showOnlyWhereClause={
 				panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE
 			}
-			version="v3" // setting this to v3 as we this is rendered in logs explorer
 		/>
 	);
 }

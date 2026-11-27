@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
-import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V5 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useScrollWidgetIntoView } from 'lib/visualization/hooks/useScrollWidgetIntoView';
@@ -171,7 +171,7 @@ function GridCardGraph({
 			end: customTimeRange?.endTime || end,
 			originalGraphType: widget?.panelTypes,
 		},
-		version || DEFAULT_ENTITY_VERSION,
+		version || ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.DASHBOARD_GRID_CARD_QUERY_RANGE,
@@ -290,7 +290,7 @@ GridCardGraph.defaultProps = {
 	isQueryEnabled: true,
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
-	version: 'v3',
+	version: ENTITY_VERSION_V5,
 	analyticsEvent: undefined,
 	customTimeRangeWindowForCoRelation: undefined,
 	enableDrillDown: false,

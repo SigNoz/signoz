@@ -35,7 +35,6 @@ function LogExplorerQuerySection({
 			config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}
 			panelType={panelTypes}
 			showOnlyWhereClause={selectedView === ExplorerViews.LIST}
-			version="v3" // setting this to v3 as we this is rendered in logs explorer
 		/>
 	);
 }

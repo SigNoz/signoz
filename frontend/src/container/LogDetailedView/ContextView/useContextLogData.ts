@@ -7,7 +7,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	getOrderByTimestamp,
@@ -131,7 +131,7 @@ export const useContextLogData = ({
 	const { isError, isFetching } = useGetExplorerQueryRange(
 		requestData,
 		PANEL_TYPES.LIST,
-		DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 		{
 			keepPreviousData: true,
 			enabled: !!requestData,

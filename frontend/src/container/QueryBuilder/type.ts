@@ -28,7 +28,6 @@ export type QueryProps = {
 	queryVariant?: 'static' | 'dropdown';
 	isRawQuery?: boolean;
 	showFunctions?: boolean;
-	version: string;
 	showSpanScopeSelector?: boolean;
 	showOnlyWhereClause?: boolean;
 	showTraceOperator?: boolean;

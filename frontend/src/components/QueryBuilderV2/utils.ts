@@ -9,11 +9,6 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
-import {
-	getActiveBuilder,
-	getBuilderSlotKeyForQueryType,
-	isBuilderQueryType,
-} from 'lib/query/builderSlot';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser, {
 	AndExpressionContext,
@@ -29,7 +24,6 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import {
 	Having,
 	IBuilderQuery,
-	Query,
 	TagFilter,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
@@ -1032,57 +1026,3 @@ export function getQueryLabelWithAggregation(
 
 	return labels;
 }
-
-export const adjustQueryForV5 = (currentQuery: Query): Query => {
-	if (isBuilderQueryType(currentQuery.queryType)) {
-		const activeBuilder = getActiveBuilder(currentQuery);
-		const newQueryData = activeBuilder.queryData.map((query) => {
-			const aggregations = query.aggregations?.map((aggregation) => {
-				if (query.dataSource === DataSource.METRICS) {
-					const metricAggregation = aggregation as MetricAggregation;
-					return {
-						...aggregation,
-						metricName:
-							metricAggregation.metricName || query.aggregateAttribute?.key || '',
-						timeAggregation:
-							metricAggregation.timeAggregation || query.timeAggregation || '',
-						spaceAggregation:
-							metricAggregation.spaceAggregation || query.spaceAggregation || '',
-						reduceTo: metricAggregation.reduceTo || query.reduceTo || 'avg',
-					};
-				}
-				return aggregation;
-			});
-
-			const {
-				aggregateAttribute: _aggregateAttribute,
-				aggregateOperator: _aggregateOperator,
-				timeAggregation: _timeAggregation,
-				spaceAggregation: _spaceAggregation,
-				reduceTo: _reduceTo,
-				filters: _filters,
-				...retainedQuery
-			} = query;
-
-			const newAggregations =
-				query.dataSource === DataSource.METRICS
-					? (aggregations as MetricAggregation[])
-					: (aggregations as (TraceAggregation | LogAggregation)[]);
-
-			return {
-				...retainedQuery,
-				aggregations: newAggregations,
-			};
-		});
-
-		return {
-			...currentQuery,
-			[getBuilderSlotKeyForQueryType(currentQuery.queryType)]: {
-				...activeBuilder,
-				queryData: newQueryData,
-			},
-		};
-	}
-
-	return currentQuery;
-};

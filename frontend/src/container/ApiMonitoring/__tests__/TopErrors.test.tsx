@@ -99,33 +99,6 @@ describe('TopErrors', () => {
 				),
 			),
 		);
-
-		// Mock V4 API endpoint for dropdown data
-		server.use(
-			rest.post('*/api/v1/query_range', (_req, res, ctx) =>
-				res(
-					ctx.status(200),
-					ctx.json({
-						payload: {
-							data: {
-								result: [
-									{
-										table: {
-											rows: [
-												{
-													http_url: '/api/test',
-													A: 100,
-												},
-											],
-										},
-									},
-								],
-							},
-						},
-					}),
-				),
-			),
-		);
 	});
 
 	it('renders component correctly', async () => {

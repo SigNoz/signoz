@@ -1,15 +1,11 @@
-import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
-import type {
-	BaseAutocompleteData,
-	IQueryAutocompleteResponse,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 /**
- * The keys the legacy v3 query builder offers per signal, so a page that reaches
- * it without declaring its own autocomplete opens on a list that looks like the
- * product's rather than on a failed request.
+ * The keys the query builder offers per signal, so a page that reaches it
+ * without declaring its own keys opens on a list that looks like the product's
+ * rather than on a failed request.
  */
 const ATTRIBUTE_KEYS: Record<DataSource, BaseAutocompleteData[]> = {
 	[DataSource.LOGS]: [
@@ -96,34 +92,21 @@ const isDataSource = (value: string | null): value is DataSource =>
 const matches = (candidate: string, searchText: string): boolean =>
 	candidate.toLowerCase().includes(searchText.toLowerCase());
 
-export const autocompleteKeysResponse = (
+export const attributeKeysFor = (
 	dataSource: string | null,
 	searchText: string,
-): { status: string; data: IQueryAutocompleteResponse } => ({
-	status: 'success',
-	data: {
-		attributeKeys: ATTRIBUTE_KEYS[
-			isDataSource(dataSource) ? dataSource : DataSource.LOGS
-		].filter((attribute) => matches(attribute.key, searchText)),
-	},
-});
+): BaseAutocompleteData[] =>
+	ATTRIBUTE_KEYS[isDataSource(dataSource) ? dataSource : DataSource.LOGS].filter(
+		(attribute) => matches(attribute.key, searchText),
+	);
 
-export const autocompleteValuesResponse = (
-	attributeKey: string | null,
+export const attributeValuesFor = (
+	name: string | null,
 	searchText: string,
-): { status: string; data: IAttributeValuesResponse } => {
-	const normalized = (attributeKey ?? '')
-		.replace(/^resource_/, '')
-		.toLowerCase();
+): string[] => {
+	const normalized = (name ?? '').replace(/^resource_/, '').toLowerCase();
 
-	return {
-		status: 'success',
-		data: {
-			stringAttributeValues: (
-				ATTRIBUTE_VALUES[normalized] ?? DEFAULT_VALUES
-			).filter((value) => matches(value, searchText)),
-			numberAttributeValues: null,
-			boolAttributeValues: null,
-		},
-	};
+	return (ATTRIBUTE_VALUES[normalized] ?? DEFAULT_VALUES).filter((value) =>
+		matches(value, searchText),
+	);
 };

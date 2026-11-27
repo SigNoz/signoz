@@ -20,7 +20,6 @@ export function OrderByFilter({
 	query,
 	onChange,
 	isRawQuery = false,
-	entityVersion,
 	isNewQueryV2 = false,
 	placeholder,
 	panelType,
@@ -34,7 +33,7 @@ export function OrderByFilter({
 		createOptions,
 		handleChange,
 		handleSearchKeys,
-	} = useOrderByFilter({ query, onChange, entityVersion });
+	} = useOrderByFilter({ query, onChange });
 
 	const builderQueryType = useBuilderQueryType(query);
 	const { data: fieldKeys, isFetching } = useFieldKeysSuggestion(

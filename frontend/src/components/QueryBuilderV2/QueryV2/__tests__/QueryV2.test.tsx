@@ -177,7 +177,6 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 				<QueryV2
 					index={0}
 					query={queryA}
-					version="v4"
 					isAvailableToDisable={false}
 					isMultiQueryAllowed
 					queriesCount={queriesCount}
@@ -190,7 +189,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 	};
 
 	it('renders limit input when dataSource is logs', () => {
-		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
+		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} />);
 
 		// Ensure the Limit add-on input is present and is of type number
 		const limitInput = screen.getByPlaceholderText(
@@ -204,7 +203,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 
 	it('Cmd+Enter on the limit input triggers handleRunQuery via container handler', async () => {
 		const user = userEvent.setup();
-		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
+		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} />);
 
 		screen.getByTestId('input-Limit-field').focus();
 		await user.keyboard('{Meta>}{Enter}{/Meta}');
@@ -214,7 +213,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 
 	it('Cmd+Enter on the legend input triggers handleRunQuery via container handler', async () => {
 		const user = userEvent.setup();
-		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
+		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} />);
 
 		screen.getByPlaceholderText('Write legend format').focus();
 		await user.keyboard('{Meta>}{Enter}{/Meta}');
@@ -224,7 +223,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 
 	it('Cmd+Enter in the where clause editor triggers handleRunQuery via container handler', async () => {
 		const user = userEvent.setup();
-		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
+		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} />);
 
 		const editorWrapper = await screen.findByTestId('query-where-clause-editor');
 		within(editorWrapper).getByRole('textbox').focus();
@@ -249,7 +248,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		});
 
 		expect(() =>
-			render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />),
+			render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} />),
 		).not.toThrow();
 
 		// query list still renders from queryData, formulas block is skipped
@@ -342,7 +341,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			},
 		});
 
-		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
+		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} />);
 
 		const fxButton = screen.getByTestId('query-functions-fx-btn');
 		expect(fxButton).toBeInTheDocument();

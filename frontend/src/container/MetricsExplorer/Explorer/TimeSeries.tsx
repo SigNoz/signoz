@@ -122,7 +122,6 @@ function TimeSeries({
 							dataSource: DataSource.METRICS,
 						},
 					},
-					// ENTITY_VERSION_V4,
 					ENTITY_VERSION_V5,
 					undefined,
 					signal,

@@ -340,7 +340,6 @@ function Explorer(): JSX.Element {
 						config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
 						panelType={PANEL_TYPES.TIME_SERIES}
 						showFunctions={false}
-						version="v3"
 					/>
 					<div className="explore-content">
 						<TimeSeries

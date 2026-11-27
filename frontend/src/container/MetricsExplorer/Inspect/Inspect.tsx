@@ -60,7 +60,6 @@ function Inspect({
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
 		query: currentQuery.builder.queryData[0],
-		entityVersion: '',
 	});
 
 	const updatedCurrentQuery = useMemo(
