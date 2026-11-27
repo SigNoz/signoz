@@ -17,6 +17,7 @@ import { useDashboardFetchRequired } from './useDashboardFetchRequired';
  */
 export function useDashboardEditContext(): DashboardEditContext {
 	const { dashboard } = useDashboardFetchRequired();
+	const readOnly = useDashboardStore((s) => s.readOnly);
 	const {
 		canRead,
 		canEdit,
@@ -24,12 +25,8 @@ export function useDashboardEditContext(): DashboardEditContext {
 		editChecks,
 		deletePermission,
 		areOtherPermissionsLoading,
-	} = useDashboardPermissions(dashboard.id);
+	} = useDashboardPermissions(dashboard.id, { enabled: !readOnly });
 	const { t } = useTranslation('dashboard');
-	const readOnlyOverride = useDashboardStore(
-		(s) => s.canEditDashboardOverride === false,
-	);
-
 	const deleteChecks = useMemo(() => [deletePermission], [deletePermission]);
 
 	return deriveEditContext({
@@ -44,6 +41,6 @@ export function useDashboardEditContext(): DashboardEditContext {
 			locked: t('dashboard_locked'),
 			readOnly: t('dashboard_read_only_here'),
 		},
-		readOnlyOverride,
+		readOnlyOverride: readOnly,
 	});
 }

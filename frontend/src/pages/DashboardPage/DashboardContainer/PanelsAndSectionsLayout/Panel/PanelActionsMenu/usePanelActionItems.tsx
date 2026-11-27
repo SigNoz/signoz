@@ -28,6 +28,7 @@ import { buildMoveItems } from '../utils/buildMoveItems';
 import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
 import { blockedBy } from 'lib/authz/components/AuthZDropdown/utils';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
+import { useDashboardControlGroup } from '../../../controls/useDashboardControlGroup';
 
 // Stable fallback so renders without layout context don't churn the mutation
 // hooks' deps (a fresh [] each render would re-create their callbacks).
@@ -64,6 +65,7 @@ export function usePanelActionItems({
 	const panelKind = panel.spec.plugin.kind;
 	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
+	const panelControls = useDashboardControlGroup('panelActions');
 	const openPanelEditor = useOpenPanelEditor();
 	const createAlert = useCreateAlertFromPanel();
 	const { openView } = useViewPanel();
@@ -101,7 +103,7 @@ export function usePanelActionItems({
 		const editGate = { checks: editChecks, ...blockedBy(editDisabledTooltip) };
 
 		const panelGroup: AuthZDropdownItemType[] = [];
-		if (panelCapabilities.view) {
+		if (panelControls.view && panelCapabilities.view) {
 			panelGroup.push({
 				type: 'item',
 				value: 'view-panel',
@@ -110,7 +112,7 @@ export function usePanelActionItems({
 				onClick: (): void => openView(panelId, panel),
 			});
 		}
-		if (panelCapabilities.edit) {
+		if (panelControls.edit && panelCapabilities.edit) {
 			panelGroup.push({
 				type: 'item',
 				value: 'edit-panel',
@@ -120,7 +122,7 @@ export function usePanelActionItems({
 				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
 		}
-		if (panelCapabilities.clone) {
+		if (panelControls.clone && panelCapabilities.clone) {
 			// Needs section context to place the copy; disabled without it.
 			panelGroup.push({
 				type: 'item',
@@ -140,13 +142,13 @@ export function usePanelActionItems({
 		}
 
 		const dataGroup: AuthZDropdownItemType[] = [];
-		if (downloadItem) {
+		if (panelControls.download && downloadItem) {
 			dataGroup.push(downloadItem);
 		}
 
 		// Create Alerts opens a new tab and never mutates the dashboard, so —
 		// unlike edit/clone — it isn't gated on editability (V1 parity).
-		if (panelCapabilities.createAlert) {
+		if (panelControls.createAlert && panelCapabilities.createAlert) {
 			dataGroup.push({
 				type: 'item',
 				value: 'create-alert',
@@ -156,8 +158,9 @@ export function usePanelActionItems({
 			});
 		}
 
-		const moveGroup: AuthZDropdownItemType[] =
-			isEditable && panelActions
+		const moveGroup: AuthZDropdownItemType[] = !panelControls.move
+			? []
+			: isEditable && panelActions
 				? buildMoveItems({
 						sections,
 						currentLayoutIndex: panelActions.currentLayoutIndex,
@@ -174,17 +177,19 @@ export function usePanelActionItems({
 						},
 					];
 
-		const deleteGroup: AuthZDropdownItemType[] = [
-			{
-				type: 'item',
-				value: 'delete-panel',
-				label: 'Delete panel',
-				prefix: <Trash2 size={14} />,
-				danger: true,
-				...editGate,
-				onClick: (): void => requestDelete(),
-			},
-		];
+		const deleteGroup: AuthZDropdownItemType[] = !panelControls.delete
+			? []
+			: [
+					{
+						type: 'item',
+						value: 'delete-panel',
+						label: 'Delete panel',
+						prefix: <Trash2 size={14} />,
+						danger: true,
+						...editGate,
+						onClick: (): void => requestDelete(),
+					},
+				];
 
 		return [panelGroup, dataGroup, moveGroup, deleteGroup]
 			.filter((group) => group.length > 0)
@@ -194,6 +199,7 @@ export function usePanelActionItems({
 					: [{ type: 'separator', value: `separator-${index}` }, ...group],
 			);
 	}, [
+		panelControls,
 		isEditable,
 		editChecks,
 		editDisabledTooltip,

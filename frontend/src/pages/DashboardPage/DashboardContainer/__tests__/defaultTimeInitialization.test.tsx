@@ -7,6 +7,7 @@ import { UpdateTimeInterval } from 'store/actions';
 import { act, render, screen } from 'tests/test-utils';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
+import { resolveControls } from '../controls/dashboardControls';
 import DashboardContainer from '../index';
 
 jest.mock('store/actions', () => ({
@@ -21,7 +22,11 @@ const mockSelectorMount = jest.fn() as jest.MockedFunction<
 const mockPanelMount = jest.fn() as jest.MockedFunction<
 	(search: string) => void
 >;
-const mockStore = { resetVariableFetch: jest.fn(), setEditContext: jest.fn() };
+const mockStore = {
+	resetVariableFetch: jest.fn(),
+	setEditContext: jest.fn(),
+	controls: resolveControls(undefined, false),
+};
 jest.mock('../store/useDashboardStore', () => ({
 	useDashboardStore: (selector: (state: typeof mockStore) => unknown): unknown =>
 		selector(mockStore),
@@ -68,6 +73,13 @@ jest.mock('../components/LockedIndicator/LockedIndicator', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));
+jest.mock(
+	'../components/DashboardSettingsDrawer/DashboardSettingsDrawer',
+	() => ({
+		__esModule: true,
+		default: (): null => null,
+	}),
+);
 jest.mock(
 	'../components/DashboardChangedDialog/DashboardChangedDialog',
 	() => ({ __esModule: true, default: (): null => null }),

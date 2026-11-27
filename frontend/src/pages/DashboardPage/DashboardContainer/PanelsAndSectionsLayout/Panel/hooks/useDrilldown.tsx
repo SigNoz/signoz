@@ -37,6 +37,7 @@ import { useDrilldownCoordinates } from './useDrilldownCoordinates';
 import { useDrilldownDashboardVariables } from './useDrilldownDashboardVariables';
 import { useDrilldownFilter } from './useDrilldownFilter';
 import { useResolvedDrilldownQuery } from './useResolvedDrilldownQuery';
+import { useDashboardControl } from 'pages/DashboardPage/DashboardContainer/controls/useDashboardControl';
 import { useViewPanel } from './useViewPanel';
 
 /** Which menu the popover shows; extend as submenus are added (e.g. dashboard variables). */
@@ -89,15 +90,17 @@ export function useDrilldown(
 	// Drilldown only for builder-authored panels with a query to drill into (PromQL /
 	// ClickHouse have no builder context to refine). A panel whose builder queries
 	// are all disabled draws only formulas, which have no series to drill into.
+	const showDrilldown = useDashboardControl('panelActions.drilldown');
 	const enableDrillDown = useMemo(() => {
 		const queryType = getPanelQueryType(panel);
 		return (
+			showDrilldown &&
 			getPanelDefinition(kind).actions.drilldown &&
 			!!queryType &&
 			isBuilderQueryType(queryType) &&
 			getBuilderQueries(queries).some((query) => !query.disabled)
 		);
-	}, [kind, panel, queries]);
+	}, [showDrilldown, kind, panel, queries]);
 
 	const slotQuery = useMemo(
 		() => fromPerses(queries, panelType),

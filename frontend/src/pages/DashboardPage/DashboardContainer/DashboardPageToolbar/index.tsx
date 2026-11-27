@@ -17,6 +17,7 @@ import { getAbsoluteUrl } from 'utils/basePath';
 
 import { useCreatePanel } from '../hooks/useCreatePanel';
 import { useOptimisticPatch } from '../hooks/useOptimisticPatch';
+import { useDashboardControlGroup } from '../controls/useDashboardControlGroup';
 import { usePublicDashboardMeta } from '../DashboardSettings/PublicDashboard/usePublicDashboardMeta';
 import PanelTypeSelectionModal from '../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import DashboardActions from './DashboardActions/DashboardActions';
@@ -56,6 +57,16 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		[dashboard.tags],
 	);
 
+	const titleControls = useDashboardControlGroup('title');
+	const actionControls = useDashboardControlGroup('dashboardActions');
+	const toolbarControls = useDashboardControlGroup('toolbar');
+	const hasTitleRow = Object.values(titleControls).some(Boolean);
+	const hasActions = Object.values(actionControls).some(Boolean);
+	const hasVisibleRows =
+		hasTitleRow ||
+		hasActions ||
+		toolbarControls.timeRange ||
+		toolbarControls.variables;
 	const { showErrorModal } = useErrorModal();
 	const { patchAsync } = useOptimisticPatch();
 	const {
@@ -71,10 +82,13 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		useDashboardLockPermission({
 			dashboardId: id,
 			source: dashboard.source,
+			enabled: titleControls.lock || actionControls.lock,
 		});
 
 	// Public-sharing meta (deduped react-query read); drives the header globe.
-	const { isPublic, publicMeta } = usePublicDashboardMeta(id);
+	const { isPublic, publicMeta } = usePublicDashboardMeta(id, {
+		enabled: titleControls.publicBadge,
+	});
 	const publicUrl = getAbsoluteUrl(publicMeta?.publicPath ?? '');
 
 	// Shared with the list's row menu — it owns the API call, the toast and the
@@ -154,49 +168,71 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	}, [id, openPicker]);
 
 	return (
-		<section className={styles.dashboardPageToolbarContainer}>
-			<div className={styles.dashboardInfoWithActions}>
-				<DashboardInfo
-					title={title}
-					image={image}
-					tags={tags}
-					description={description}
-					isPublicDashboard={isPublic}
-					publicUrl={publicUrl}
-					isDashboardLocked={isDashboardLocked}
-					showLockToggle={showLockToggle}
-					onToggleLock={
-						canToggleLock
-							? (): void => handleLockDashboardToggle('header')
-							: undefined
-					}
-					lockDisabledTooltip={lockDisabledTooltip}
-					isEditing={isEditing}
-					draft={draft}
-					onDraftChange={setDraft}
-					onStartEdit={startEdit}
-					onCommit={commit}
-					onCancel={cancel}
-				/>
-				<DashboardActions
-					title={title}
-					dashboard={dashboard}
-					handle={handle}
-					isDashboardLocked={isDashboardLocked}
-					onAddPanel={onAddPanel}
-					onLockToggle={(): void => handleLockDashboardToggle('menu')}
-					onOpenRename={startEdit}
-				/>
-			</div>
+		<section
+			className={styles.dashboardPageToolbarContainer}
+			data-testid="dashboard-page-toolbar"
+			hidden={!hasVisibleRows}
+		>
+			{(hasTitleRow || hasActions) && (
+				<div className={styles.dashboardInfoWithActions}>
+					{hasTitleRow && (
+						<DashboardInfo
+							title={title}
+							image={image}
+							tags={tags}
+							description={description}
+							isPublicDashboard={isPublic}
+							publicUrl={publicUrl}
+							isDashboardLocked={isDashboardLocked}
+							showLockToggle={showLockToggle}
+							onToggleLock={
+								canToggleLock
+									? (): void => handleLockDashboardToggle('header')
+									: undefined
+							}
+							lockDisabledTooltip={lockDisabledTooltip}
+							isEditing={isEditing}
+							draft={draft}
+							onDraftChange={setDraft}
+							onStartEdit={startEdit}
+							onCommit={commit}
+							onCancel={cancel}
+						/>
+					)}
+					{hasActions && (
+						<DashboardActions
+							title={title}
+							dashboard={dashboard}
+							handle={handle}
+							isDashboardLocked={isDashboardLocked}
+							onAddPanel={onAddPanel}
+							onLockToggle={(): void => handleLockDashboardToggle('menu')}
+							onOpenRename={startEdit}
+						/>
+					)}
+				</div>
+			)}
 
 			{/* Row 2: the time selector floats top-right (declared first so the
 			    variables bar's content wraps around it); the variables bar
 			    collapses to one line and, when expanded, wraps full-width under it. */}
 			<div className={styles.toolbarRow}>
-				<div className={styles.timeCluster}>
-					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
-				</div>
-				<VariablesBar dashboard={dashboard} />
+				{toolbarControls.timeRange && (
+					<div className={styles.timeCluster}>
+						<DateTimeSelectionV2
+							showAutoRefresh={toolbarControls.autoRefresh}
+							hideShareModal
+						/>
+					</div>
+				)}
+				{toolbarControls.variables ? (
+					<VariablesBar dashboard={dashboard} />
+				) : (
+					// Still mounted: the selectors seed and auto-select the values panels query with.
+					<div hidden>
+						<VariablesBar dashboard={dashboard} />
+					</div>
+				)}
 			</div>
 			<PanelTypeSelectionModal
 				open={isPickerOpen}

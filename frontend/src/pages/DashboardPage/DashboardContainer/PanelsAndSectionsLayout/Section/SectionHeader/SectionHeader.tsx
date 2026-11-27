@@ -16,12 +16,12 @@ export interface SectionDragHandle {
 	setActivatorNodeRef: (element: HTMLElement | null) => void;
 }
 
-/** Editable-mode section actions — present together or not at all. */
+/** Section actions; an absent one isn't offered. */
 export interface SectionHeaderActions {
-	onRename: () => void;
-	onAddPanel: () => void;
-	onCloneSection: () => void;
-	onDeleteSection: () => void;
+	onRename?: () => void;
+	onAddPanel?: () => void;
+	onCloneSection?: () => void;
+	onDeleteSection?: () => void;
 }
 
 interface SectionHeaderProps {

@@ -10,6 +10,7 @@ import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import type { DashboardSection } from '../../../../utils';
+import { useDashboardStore } from '../../../../store/useDashboardStore';
 import { usePanelActionItems } from '../usePanelActionItems';
 
 /** Keys of the disabled items, in order. */
@@ -493,5 +494,44 @@ describe('usePanelActionItems', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
 		click(actionRow(result.current.items, 'create-alert'));
 		expect(mockCreateAlert).toHaveBeenCalledWith(mockPanel, 'panel-1');
+	});
+
+	describe('host controls', () => {
+		afterEach(() => {
+			useDashboardStore
+				.getState()
+				.setEditContext({ dashboardId: '', refetch: jest.fn() });
+		});
+
+		it('drops every writing action on a read-only mount', () => {
+			useDashboardStore.getState().setEditContext({
+				dashboardId: 'dash-1',
+				refetch: jest.fn(),
+				readOnly: true,
+			});
+
+			const { result } = renderHook(() => usePanelActionItems(baseArgs));
+
+			expect(itemKeys(result.current)).toStrictEqual([
+				'view-panel',
+				'separator',
+				'download',
+				'create-alert',
+			]);
+		});
+
+		it('drops the actions the host hides', () => {
+			useDashboardStore.getState().setEditContext({
+				dashboardId: 'dash-1',
+				refetch: jest.fn(),
+				controls: { panelActions: { createAlert: false, delete: false } },
+			});
+
+			const { result } = renderHook(() => usePanelActionItems(baseArgs));
+
+			expect(itemKeys(result.current)).not.toContain('create-alert');
+			expect(itemKeys(result.current)).not.toContain('delete-panel');
+			expect(itemKeys(result.current)).toContain('edit-panel');
+		});
 	});
 });
