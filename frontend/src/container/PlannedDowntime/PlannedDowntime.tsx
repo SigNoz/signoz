@@ -9,7 +9,6 @@ import { useAppLocation } from 'lib/router/useAppLocation';
 import { navigate } from 'lib/router/navigation';
 import { Plus, Search } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
-import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Skeleton } from '@signozhq/ui/skeleton';
 import { Typography } from '@signozhq/ui/typography';
@@ -23,13 +22,19 @@ import { ColumnSelector } from 'components/TanStackTableView';
 import TextToolTip from 'components/TextToolTip';
 import dayjs from 'dayjs';
 import { useListAllRules } from 'hooks/alerts/useListAllRules';
+import {
+	PlannedMaintenanceCreateChecks,
+	PlannedMaintenanceListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/planned-maintenance.permissions';
+import { useAuthZDisabled } from 'lib/authz/hooks/useAuthZDisabled/useAuthZDisabled';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useAppContext } from 'providers/App/App';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
-import { USER_ROLES } from 'types/roles';
 
 import 'dayjs/locale/en';
 
@@ -48,6 +53,8 @@ import usePlannedDowntimeTable from './usePlannedDowntimeTable';
 import './PlannedDowntime.styles.scss';
 
 const COLUMNS_STORAGE_KEY = 'planned-downtime-columns';
+// Module-level so the useQueries identity stays stable across renders.
+const LIST_CHECKS = [PlannedMaintenanceListPermission];
 
 dayjs.locale('en');
 
@@ -60,7 +67,6 @@ export function PlannedDowntime(): JSX.Element {
 	} = useListAllRules({ cacheTime: 0 });
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [form] = Form.useForm();
-	const { user } = useAppContext();
 	const { showErrorModal } = useErrorModal();
 	const location = useAppLocation();
 	const urlQuery = useUrlQuery();
@@ -76,7 +82,7 @@ export function PlannedDowntime(): JSX.Element {
 			alertsData?.map((i) => ({
 				label: i.alert,
 				value: i.id,
-			})),
+			})) ?? [],
 		[alertsData],
 	);
 
@@ -123,7 +129,7 @@ export function PlannedDowntime(): JSX.Element {
 		setLimit,
 	} = usePlannedDowntimeTable(
 		downtimeSchedules.data?.data || [],
-		alertOptions || [],
+		alertOptions,
 		searchValue,
 	);
 
@@ -139,7 +145,7 @@ export function PlannedDowntime(): JSX.Element {
 		setPage(1);
 	};
 
-	const canEdit = user?.role !== USER_ROLES.VIEWER;
+	const searchLock = useAuthZDisabled(LIST_CHECKS);
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const isAlertsLoading = isLoading || (!alertsData && isFetchingAlerts);
 	const columns = React.useMemo(
@@ -245,18 +251,17 @@ export function PlannedDowntime(): JSX.Element {
 							testId="planned-downtime-columns"
 						/>
 					)}
-					<Button
+					<AuthZButton
+						checks={PlannedMaintenanceCreateChecks}
 						variant="solid"
 						color="primary"
 						size="sm"
 						prefix={<Plus size={14} />}
 						onClick={handleCreate}
-						disabled={!canEdit}
-						disabledTooltip="You need edit permissions to create a planned downtime"
 						testId="planned-downtime-create"
 					>
 						New Downtime
-					</Button>
+					</AuthZButton>
 					<TextToolTip
 						text="More details on how to schedule planned downtime"
 						url="https://signoz.io/docs/alerts-management/planned-maintenance/"
@@ -270,6 +275,8 @@ export function PlannedDowntime(): JSX.Element {
 							placeholder="Search by name"
 							value={searchValue}
 							onChange={handleSearch}
+							disabled={searchLock.disabled}
+							disabledTooltip={searchLock.disabledTooltip}
 							suffix={<Search size={14} className={styles.searchIcon} />}
 							testId="planned-downtime-search"
 						/>
@@ -278,27 +285,41 @@ export function PlannedDowntime(): JSX.Element {
 			</header>
 
 			<div ref={containerRef} className={styles.tableContainer}>
-				<PlannedDowntimeList
-					columns={columns}
-					downtimes={filteredDowntimes}
-					pagedDowntimes={pagedDowntimes}
-					calculatedPageSize={calculatedPageSize}
-					onLimitChange={setLimit}
-					isFetching={isFetching}
-					isError={downtimeSchedules.isError}
-					refetch={refetchAllSchedules}
-					canEdit={canEdit}
-					onEdit={handleEdit}
-					onDelete={handleDelete}
-					onCreate={handleCreate}
-					hasSearchTerm={searchValue.length > 0}
-					onClearSearch={clearSearch}
-				/>
+				<AuthZGuardContent
+					checks={LIST_CHECKS}
+					fallback={({ deniedPermissions }): JSX.Element => (
+						<PermissionDeniedCallout
+							deniedPermissions={deniedPermissions}
+							className={styles.guardInset}
+						/>
+					)}
+					fallbackOnLoading={
+						<div className={styles.guardInset}>
+							<Skeleton active paragraph={{ rows: 6 }} />
+						</div>
+					}
+				>
+					<PlannedDowntimeList
+						columns={columns}
+						downtimes={filteredDowntimes}
+						pagedDowntimes={pagedDowntimes}
+						calculatedPageSize={calculatedPageSize}
+						onLimitChange={setLimit}
+						isFetching={isFetching}
+						isError={downtimeSchedules.isError}
+						refetch={refetchAllSchedules}
+						onEdit={handleEdit}
+						onDelete={handleDelete}
+						onCreate={handleCreate}
+						hasSearchTerm={searchValue.length > 0}
+						onClearSearch={clearSearch}
+					/>
+				</AuthZGuardContent>
 			</div>
 
 			{isOpen && (
 				<PlannedDowntimeForm
-					alertOptions={alertOptions || []}
+					alertOptions={alertOptions}
 					initialValues={initialValues}
 					isError={isError}
 					isLoading={isLoading}
