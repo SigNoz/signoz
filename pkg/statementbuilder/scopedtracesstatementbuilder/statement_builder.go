@@ -36,7 +36,7 @@ type scopedTraceStatementBuilder struct {
 	storage                   qbtypes.Storage
 	scope                     TraceScope
 	traceStmtBuilder          qbtypes.StatementBuilder[qbtypes.TraceAggregation]
-	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	resourceFilterStmtBuilder *resourcefilter.StatementBuilder[qbtypes.TraceAggregation]
 	fl                        flagger.Flagger
 }
 
@@ -241,7 +241,7 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 	if err != nil {
 		return nil, err
 	}
-	resourceFrag, resourceArgs, resourcePred, err := b.maybeAttachResourceFilter(ctx, orgID, query, start, end, variables)
+	resourceFrag, resourceArgs, resourcePred, err := b.maybeAttachResourceFilter(ctx, orgID, query, start, end, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -292,11 +292,10 @@ func (b *scopedTraceStatementBuilder) maybeAttachResourceFilter(
 	orgID valuer.UUID,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (cteFrag string, cteArgs []any, fingerprintPred string, err error) {
-	stmt, err := b.resourceFilterStmtBuilder.Build(
-		ctx, orgID, start, end, qbtypes.RequestTypeRaw, query, variables,
-	)
+	stmt, err := b.resourceFilterStmtBuilder.BuildWithKeys(ctx, orgID, start, end, query, variables, keys)
 	if err != nil {
 		return "", nil, "", err
 	}

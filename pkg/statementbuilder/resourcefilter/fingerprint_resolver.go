@@ -12,7 +12,7 @@ import (
 )
 
 type ResourceFingerprintResolver[T any] struct {
-	stmtBuilder    *resourceFilterStatementBuilder[T]
+	stmtBuilder    *StatementBuilder[T]
 	telemetryStore telemetrystore.TelemetryStore
 	threshold      uint64
 }
@@ -45,8 +45,16 @@ func NewResolver[T any](
 	}
 }
 
-func (r *ResourceFingerprintResolver[T]) StatementBuilder() qbtypes.StatementBuilder[T] {
-	return r.stmtBuilder
+// Build builds the resource filter statement from the keys the main query resolved.
+func (r *ResourceFingerprintResolver[T]) Build(
+	ctx context.Context,
+	orgID valuer.UUID,
+	query qbtypes.QueryBuilderQuery[T],
+	start, end uint64,
+	variables map[string]qbtypes.VariableItem,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+) (*qbtypes.Statement, error) {
+	return r.stmtBuilder.BuildWithKeys(ctx, orgID, start, end, query, variables, keys)
 }
 
 func (r *ResourceFingerprintResolver[T]) Resolve(
@@ -55,8 +63,9 @@ func (r *ResourceFingerprintResolver[T]) Resolve(
 	query qbtypes.QueryBuilderQuery[T],
 	start, end uint64,
 	variables map[string]qbtypes.VariableItem,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (qbtypes.ResourceFilterResolveKind, error) {
-	countStmt, err := r.stmtBuilder.BuildCount(ctx, orgID, start, end, query, variables)
+	countStmt, err := r.stmtBuilder.BuildCount(ctx, orgID, start, end, query, variables, keys)
 	if err != nil {
 		return qbtypes.ResourceFilterResolveKindNoOp, err
 	}
