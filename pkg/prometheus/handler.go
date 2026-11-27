@@ -125,6 +125,13 @@ func (h *handler) respondResult(ctx context.Context, w http.ResponseWriter, r *h
 		case promql.ErrQueryTimeout:
 			h.respondError(ctx, w, errTimeout, err)
 		case promql.ErrStorage:
+			// A fetch-budget refusal is the storage-level twin of the
+			// engine's own too-many-samples error, which upstream maps to
+			// "execution", not "internal".
+			if typed := TypedStorageError(err); typed != nil {
+				h.respondError(ctx, w, errExec, typed)
+				return
+			}
 			h.respondError(ctx, w, errInternal, err)
 		default:
 			h.respondError(ctx, w, errExec, err)

@@ -42,8 +42,8 @@ type scalarOp struct {
 }
 
 // Comparisons preserve the metric name; arithmetic drops it.
-func (o scalarOp) isComparison() bool {
-	return o.op.IsComparisonOperator()
+func (operation scalarOp) isComparison() bool {
+	return operation.op.IsComparisonOperator()
 }
 
 type unitKind int
@@ -86,12 +86,12 @@ type coreUnit struct {
 // name cannot become a synthetic series in a hybrid plan: the synthetic
 // name would replace the real one. It transpiles fine as a full plan, where
 // assembly emits the real names.
-func (u *coreUnit) keepsName() bool {
-	nameKeepingSelector := u.kind == unitInstant || (u.kind == unitOverTime && u.overFn == "last")
-	if !nameKeepingSelector || u.hasAgg {
+func (unit *coreUnit) keepsName() bool {
+	nameKeepingSelector := unit.kind == unitInstant || (unit.kind == unitOverTime && unit.overFn == "last")
+	if !nameKeepingSelector || unit.hasAgg {
 		return false
 	}
-	for _, op := range u.ops {
+	for _, op := range unit.ops {
 		if !op.isComparison() || op.returnBool {
 			return false
 		}
