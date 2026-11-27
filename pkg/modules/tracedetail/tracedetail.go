@@ -31,4 +31,5 @@ type Module interface {
 	GetTraceAggregations(ctx context.Context, traceID string, req *spantypes.PostableTraceAggregations) (*spantypes.GettableTraceAggregations, error)
 	GetFlamegraph(ctx context.Context, traceID string, selectedSpanID string, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error)
 	GetThread(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.ThreadQuery) (*spantypes.GettableTraceThread, error)
+	GetTraceHighlights(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceHighlightsQuery) (*spantypes.TraceHighlights, error)
 }

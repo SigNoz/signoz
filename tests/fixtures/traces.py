@@ -184,16 +184,19 @@ class TracesEvent(ABC):
     name: str
     time_unix_nano: np.uint64
     attribute_map: dict[str, str]
+    is_error: bool
 
     def __init__(
         self,
         name: str,
         timestamp: datetime.datetime,
         attribute_map: dict[str, str] = {},
+        is_error: bool = False,
     ) -> None:
         self.name = name
         self.time_unix_nano = np.uint64(int(timestamp.timestamp() * 1e9))
         self.attribute_map = attribute_map
+        self.is_error = is_error
 
     def np_arr(self) -> np.array:
         return np.array([self.name, self.time_unix_nano, json.dumps(self.attribute_map)])
@@ -598,13 +601,15 @@ class Traces(ABC):
         )
         # DB shape per event: {"name", "timeUnixNano", "attributeMap"}. Must match
         # what the consume-layer parser in pkg/types/spantypes expects.
+        # The collector writes isError only when it is set.
         self._events_db = [
             json.dumps(
                 {
                     "name": event.name,
                     "timeUnixNano": int(event.time_unix_nano),
                     "attributeMap": dict(event.attribute_map),
-                },
+                }
+                | ({"isError": True} if event.is_error else {}),
                 separators=(",", ":"),
             )
             for event in events
