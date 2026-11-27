@@ -31,7 +31,7 @@ type Column struct {
 	// The name of the column in the table.
 	Name ColumnName
 
-	// The data type of the column. This will be translated to the the appropriate data type as per the dialect.
+	// The data type of the column. This will be translated to the appropriate data type as per the dialect.
 	DataType DataType
 
 	// Whether the column is nullable.
