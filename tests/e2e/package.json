@@ -27,6 +27,7 @@
     "fmt:check": "oxfmt --check .",
     "lint": "oxlint .",
     "lint:fix": "oxlint . --fix",
+    "test:scripts": "node scripts/affected.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

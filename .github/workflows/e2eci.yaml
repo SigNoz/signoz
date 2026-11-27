@@ -67,6 +67,9 @@ jobs:
       - name: lint
         run: |
           cd tests/e2e && pnpm lint
+      - name: test-scripts
+        run: |
+          cd tests/e2e && pnpm test:scripts
   test:
     strategy:
       fail-fast: false
