@@ -40,7 +40,7 @@ type TraceStore interface {
 	GetThreadSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *TraceBounds, page ThreadPage) ([]StorableSpan, error)
 	GetThreadCursor(ctx context.Context, traceID string, bounds *TraceBounds, spanID string) (*ThreadCursor, error)
 
-	GetTraceSkeleton(ctx context.Context, traceID string, bounds *TraceBounds) (*TraceSkeleton, error)
+	GetTraceSkeleton(ctx context.Context, orgID valuer.UUID, traceID string, bounds *TraceBounds) (*TraceSkeleton, error)
 	// SearchTraceSpans returns every span of the trace that matches query: words, a filter expression, or both.
 	SearchTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *TraceBounds, query string) (*SpanSearch, error)
 

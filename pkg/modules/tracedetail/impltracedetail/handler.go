@@ -129,6 +129,12 @@ func (h *handler) GetThread(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetTraceHighlights(rw http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	params := new(spantypes.GetTraceHighlightsParams)
 	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
 		render.Error(rw, err)
@@ -141,7 +147,7 @@ func (h *handler) GetTraceHighlights(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.module.GetTraceHighlights(r.Context(), mux.Vars(r)["traceID"], query)
+	result, err := h.module.GetTraceHighlights(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], query)
 	if err != nil {
 		render.Error(rw, err)
 		return

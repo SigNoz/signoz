@@ -255,11 +255,37 @@ func TestGetThreadSpans(t *testing.T) {
 }
 
 func TestGetTraceSkeleton(t *testing.T) {
-	expectedSQL := "SELECT DISTINCT ON (span_id) span_id, parent_span_id, timestamp, duration_nano, has_error, name, resource_string_service$$name, kind_string, response_status_code, status_code_string, status_message, (NOT has_error AND arrayExists(e -> position(e, '\"isError\":true') > 0, events)) AS has_exception_event, (position(links, '\"refType\":\"FOLLOWS_FROM\"') > 0) AS has_link, multiIf(links = concat('[\\x7B\"traceId\":\"', trace_id, '\",\"spanId\":\"', parent_span_id, '\",\"refType\":\"CHILD_OF\"\\x7D]'), '', links = '', '[]', links) AS other_references, toFloat64OrNull(attributes.`gen_ai.usage.input_tokens`::String) AS input_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.output_tokens`::String) AS output_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.cache_read.input_tokens`::String) AS cache_read_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.cache_creation.input_tokens`::String) AS cache_write_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.reasoning.output_tokens`::String) AS reasoning_tokens_value, toFloat64OrNull(attributes.`signoz.gen_ai.usage.tokens.cost`::String) AS total_cost_value FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC, span_id ASC"
-	s := newTestStore(sqlmock.QueryMatcherEqual)
-	s.Mock().ExpectQuery(expectedSQL).WithArgs(testTraceID, testStart.Unix()-1800, testEnd.Unix()).WillReturnRows(cmock.NewRows(nil, nil))
+	jsonInsideTrace := testStart.Add(500 * time.Second)
+	jsonBeforeTrace := testStart.Add(-500 * time.Second)
+	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): true})
 
-	_, _ = s.Store().GetTraceSkeleton(context.Background(), testTraceID, testBounds)
+	testCases := []struct {
+		name        string
+		jsonRelease *time.Time
+		expectedSQL string
+	}{
+		{
+			name:        "LegacyMaps",
+			expectedSQL: "SELECT DISTINCT ON (span_id) span_id, parent_span_id, timestamp, duration_nano, has_error, name, resource_string_service$$name, kind_string, response_status_code, status_code_string, status_message, (NOT has_error AND arrayExists(e -> position(e, '\"isError\":true') > 0, events)) AS has_exception_event, (position(links, '\"refType\":\"FOLLOWS_FROM\"') > 0) AS has_link, multiIf(links = concat(?, trace_id, ?, parent_span_id, ?), '', links = '', '[]', links) AS other_references, multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL) AS input_tokens_value, multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL) AS output_tokens_value, multiIf(mapContains(attributes_number, 'gen_ai.usage.cache_read.input_tokens'), toFloat64(attributes_number['gen_ai.usage.cache_read.input_tokens']), NULL) AS cache_read_tokens_value, multiIf(mapContains(attributes_number, 'gen_ai.usage.cache_creation.input_tokens'), toFloat64(attributes_number['gen_ai.usage.cache_creation.input_tokens']), NULL) AS cache_write_tokens_value, multiIf(mapContains(attributes_number, 'gen_ai.usage.reasoning.output_tokens'), toFloat64(attributes_number['gen_ai.usage.reasoning.output_tokens']), NULL) AS reasoning_tokens_value, multiIf(mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), toFloat64(attributes_number['signoz.gen_ai.usage.tokens.cost']), NULL) AS total_cost_value FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC, span_id ASC",
+		},
+		{
+			name:        "JSONEvolutionInsideTrace_ReadsBothColumns",
+			jsonRelease: &jsonInsideTrace,
+			expectedSQL: "SELECT DISTINCT ON (span_id) span_id, parent_span_id, timestamp, duration_nano, has_error, name, resource_string_service$$name, kind_string, response_status_code, status_code_string, status_message, (NOT has_error AND arrayExists(e -> position(e, '\"isError\":true') > 0, events)) AS has_exception_event, (position(links, '\"refType\":\"FOLLOWS_FROM\"') > 0) AS has_link, multiIf(links = concat(?, trace_id, ?, parent_span_id, ?), '', links = '', '[]', links) AS other_references, toFloat64(multiIf(toFloat64OrNull(attributes.`gen_ai.usage.input_tokens`::String) IS NOT NULL, toFloat64OrNull(attributes.`gen_ai.usage.input_tokens`::String), mapContains(attributes_number, 'gen_ai.usage.input_tokens'), attributes_number['gen_ai.usage.input_tokens'], NULL)) AS input_tokens_value, toFloat64(multiIf(toFloat64OrNull(attributes.`gen_ai.usage.output_tokens`::String) IS NOT NULL, toFloat64OrNull(attributes.`gen_ai.usage.output_tokens`::String), mapContains(attributes_number, 'gen_ai.usage.output_tokens'), attributes_number['gen_ai.usage.output_tokens'], NULL)) AS output_tokens_value, toFloat64(multiIf(toFloat64OrNull(attributes.`gen_ai.usage.cache_read.input_tokens`::String) IS NOT NULL, toFloat64OrNull(attributes.`gen_ai.usage.cache_read.input_tokens`::String), mapContains(attributes_number, 'gen_ai.usage.cache_read.input_tokens'), attributes_number['gen_ai.usage.cache_read.input_tokens'], NULL)) AS cache_read_tokens_value, toFloat64(multiIf(toFloat64OrNull(attributes.`gen_ai.usage.cache_creation.input_tokens`::String) IS NOT NULL, toFloat64OrNull(attributes.`gen_ai.usage.cache_creation.input_tokens`::String), mapContains(attributes_number, 'gen_ai.usage.cache_creation.input_tokens'), attributes_number['gen_ai.usage.cache_creation.input_tokens'], NULL)) AS cache_write_tokens_value, toFloat64(multiIf(toFloat64OrNull(attributes.`gen_ai.usage.reasoning.output_tokens`::String) IS NOT NULL, toFloat64OrNull(attributes.`gen_ai.usage.reasoning.output_tokens`::String), mapContains(attributes_number, 'gen_ai.usage.reasoning.output_tokens'), attributes_number['gen_ai.usage.reasoning.output_tokens'], NULL)) AS reasoning_tokens_value, toFloat64(multiIf(toFloat64OrNull(attributes.`signoz.gen_ai.usage.tokens.cost`::String) IS NOT NULL, toFloat64OrNull(attributes.`signoz.gen_ai.usage.tokens.cost`::String), mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), attributes_number['signoz.gen_ai.usage.tokens.cost'], NULL)) AS total_cost_value FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC, span_id ASC",
+		},
+		{
+			name:        "JSONEvolutionBeforeTrace_ReadsJSONOnly",
+			jsonRelease: &jsonBeforeTrace,
+			expectedSQL: "SELECT DISTINCT ON (span_id) span_id, parent_span_id, timestamp, duration_nano, has_error, name, resource_string_service$$name, kind_string, response_status_code, status_code_string, status_message, (NOT has_error AND arrayExists(e -> position(e, '\"isError\":true') > 0, events)) AS has_exception_event, (position(links, '\"refType\":\"FOLLOWS_FROM\"') > 0) AS has_link, multiIf(links = concat(?, trace_id, ?, parent_span_id, ?), '', links = '', '[]', links) AS other_references, toFloat64OrNull(attributes.`gen_ai.usage.input_tokens`::String) AS input_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.output_tokens`::String) AS output_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.cache_read.input_tokens`::String) AS cache_read_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.cache_creation.input_tokens`::String) AS cache_write_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.reasoning.output_tokens`::String) AS reasoning_tokens_value, toFloat64OrNull(attributes.`signoz.gen_ai.usage.tokens.cost`::String) AS total_cost_value FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC, span_id ASC",
+		},
+	}
 
-	assert.NoError(t, s.Mock().ExpectationsWereMet())
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			s := newTestStoreWithMetadata(sqlmock.QueryMatcherEqual, genAIMetadataStore(testCase.jsonRelease), fl)
+			s.Mock().ExpectQuery(testCase.expectedSQL).WithArgs(`[{"traceId":"`, `","spanId":"`, `","refType":"CHILD_OF"}]`, testTraceID, testStart.Unix()-1800, testEnd.Unix()).WillReturnRows(cmock.NewRows(nil, nil))
+			_, _ = s.Store().GetTraceSkeleton(context.Background(), valuer.GenerateUUID(), testTraceID, testBounds)
+			assert.NoError(t, s.Mock().ExpectationsWereMet())
+		})
+	}
 }

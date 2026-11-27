@@ -109,15 +109,12 @@ def test_trace_highlights(
     assert links["items"][0]["span"]["span_id"] == ids["consume"]
     assert {"traceId": other_trace_id, "spanId": "aaaaaaaaaaaaaaaa", "refType": "FOLLOWS_FROM"} in links["items"][0]["span"]["references"]
 
-    # the aiUsage list reads the usage of its spans from the JSON attributes only; no other list carries attributes
+    # no other list carries attributes
     ai_usage = highlights["aiUsage"]
-    if attribute_backend == "json":
-        # the tool span carries no token or cost value, so it is not listed
-        assert ai_usage["total"] == 1
-        assert ai_usage["items"][0]["span"]["span_id"] == ids["model"]
-        assert ai_usage["items"][0]["span"]["attributes"] == {"gen_ai.usage.input_tokens": 100, "gen_ai.usage.output_tokens": 20, "signoz.gen_ai.usage.tokens.cost": pytest.approx(0.01)}
-    else:
-        assert ai_usage == {"total": 0, "items": []}
+    # the tool span carries no token or cost value, so it is not listed
+    assert ai_usage["total"] == 1
+    assert ai_usage["items"][0]["span"]["span_id"] == ids["model"]
+    assert ai_usage["items"][0]["span"]["attributes"] == {"gen_ai.usage.input_tokens": 100, "gen_ai.usage.output_tokens": 20, "signoz.gen_ai.usage.tokens.cost": pytest.approx(0.01)}
 
     # every span is its own entry here, most own time first
     time_spent = highlights["timeSpent"]

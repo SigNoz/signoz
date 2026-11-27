@@ -31,10 +31,6 @@ const colHasExceptionEvent = `(NOT has_error AND arrayExists(e -> position(e, '"
 // The collector writes a span link as a FOLLOWS_FROM reference; the parent is a CHILD_OF one.
 const colHasLink = `(position(links, '"refType":"FOLLOWS_FROM"') > 0) AS has_link`
 
-// Empty for the usual value, one reference to the parent, which the tree rebuilds from the two ids.
-// \x7B and \x7D are the braces: the driver reads a brace in a query as a query parameter.
-const colOtherReferences = `multiIf(links = concat('[\x7B"traceId":"', trace_id, '","spanId":"', parent_span_id, '","refType":"CHILD_OF"\x7D]'), '', links = '', '[]', links) AS other_references`
-
 // jsonTextEscaper writes a word the way ClickHouse writes it inside JSON text.
 var jsonTextEscaper = strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", `\n`, "\r", `\r`, "\t", `\t`, "\b", `\b`, "\f", `\f`)
 
@@ -223,8 +219,16 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 	if err != nil {
 		return nil, err
 	}
-	columns := []string{isGenAI + " AS is_gen_ai", isLLMCall + " AS is_llm_call", isToolCall + " AS is_tool_call"}
+	usageColumns, err := s.genAIUsageColumns(ctx, q, keys)
+	if err != nil {
+		return nil, err
+	}
+	return append([]string{isGenAI + " AS is_gen_ai", isLLMCall + " AS is_llm_call", isToolCall + " AS is_tool_call"}, usageColumns...), nil
+}
 
+// genAIUsageColumns returns the token and cost columns of a span, resolved across attribute evolutions.
+func (s *traceStore) genAIUsageColumns(ctx context.Context, q qbtypes.QueryInfo, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]string, error) {
+	columns := make([]string, 0, len(genAIUsageValues))
 	for _, value := range genAIUsageValues {
 		// lookup by number, the type metadata stores numeric attributes under; float64 is only the output cast
 		// fixed gen_ai keys that many traces lack, so a not-found warning means nothing here
@@ -552,14 +556,31 @@ func (s *traceStore) anyExistsCondition(ctx context.Context, q qbtypes.QueryInfo
 	return sb.Or(conds...), nil
 }
 
-func (s *traceStore) GetTraceSkeleton(ctx context.Context, traceID string, bounds *spantypes.TraceBounds) (*spantypes.TraceSkeleton, error) {
+func (s *traceStore) GetTraceSkeleton(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds) (*spantypes.TraceSkeleton, error) {
+	names := make([]string, 0, len(genAIUsageValues))
+	for _, value := range genAIUsageValues {
+		names = append(names, value.key)
+	}
+	keys, err := s.genAIFieldKeys(ctx, orgID, names)
+	if err != nil {
+		return nil, err
+	}
+	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(bounds.Start.UnixNano()), uint64(bounds.End.UnixNano()))
+	usageColumns, err := s.genAIUsageColumns(ctx, q, keys)
+	if err != nil {
+		return nil, err
+	}
+
 	sb := sqlbuilder.NewSelectBuilder()
+	// Empty for the usual value, one reference to the parent, which the tree rebuilds from the two ids.
+	otherReferences := fmt.Sprintf("multiIf(links = concat(%s, trace_id, %s, parent_span_id, %s), '', links = '', '[]', links) AS other_references",
+		sb.Var(`[{"traceId":"`), sb.Var(`","spanId":"`), sb.Var(`","refType":"CHILD_OF"}]`))
 	sb.Select(
 		"DISTINCT ON (span_id) span_id", "parent_span_id", "timestamp", "duration_nano", "has_error",
 		"name", colServiceName, "kind_string", "response_status_code", "status_code_string", "status_message",
-		colHasExceptionEvent, colHasLink, colOtherReferences,
+		colHasExceptionEvent, colHasLink, otherReferences,
 	)
-	sb.SelectMore(genAIUsageJSONColumns()...)
+	sb.SelectMore(usageColumns...)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	sb.Where(
 		sb.E("trace_id", traceID),
@@ -579,7 +600,7 @@ func (s *traceStore) GetTraceSkeleton(ctx context.Context, traceID string, bound
 
 	builder := spantypes.NewTraceSkeletonBuilder(traceID, int(bounds.NumSpans))
 	var span spantypes.SkeletonSpan
-	// Scanning into one reused list of fields, not ScanStruct, keeps the per-row cost to the strings.
+	// ScanStruct builds a new list of fields for every row; reusing one halves the time on a large trace.
 	fields := []any{
 		&span.SpanID, &span.ParentSpanID, &span.StartTime, &span.DurationNano, &span.HasError,
 		&span.Name, &span.ServiceName, &span.KindString, &span.ResponseStatusCode, &span.StatusCodeString, &span.StatusMessage,
@@ -694,16 +715,4 @@ func spanTextCondition(sb *sqlbuilder.SelectBuilder, text string) string {
 		jsonOrMaps("resource", anyOf("mapKeys(resources_string)", "x"), anyOf("mapValues(resources_string)", "x")),
 		event,
 	}, " OR ") + ")"
-}
-
-// genAIUsageJSONColumns reads the token and cost usage of a span from the JSON attributes column
-// only: a span written before that column carries none of it.
-func genAIUsageJSONColumns() []string {
-	columns := make([]string, 0, len(genAIUsageValues))
-	for _, value := range genAIUsageValues {
-		path := fmt.Sprintf("%s.%s", tracestelemetryschema.SpanAttributesColumn, clickhousesql.Identifier(value.key))
-		expr, _ := tracestelemetryschema.AttributeJSONValueExpr(path, telemetrytypes.FieldDataTypeNumber)
-		columns = append(columns, sqlbuilder.Escape(expr+" AS "+value.alias))
-	}
-	return columns
 }
