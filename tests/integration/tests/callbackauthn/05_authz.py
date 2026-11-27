@@ -28,6 +28,7 @@ _TARGET_A = "target-a-authdomain.integration.test"
 _TARGET_B = "target-b-authdomain.integration.test"
 _ADMIN_DOMAIN = "admin-crud-authdomain.integration.test"
 _ACTOR_DOMAIN = "actor-crud-authdomain.integration.test"
+_DIFF_DOMAIN = "role-diff-authdomain.integration.test"
 
 _SAML_CONFIG = {
     "kind": "saml",
@@ -375,7 +376,6 @@ def test_update_requires_detach_on_stored_roles(
                 transaction_group("attach", "metaresource", "auth-domain", [domain_id]),
                 transaction_group("detach", "metaresource", "auth-domain", [domain_id]),
                 transaction_group("attach", "role", "role", ["signoz-viewer"]),
-                transaction_group("detach", "role", "role", ["signoz-viewer"]),
             ],
         },
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -419,6 +419,148 @@ def test_update_requires_detach_on_stored_roles(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, f"drop mapping with detach on stored role: {response.text}"
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_update_checks_only_added_and_removed_roles(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    actor_id = find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)
+
+    viewer_only = {"defaultRole": "VIEWER", "groupMappings": {"abc": "VIEWER"}}
+    viewer_and_editor = {"defaultRole": "VIEWER", "groupMappings": {"abc": "VIEWER", "def": "EDITOR"}}
+    viewer_and_admin = {"defaultRole": "VIEWER", "groupMappings": {"abc": "VIEWER", "def": "ADMIN"}}
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
+        json={"name": _DIFF_DOMAIN, "enabled": True, "config": _SAML_CONFIG, "roleMapping": viewer_and_editor},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    domain_id = response.json()["data"]["id"]
+
+    # signoz-viewer is retained by every update below and is never granted.
+    domain_grants = [
+        transaction_group("update", "metaresource", "auth-domain", [domain_id]),
+        transaction_group("attach", "metaresource", "auth-domain", [domain_id]),
+        transaction_group("detach", "metaresource", "auth-domain", [domain_id]),
+    ]
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{actor_id}"),
+        json={"description": "", "transactionGroups": domain_grants},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        json={"enabled": True, "config": _SAML_CONFIG, "roleMapping": viewer_only},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, f"remove without detach on removed role: expected 403, got {response.status_code}: {response.text}"
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{actor_id}"),
+        json={
+            "description": "",
+            "transactionGroups": domain_grants + [transaction_group("detach", "role", "role", ["signoz-editor"])],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        json={"enabled": True, "config": _SAML_CONFIG, "roleMapping": viewer_only},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"remove with detach on removed role only: {response.text}"
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        json={"enabled": True, "config": _SAML_CONFIG, "roleMapping": viewer_and_editor},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, f"add without attach on added role: expected 403, got {response.status_code}: {response.text}"
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{actor_id}"),
+        json={
+            "description": "",
+            "transactionGroups": domain_grants + [transaction_group("attach", "role", "role", ["signoz-editor"])],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        json={"enabled": True, "config": _SAML_CONFIG, "roleMapping": viewer_and_editor},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"add with attach on added role only: {response.text}"
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{actor_id}"),
+        json={
+            "description": "",
+            "transactionGroups": domain_grants + [transaction_group("attach", "role", "role", ["signoz-admin"])],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        json={"enabled": True, "config": _SAML_CONFIG, "roleMapping": viewer_and_admin},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, f"swap without detach on removed role: expected 403, got {response.status_code}: {response.text}"
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{actor_id}"),
+        json={
+            "description": "",
+            "transactionGroups": domain_grants
+            + [
+                transaction_group("attach", "role", "role", ["signoz-admin"]),
+                transaction_group("detach", "role", "role", ["signoz-editor"]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        json={"enabled": True, "config": _SAML_CONFIG, "roleMapping": viewer_and_admin},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"swap with attach on added and detach on removed role: {response.text}"
 
     response = requests.delete(
         signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
