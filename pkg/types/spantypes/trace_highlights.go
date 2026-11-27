@@ -49,7 +49,9 @@ func NewTraceHighlightsQuery(params *GetTraceHighlightsParams) (*TraceHighlights
 		}
 	}
 	if len(query.Views) == 0 {
-		query.Views = spanListViews()
+		for _, view := range SpanListView("").Enum() {
+			query.Views = append(query.Views, view.(SpanListView))
+		}
 	}
 	return query, nil
 }
