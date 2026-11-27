@@ -157,29 +157,33 @@ function OptionsMenu({
 							</span>
 						</Button>
 					</div>
-					<div className="horizontal-line" />
-					<div className="menu-container" data-testid="format-options-menu">
-						<div className="title">FORMAT</div>
+					{items.length > 0 && (
+						<>
+							<div className="horizontal-line" />
+							<div className="menu-container" data-testid="format-options-menu">
+								<div className="title">FORMAT</div>
 
-						<div className="menu-items">
-							{items.map((item: any): JSX.Element => (
-								<div
-									className="item"
-									key={item.label}
-									data-testid={`format-option-${item.key}`}
-									onClick={(): void => handleMenuItemClick(item.key)}
-								>
-									<div className={cx('item-label')}>
-										{item.label}
+								<div className="menu-items">
+									{items.map((item: any): JSX.Element => (
+										<div
+											className="item"
+											key={item.label}
+											data-testid={`format-option-${item.key}`}
+											onClick={(): void => handleMenuItemClick(item.key)}
+										>
+											<div className={cx('item-label')}>
+												{item.label}
 
-										{selectedItem === item.key && (
-											<Check size={12} data-testid="format-check-icon" />
-										)}
-									</div>
+												{selectedItem === item.key && (
+													<Check size={12} data-testid="format-check-icon" />
+												)}
+											</div>
+										</div>
+									))}
 								</div>
-							))}
-						</div>
-					</div>
+							</div>
+						</>
+					)}
 
 					{selectedItem && (
 						<>

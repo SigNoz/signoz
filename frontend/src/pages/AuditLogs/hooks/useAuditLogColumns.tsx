@@ -1,5 +1,6 @@
 import { ReactElement, useMemo } from 'react';
 import { TableColumnDef } from 'components/TanStackTableView';
+import { useAuditLogsOptionsStore } from './useAuditLogsOptionsStore';
 import { FontSize } from 'container/OptionsMenu/types';
 
 import { AuditLog, AuditLogsColumnIds } from '../AuditLogs.types';
@@ -26,7 +27,7 @@ interface UseAuditLogColumnsResult {
 }
 
 export const useAuditLogColumns = (): UseAuditLogColumnsResult => {
-	const fontSize = FontSize.SMALL;
+	const fontSize = useAuditLogsOptionsStore((state) => state.fontSize);
 
 	const columns = useMemo(() => {
 		const outcomeIndicator: TableColumnDef<AuditLog> = {

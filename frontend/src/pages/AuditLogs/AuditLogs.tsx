@@ -1,4 +1,5 @@
 import styles from './AuditLogs.module.scss';
+import { OptionsMenu } from './components/OptionsMenu';
 import { OrderBy } from './components/OrderBy';
 import { QueryBar } from './components/QueryBar';
 import * as Sentry from '@sentry/react';
@@ -59,6 +60,7 @@ function AuditLogs(): JSX.Element {
 					<QueryBar />
 					<div className={styles.actionsRow}>
 						<OrderBy />
+						<OptionsMenu />
 					</div>
 					{isCancelled ? (
 						<QueryCancelledPlaceholder subText='Click "Run Query" to load audit logs.' />

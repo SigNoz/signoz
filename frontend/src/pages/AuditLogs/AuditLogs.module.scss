@@ -20,6 +20,8 @@
 .actionsRow {
 	width: 100%;
 	display: flex;
+	align-items: center;
 	justify-content: flex-end;
+	gap: var(--spacing-4);
 	padding: var(--spacing-4) var(--spacing-8);
 }
