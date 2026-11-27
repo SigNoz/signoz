@@ -970,6 +970,30 @@ func (m *Manager) snapshotRuleStates() map[string]ruletypes.AlertState {
 	return states
 }
 
+// ruleByID reads m.rules under the read lock. addTask, editTask and
+// deleteTask write it under the write lock, and a concurrent map read
+// and map write is an unrecoverable fatal error, not a panic a handler
+// can recover.
+func (m *Manager) ruleByID(id string) (Rule, bool) {
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
+
+	rule, ok := m.rules[id]
+	return rule, ok
+}
+
+// hasTask reads m.tasks under the read lock, for the same reason. It
+// returns rather than holding the lock because sync.RWMutex is not
+// reentrant and its callers go on to call addTask or deleteTask, which
+// take the write lock.
+func (m *Manager) hasTask(taskName string) bool {
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
+
+	_, ok := m.tasks[taskName]
+	return ok
+}
+
 func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.GettableRule, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -990,7 +1014,7 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 	}
 	r.Id = id.StringValue()
 	// fetch state of rule from memory
-	if rm, ok := m.rules[r.Id]; !ok {
+	if rm, ok := m.ruleByID(r.Id); !ok {
 		r.State = ruletypes.StateDisabled
 		r.Disabled = true
 	} else {
@@ -1010,13 +1034,13 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 func (m *Manager) syncRuleStateWithTask(ctx context.Context, orgID valuer.UUID, taskName string, rule *ruletypes.PostableRule) error {
 	if rule.Disabled {
 		// check if rule has any task running
-		if _, ok := m.tasks[taskName]; ok {
+		if m.hasTask(taskName) {
 			// delete task from memory
 			m.deleteTask(taskName)
 		}
 	} else {
 		// check if rule has a task running
-		if _, ok := m.tasks[taskName]; !ok {
+		if !m.hasTask(taskName) {
 			// rule has no task, start one
 			if err := m.addTask(ctx, orgID, rule, taskName); err != nil {
 				return err
@@ -1097,7 +1121,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	}
 
 	// fetch state of rule from memory
-	if rm, ok := m.rules[id.StringValue()]; !ok {
+	if rm, ok := m.ruleByID(id.StringValue()); !ok {
 		response.State = ruletypes.StateDisabled
 		response.Disabled = true
 	} else {
