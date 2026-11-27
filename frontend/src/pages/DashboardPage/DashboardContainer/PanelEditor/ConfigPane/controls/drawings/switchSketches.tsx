@@ -26,6 +26,13 @@ export const SWITCH_SKETCHES = {
 			))}
 		</SketchSvg>
 	),
+	percentiles: (
+		<SketchSvg>
+			<path d="M3 19 L9 13 L15 7 L21 9 L27 14 L33 17 L37 19" />
+			<path d="M15 3 V20" strokeDasharray="2 2" />
+			<path d="M29 3 V20" strokeDasharray="2 2" />
+		</SketchSvg>
+	),
 	rank: (
 		<SketchSvg>
 			{[5, 11, 17].map((y, index) => (

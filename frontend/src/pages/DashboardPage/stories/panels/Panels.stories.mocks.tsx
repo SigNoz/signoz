@@ -27,15 +27,17 @@ import { publicDashboardMeta } from '../__story_mockdata__/publicDashboard';
 
 import {
 	BUCKET_WIDTHS,
+	DISTRIBUTION_OVERFLOWS,
+	DISTRIBUTION_X_RANGES,
 	GAPS,
 	HEATMAP_COUNT_RANGES,
 	HEATMAP_FIXED_COUNTS,
 	HEATMAP_PALETTES,
-	HEATMAP_SOURCES,
+	BUCKET_SOURCES,
 	HEATMAP_Y_SCALES,
 	LEGEND_POSITIONS,
 	LINE_STYLES,
-	MAX_SERIES,
+	MAX_SERIES_CONTROL,
 	PANEL_KINDS,
 	PANEL_RESULTS,
 	PANELS_DASHBOARD_ID,
@@ -60,9 +62,11 @@ import {
 } from './__story_mockdata__/panelResponses';
 import type {
 	BucketWidth,
+	DistributionOverflow,
+	DistributionXRange,
 	Gaps,
 	HeatmapCountRange,
-	HeatmapSource,
+	BucketSource,
 	PanelArgs,
 	PanelKind,
 	PanelResult,
@@ -115,7 +119,7 @@ export const panelsMocks = defineStoryMocks({
 		stack: choiceControl<StackMode>('Stack', {
 			group: PANEL,
 			description:
-				'Area stacks `normal` or to `percent`; Bar stacks on anything but `none`. No effect on other kinds.',
+				'Area and Distribution stack `normal` or to `percent`, and Distribution draws `none` side by side; Bar stacks on anything but `none`. No effect on other kinds.',
 			options: STACK_MODES,
 			value: StackMode.none,
 		}),
@@ -137,11 +141,27 @@ export const panelsMocks = defineStoryMocks({
 			options: HEATMAP_COUNT_RANGES,
 			value: 'auto',
 		}),
-		heatmapSource: choiceControl<HeatmapSource>('Heatmap source', {
+		distributionXRange: choiceControl<DistributionXRange>(
+			'Distribution x range',
+			{
+				group: PANEL,
+				description:
+					'Bucket axis range: `all` shows every bucket, `clamped` hides those outside 10–1000.',
+				options: DISTRIBUTION_X_RANGES,
+				value: 'all',
+			},
+		),
+		percentiles: toggleControl('Distribution percentiles', {
 			group: PANEL,
 			description:
-				'The signal the heatmap buckets: a metric, a log field (`attribute.queue_depth`), a span field (`duration_nano`), or a traces query whose field was cleared, which the panel does not run.',
-			options: HEATMAP_SOURCES,
+				'Dashed p50, p90 and p99 markers across the Distribution panel.',
+			value: true,
+		}),
+		bucketSource: choiceControl<BucketSource>('Bucket source', {
+			group: PANEL,
+			description:
+				'The signal the Heatmap and Distribution panels bucket: a metric, a log field (`attribute.queue_depth`), a span field (`duration_nano`), or a traces query whose field was cleared, which the panel does not run.',
+			options: BUCKET_SOURCES,
 			value: 'metrics',
 		}),
 		bucketWidth: choiceControl<BucketWidth>('Histogram bucket width', {
@@ -171,7 +191,8 @@ export const panelsMocks = defineStoryMocks({
 		}),
 		yScale: choiceControl<YScale>('Y scale', {
 			group: PANEL,
-			description: 'The y axis of Time Series, Bar and Area.',
+			description:
+				'The y axis of Time Series, Bar and Area, and the count axis of Distribution.',
 			options: Y_SCALES,
 			value: 'linear',
 		}),
@@ -228,9 +249,9 @@ export const panelsMocks = defineStoryMocks({
 		series: countControl('Series', {
 			group: DATA,
 			description:
-				'Series on the charts, groups on the heatmap, slices on the pie, rows on the table and the top list.',
+				'Series on the charts, groups on the heatmap and distribution, slices on the pie, rows on the table and the top list. Side by side, a distribution draws at most 10 and sums the rest into Other.',
 			value: 4,
-			max: MAX_SERIES,
+			max: MAX_SERIES_CONTROL,
 		}),
 		pieSlices: choiceControl<PieSlices>('Pie slices', {
 			group: DATA,
@@ -245,6 +266,13 @@ export const panelsMocks = defineStoryMocks({
 				'`hole` drops 12 of the 30 samples from the middle of every time series, a 13m gap.',
 			options: GAPS,
 			value: 'none',
+		}),
+		overflow: choiceControl<DistributionOverflow>('Distribution overflow', {
+			group: DATA,
+			description:
+				'Observations past the last bucket bound: `low` 2%, `high` 25%, which the panel header flags.',
+			options: DISTRIBUTION_OVERFLOWS,
+			value: 'low',
 		}),
 		listRows: countControl('List rows', {
 			group: DATA,
@@ -315,6 +343,7 @@ export const panelsMocks = defineStoryMocks({
 						listWideRows: values.listWideRows,
 						gaps: values.gaps,
 						pieSlices: values.pieSlices,
+						overflow: values.overflow,
 					});
 				}),
 			),

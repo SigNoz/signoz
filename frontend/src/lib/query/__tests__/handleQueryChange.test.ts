@@ -49,8 +49,23 @@ describe('handleQueryChange bucket options', () => {
 		);
 	});
 
-	// The request rejects an axis on any type but heatmap, so a switch has to shed it
-	// from the query (via the field allowlist) and from the formula (by hand).
+	it('keeps both axes when a heatmap switches to a distribution', () => {
+		const result = handleQueryChange(
+			PANEL_TYPES.DISTRIBUTION,
+			queryWithFormulaAxis(),
+			PANEL_TYPES.HEATMAP,
+		);
+
+		expect(result.builder.queryData[0].bucketOptions).toStrictEqual(
+			bucketOptions,
+		);
+		expect(result.builder.queryFormulas[0].bucketOptions).toStrictEqual(
+			bucketOptions,
+		);
+	});
+
+	// The request rejects an axis on any type but heatmap and distribution, so a switch
+	// has to shed it from the query (via the field allowlist) and from the formula (by hand).
 	it('drops both axes when switching to another panel type', () => {
 		const result = handleQueryChange(
 			PANEL_TYPES.TIME_SERIES,
@@ -124,16 +139,19 @@ describe('handleQueryChange trace operator', () => {
 		expect(result.builder.queryTraceOperator).toStrictEqual([]);
 	});
 
-	// A heatmap request takes one builder query and rejects a trace operator.
-	it('drops the trace operator when switching to a heatmap', () => {
-		const result = handleQueryChange(
-			PANEL_TYPES.HEATMAP,
-			queryWithTraceOperator(),
-			PANEL_TYPES.TIME_SERIES,
-		);
+	// A heatmap or distribution request takes one builder query and rejects a trace operator.
+	it.each([PANEL_TYPES.HEATMAP, PANEL_TYPES.DISTRIBUTION] as const)(
+		'drops the trace operator when switching to a %s',
+		(panelType) => {
+			const result = handleQueryChange(
+				panelType,
+				queryWithTraceOperator(),
+				PANEL_TYPES.TIME_SERIES,
+			);
 
-		expect(result.builder.queryTraceOperator).toStrictEqual([]);
-	});
+			expect(result.builder.queryTraceOperator).toStrictEqual([]);
+		},
+	);
 
 	it('keeps the trace operator when switching to a table', () => {
 		const result = handleQueryChange(

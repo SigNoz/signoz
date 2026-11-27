@@ -16,6 +16,7 @@ import { resolveBubbleRadius } from 'pages/DashboardPage/DashboardContainer/Pane
 
 import ConfigRangeSlider from '../../controls/ConfigRangeSlider/ConfigRangeSlider';
 import DisconnectValuesField from './DisconnectValuesField';
+import DistributionPercentilesField from './DistributionPercentilesField';
 import GeoMapColorsField from './GeoMapColorsField';
 import HeatmapColorsField from './HeatmapColorsField';
 import PointsFields from './PointsFields';
@@ -43,6 +44,7 @@ const BUBBLE_RADIUS_BOUNDS = { min: 1, max: 64 };
  */
 function ChartAppearanceSection({
 	value,
+	defaultValue,
 	savedValue,
 	controls,
 	onChange,
@@ -59,6 +61,15 @@ function ChartAppearanceSection({
 
 	return (
 		<>
+			{controls.percentiles && (
+				<DistributionPercentilesField
+					value={value?.percentiles}
+					defaultValue={defaultValue?.percentiles}
+					savedValue={savedValue?.percentiles}
+					onChange={(percentiles): void => onChange({ ...value, percentiles })}
+				/>
+			)}
+
 			{controls.lineStyle && (
 				<ConfigField label="Line" {...reset('lineStyle')}>
 					<ConfigTiles

@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { render, screen, userEvent, within } from 'tests/test-utils';
 import {
 	DashboardtypesStackModeDTO,
@@ -160,6 +161,43 @@ describe('VisualizationSection', () => {
 		expect(
 			screen.queryByTestId('panel-editor-v2-stack-mode'),
 		).not.toBeInTheDocument();
+	});
+
+	it("opens the bucket stack on the kind's seeded default", () => {
+		render(
+			<VisualizationSection
+				value={undefined}
+				defaultValue={{ stack: DashboardtypesStackModeDTO.normal }}
+				controls={{ switchPanelKind: false, bucketStack: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByText(
+				'Groups sit on top of each other, so the height shows the bucket total.',
+			),
+		).toBeInTheDocument();
+	});
+
+	it('writes the chosen bucket stack', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn() as jest.MockedFunction<
+			ComponentProps<typeof VisualizationSection>['onChange']
+		>;
+		render(
+			<VisualizationSection
+				value={undefined}
+				controls={{ switchPanelKind: false, bucketStack: true }}
+				onChange={onChange}
+			/>,
+		);
+
+		await user.click(screen.getByTestId('panel-editor-v2-bucket-stack-none'));
+
+		expect(onChange).toHaveBeenCalledWith({
+			stack: DashboardtypesStackModeDTO.none,
+		});
 	});
 
 	it('toggles fill spans through onChange', async () => {

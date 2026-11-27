@@ -12,7 +12,7 @@ import { toDistributionFieldOptions } from './distributionFieldOptions';
 
 import Styles from './DistributionFieldSelect.module.scss';
 
-/** A logs or traces heatmap's aggregation: the one numeric field it buckets. */
+/** A logs or traces heatmap or distribution's aggregation: the one numeric field it buckets. */
 export default function DistributionFieldSelect({
 	queryData,
 	onChange,

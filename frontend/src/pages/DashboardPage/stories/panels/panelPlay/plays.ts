@@ -1,6 +1,7 @@
 import { expect, within } from 'storybook/test';
 
 import type { PanelPlayArgs } from './args';
+import { expectDistributionTooltip } from './distributions';
 import { expectPanel } from './expectPanel';
 import { filterLegend, searchTable } from './interactions';
 import { walkListPages } from './list';
@@ -39,4 +40,12 @@ export const playListPaginated: PanelPlay = async ({ canvasElement, args }) => {
 export const playLegendRight: PanelPlay = async ({ canvasElement, args }) => {
 	await expectPanel(canvasElement, args);
 	await filterLegend(canvasElement, args);
+};
+
+export const playDistributionTooltip: PanelPlay = async ({
+	canvasElement,
+	args,
+}) => {
+	await expectPanel(canvasElement, args);
+	await expectDistributionTooltip(canvasElement, args);
 };

@@ -17,6 +17,7 @@ export type PartialPanelTypes = {
 	[PANEL_TYPES.SCATTER]: 'scatter';
 	[PANEL_TYPES.HISTOGRAM]: 'histogram';
 	[PANEL_TYPES.HEATMAP]: 'heatmap';
+	[PANEL_TYPES.DISTRIBUTION]: 'distribution';
 	[PANEL_TYPES.GEO_MAP]: 'geo_map';
 	[PANEL_TYPES.TOP_LIST]: 'top_list';
 };
@@ -149,6 +150,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 	[PANEL_TYPES.BAR]: bySource(SERIES, SERIES_METRICS),
 	[PANEL_TYPES.HISTOGRAM]: bySource(SERIES, SERIES_METRICS),
 	[PANEL_TYPES.HEATMAP]: bySource(HEATMAP, HEATMAP),
+	[PANEL_TYPES.DISTRIBUTION]: bySource(HEATMAP, HEATMAP),
 	[PANEL_TYPES.TABLE]: bySource(SERIES, SCALAR_METRICS),
 	[PANEL_TYPES.PIE]: bySource(SERIES, SCALAR_METRICS),
 	[PANEL_TYPES.SCATTER]: bySource(SERIES, SCALAR_METRICS),

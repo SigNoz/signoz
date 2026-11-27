@@ -1,8 +1,10 @@
-import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import {
+	initialClickHouseData,
+	initialFormulaBuilderFormValues,
 	initialQueriesMap,
 	initialQueryAIWithType,
+	initialQueryPromQLData,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { getActiveBuilder } from 'lib/query/builderSlot';
@@ -11,6 +13,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
+import { act, renderHook } from 'tests/test-utils';
 
 import { resolveQueryType } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getBuilderQueries } from '../../../Panels/utils/getBuilderQueries';
@@ -79,6 +82,21 @@ const tracesBuilder = (expression: string): Query['builder'] => ({
 	queryFormulas: [],
 });
 
+const builderWithQueries = (
+	queries: { queryName: string; disabled: boolean }[],
+	formulas: { queryName: string; disabled: boolean }[] = [],
+): Query['builder'] => ({
+	...initialQueriesMap.metrics.builder,
+	queryData: queries.map((query) => ({
+		...initialQueriesMap.metrics.builder.queryData[0],
+		...query,
+	})),
+	queryFormulas: formulas.map((formula) => ({
+		...initialFormulaBuilderFormValues,
+		...formula,
+	})),
+});
+
 function makeSpec(
 	kind: string,
 	pluginSpec: unknown,
@@ -103,7 +121,13 @@ function fakeQuery(
 	queryType: string,
 	queryData: Record<string, unknown>[] = [],
 ): Query {
-	return { id, queryType, builder: { queryData } } as unknown as Query;
+	return {
+		id,
+		queryType,
+		builder: { queryData },
+		promql: [],
+		clickhouse_sql: [],
+	} as unknown as Query;
 }
 
 function builderState(currentQuery: Query): {
@@ -301,12 +325,117 @@ describe('usePanelKindChange', () => {
 		expect(persisted.builder.queryFormulas).toStrictEqual([]);
 	});
 
-	it('keeps the field of a traces function aggregation when switching to a Heatmap panel', () => {
+	it.each(['signoz/HeatmapPanel', 'signoz/DistributionPanel'] as const)(
+		'keeps the first enabled query, enabled, when switching to %s',
+		(kind) => {
+			const setSpec = jest.fn();
+			mockUseQueryBuilder.mockReturnValue(
+				builderState(fakeQuery('ts-current', 'builder')),
+			);
+			mockRebuildBuilder.mockReturnValue(
+				builderWithQueries(
+					[
+						{ queryName: 'A', disabled: true },
+						{ queryName: 'B', disabled: true },
+					],
+					[{ queryName: 'F1', disabled: false }],
+				),
+			);
+
+			const { result } = renderHook(() =>
+				usePanelKindChange({
+					spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+					panelType: PANEL_TYPES.TIME_SERIES,
+					setSpec,
+				}),
+			);
+			act(() => result.current.onChangePanelKind(kind));
+
+			const [persisted] = mockToPerses.mock.calls[0] as [Query];
+			expect(
+				persisted.builder.queryData.map(({ queryName, disabled }) => ({
+					queryName,
+					disabled,
+				})),
+			).toStrictEqual([{ queryName: 'A', disabled: false }]);
+		},
+	);
+
+	it.each(['signoz/HeatmapPanel', 'signoz/DistributionPanel'] as const)(
+		'keeps one enabled PromQL and ClickHouse query when switching to %s',
+		(kind) => {
+			mockUseQueryBuilder.mockReturnValue(
+				builderState({
+					...initialQueriesMap.metrics,
+					promql: ['A', 'B', 'C'].map((name) => ({
+						...initialQueryPromQLData,
+						name,
+						disabled: name === 'A',
+					})),
+					clickhouse_sql: ['A', 'B'].map((name) => ({
+						...initialClickHouseData,
+						name,
+						disabled: true,
+					})),
+				}),
+			);
+
+			const { result } = renderHook(() =>
+				usePanelKindChange({
+					spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+					panelType: PANEL_TYPES.TIME_SERIES,
+					setSpec: jest.fn(),
+				}),
+			);
+			act(() => result.current.onChangePanelKind(kind));
+
+			const [persisted] = mockToPerses.mock.calls[0] as [Query];
+			const summarize = (
+				queries: { name: string; disabled: boolean }[],
+			): { name: string; disabled: boolean }[] =>
+				queries.map(({ name, disabled }) => ({ name, disabled }));
+			expect(summarize(persisted.promql)).toStrictEqual([
+				{ name: 'B', disabled: false },
+			]);
+			expect(summarize(persisted.clickhouse_sql)).toStrictEqual([
+				{ name: 'A', disabled: false },
+			]);
+		},
+	);
+
+	it('leaves PromQL queries alone when switching to a non-bucket kind', () => {
+		const promql = ['A', 'B'].map((name) => ({
+			...initialQueryPromQLData,
+			name,
+		}));
+		mockUseQueryBuilder.mockReturnValue(
+			builderState({ ...initialQueriesMap.metrics, promql }),
+		);
+
+		const { result } = renderHook(() =>
+			usePanelKindChange({
+				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.TIME_SERIES,
+				setSpec: jest.fn(),
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/BarChartPanel'));
+
+		const [persisted] = mockToPerses.mock.calls[0] as [Query];
+		expect(persisted.promql).toStrictEqual(promql);
+	});
+
+	it('prefers an enabled query over a disabled one ahead of it', () => {
 		const setSpec = jest.fn();
 		mockUseQueryBuilder.mockReturnValue(
 			builderState(fakeQuery('ts-current', 'builder')),
 		);
-		mockRebuildBuilder.mockReturnValue(tracesBuilder('p99(duration_nano)'));
+		mockRebuildBuilder.mockReturnValue(
+			builderWithQueries([
+				{ queryName: 'A', disabled: true },
+				{ queryName: 'B', disabled: false },
+			]),
+		);
 
 		const { result } = renderHook(() =>
 			usePanelKindChange({
@@ -315,13 +444,38 @@ describe('usePanelKindChange', () => {
 				setSpec,
 			}),
 		);
-		act(() => result.current.onChangePanelKind('signoz/HeatmapPanel'));
+		act(() => result.current.onChangePanelKind('signoz/DistributionPanel'));
 
 		const [persisted] = mockToPerses.mock.calls[0] as [Query];
-		expect(persisted.builder.queryData[0].aggregations).toMatchObject([
-			{ expression: 'duration_nano' },
+		expect(persisted.builder.queryData.map((qd) => qd.queryName)).toStrictEqual([
+			'B',
 		]);
 	});
+
+	it.each(['signoz/HeatmapPanel', 'signoz/DistributionPanel'] as const)(
+		'keeps the field of a traces function aggregation when switching to %s',
+		(kind) => {
+			const setSpec = jest.fn();
+			mockUseQueryBuilder.mockReturnValue(
+				builderState(fakeQuery('ts-current', 'builder')),
+			);
+			mockRebuildBuilder.mockReturnValue(tracesBuilder('p99(duration_nano)'));
+
+			const { result } = renderHook(() =>
+				usePanelKindChange({
+					spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+					panelType: PANEL_TYPES.TIME_SERIES,
+					setSpec,
+				}),
+			);
+			act(() => result.current.onChangePanelKind(kind));
+
+			const [persisted] = mockToPerses.mock.calls[0] as [Query];
+			expect(persisted.builder.queryData[0].aggregations).toMatchObject([
+				{ expression: 'duration_nano' },
+			]);
+		},
+	);
 
 	it('wraps a traces heatmap field in a function when switching to a TimeSeries panel', () => {
 		const setSpec = jest.fn();

@@ -6,6 +6,8 @@
 import {
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpecDTOKind as AreaChartKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTOKind as BarChartKind,
+	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpecDTOKind as DistributionKind,
+	DashboardtypesDistributionYScaleDTO as DistributionYScale,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind as HeatmapKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTOKind as HistogramKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTOKind as ListKind,
@@ -16,6 +18,7 @@ import {
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind as TimeSeriesKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind as TopListKind,
 	MetrictypesSpaceAggregationDTO as SpaceAggregation,
+	DashboardtypesStackModeDTO as DistributionStackMode,
 	DashboardtypesStackModeDTO as StackMode,
 	DashboardtypesTextModeDTO as TextMode,
 	Querybuildertypesv5RequestTypeDTO as RequestType,
@@ -24,6 +27,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 import {
+	DISTRIBUTION_CLAMP,
 	HEATMAP_FIXED_COUNTS,
 	TABLE_SECOND_COLUMN,
 	TABLE_THRESHOLD_VALUE,
@@ -33,7 +37,7 @@ import {
 import {
 	comparisonThresholds,
 	labelThresholds,
-	eventHeatmapQuery,
+	bucketQuery,
 	logQuery,
 	metricQuery,
 	tableThresholds,
@@ -133,9 +137,39 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 					},
 				},
 				queries: [
-					args.heatmapSource === 'metrics'
-						? metricQuery(RequestType.heatmap, { grouped: true, heatmap: true })
-						: eventHeatmapQuery(args.heatmapSource),
+					bucketQuery(args.bucketSource, RequestType.heatmap, {
+						grouped: true,
+						heatmap: true,
+					}),
+				],
+			};
+		case 'Distribution':
+			return {
+				plugin: {
+					kind: DistributionKind['signoz/DistributionPanel'],
+					spec: {
+						visualization: { stack: DistributionStackMode[args.stack] },
+						formatting,
+						legend,
+						axes: {
+							x: args.distributionXRange === 'clamped' ? DISTRIBUTION_CLAMP : {},
+							y: {
+								scale:
+									args.yScale === 'log'
+										? DistributionYScale.log
+										: DistributionYScale.linear,
+							},
+						},
+						chartAppearance: {
+							percentiles: { enabled: args.percentiles, values: [50, 90, 99] },
+						},
+					},
+				},
+				queries: [
+					bucketQuery(args.bucketSource, RequestType.distribution, {
+						grouped: true,
+						histogram: true,
+					}),
 				],
 			};
 		case 'Pie':

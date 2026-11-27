@@ -477,25 +477,28 @@ describe('extractLegendMap', () => {
 });
 
 describe('hasRunnableQueries', () => {
-	const heatmapQuery = (
+	const bucketQuery = (
+		kind: 'heatmap' | 'distribution',
 		signal: string,
 		aggregations: Record<string, unknown>[],
 	): DashboardtypesQueryDTO[] =>
 		compositeQuery([
 			{ type: 'builder_query', spec: { name: 'A', signal, aggregations } },
-		]).map((query) => ({ ...query, kind: 'heatmap' }) as DashboardtypesQueryDTO);
+		]).map((query) => ({ ...query, kind }) as DashboardtypesQueryDTO);
 
 	it.each([
-		['logs', [], false],
-		['traces', [{ expression: ' ' }], false],
-		['traces', [{ expression: 'duration_nano' }], true],
-		['metrics', [{ metricName: 'http_latency' }], true],
-	])(
-		'%s heatmap with aggregations %j is runnable: %s',
-		(signal, aggregations, runnable) => {
-			expect(hasRunnableQueries(heatmapQuery(signal, aggregations))).toBe(
-				runnable,
-			);
+		['heatmap', 'logs', [], false],
+		['heatmap', 'traces', [{ expression: ' ' }], false],
+		['heatmap', 'traces', [{ expression: 'duration_nano' }], true],
+		['heatmap', 'metrics', [{ metricName: 'http_latency' }], true],
+		['distribution', 'logs', [], false],
+		['distribution', 'traces', [{ expression: 'duration_nano' }], true],
+	] as const)(
+		'%s over %s with aggregations %j is runnable: %s',
+		(kind, signal, aggregations, runnable) => {
+			expect(
+				hasRunnableQueries(bucketQuery(kind, signal, [...aggregations])),
+			).toBe(runnable);
 		},
 	);
 

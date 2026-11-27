@@ -8,6 +8,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { cloneDeep, isEqual, set, unset } from 'lodash-es';
+import { isBucketPanelType } from 'lib/query/bucketPanelTypes';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -102,13 +103,13 @@ export const getIsQueryModified = (
 /**
  * Formulas are carried across a panel-type switch whole, not rebuilt from
  * `panelTypeDataSourceFormValuesMap` the way `queryData` is, so a bucket axis has to be
- * dropped by hand. The request rejects one on any type but heatmap.
+ * dropped by hand. The request rejects one on any type that does not count buckets.
  */
-const withHeatmapBucketOptions = (
+const withBucketOptions = (
 	formulas: IBuilderFormula[],
 	newPanelType: keyof PartialPanelTypes,
 ): IBuilderFormula[] => {
-	if (newPanelType === PANEL_TYPES.HEATMAP) {
+	if (isBucketPanelType(newPanelType)) {
 		return formulas;
 	}
 
@@ -173,11 +174,11 @@ export function rebuildBuilderForPanelType(
 
 			return tempQuery;
 		}),
-		queryFormulas: withHeatmapBucketOptions(builder.queryFormulas, newPanelType),
+		queryFormulas: withBucketOptions(builder.queryFormulas, newPanelType),
 		queryTraceOperator:
 			newPanelType === PANEL_TYPES.LIST ||
 			newPanelType === PANEL_TYPES.SCATTER ||
-			newPanelType === PANEL_TYPES.HEATMAP
+			isBucketPanelType(newPanelType)
 				? []
 				: builder.queryTraceOperator,
 	};

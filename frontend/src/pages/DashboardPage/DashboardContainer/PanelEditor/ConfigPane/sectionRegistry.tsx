@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import {
+	type DashboardtypesDistributionAxesDTO,
 	type DashboardtypesGeoMapChartAppearanceDTO,
 	DashboardtypesGeoMapLayerDTO,
 	type DashboardtypesGeoMapLocationDTO,
@@ -32,6 +33,7 @@ import BucketsSection from './sections/BucketsSection/BucketsSection';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
 import DimensionsSection from './sections/DimensionsSection/DimensionsSection';
+import DistributionAxesSection from './sections/DistributionAxesSection/DistributionAxesSection';
 import FormattingSection from './sections/FormattingSection/FormattingSection';
 import LegendSection from './sections/LegendSection/LegendSection';
 import LocationSection from './sections/LocationSection/LocationSection';
@@ -103,6 +105,13 @@ export const SECTION_REGISTRY: {
 		Component: ScatterAxesSection,
 		get: (spec): DashboardtypesScatterPlotAxesDTO | undefined =>
 			getPluginSlice<DashboardtypesScatterPlotAxesDTO>(spec, 'axes'),
+		update: (spec, axes): PanelSpec => updatePluginSlice(spec, 'axes', axes),
+	},
+	// Same `axes` key again, in Distribution's bucket-range/count-scale shape.
+	[SectionKind.DistributionAxes]: {
+		Component: DistributionAxesSection,
+		get: (spec): DashboardtypesDistributionAxesDTO | undefined =>
+			getPluginSlice<DashboardtypesDistributionAxesDTO>(spec, 'axes'),
 		update: (spec, axes): PanelSpec => updatePluginSlice(spec, 'axes', axes),
 	},
 	[SectionKind.Dimensions]: {

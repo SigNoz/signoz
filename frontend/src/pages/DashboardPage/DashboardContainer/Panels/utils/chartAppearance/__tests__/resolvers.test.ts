@@ -1,5 +1,6 @@
 import {
 	DashboardtypesAreaFillModeDTO,
+	DashboardtypesDistributionYScaleDTO,
 	DashboardtypesHeatmapColorModeDTO,
 	DashboardtypesHeatmapColorScaleDTO,
 	DashboardtypesHeatmapPaletteDTO,
@@ -15,9 +16,12 @@ import {
 	ColorRampPalette,
 	ColorRampScale,
 } from 'lib/visualization/colorRamp/types';
+import { DistributionYScale } from 'lib/visualization/charts/Distribution/types';
 
 import {
 	resolveAreaFillMode,
+	resolveDistributionPercentiles,
+	resolveDistributionYScale,
 	resolveHeatmapAxisScale,
 	resolveHeatmapColors,
 	resolveSpanGaps,
@@ -188,5 +192,29 @@ describe('resolveHeatmapColors', () => {
 
 	it('reads a zero step count as unset, which is how the wire sends none', () => {
 		expect(resolveHeatmapColors({ steps: 0 })).toStrictEqual({});
+	});
+});
+
+describe('resolveDistributionYScale', () => {
+	it('defaults to linear', () => {
+		expect(resolveDistributionYScale(undefined)).toBe(DistributionYScale.Linear);
+		expect(
+			resolveDistributionYScale(DashboardtypesDistributionYScaleDTO.log),
+		).toBe(DistributionYScale.Log);
+	});
+});
+
+describe('resolveDistributionPercentiles', () => {
+	it('marks nothing without percentiles; the server always writes them', () => {
+		expect(resolveDistributionPercentiles(undefined)).toStrictEqual([]);
+	});
+
+	it('marks the configured percentiles, or none when turned off', () => {
+		expect(
+			resolveDistributionPercentiles({ enabled: true, values: [75, 99.9] }),
+		).toStrictEqual([75, 99.9]);
+		expect(
+			resolveDistributionPercentiles({ enabled: false, values: [75] }),
+		).toStrictEqual([]);
 	});
 });

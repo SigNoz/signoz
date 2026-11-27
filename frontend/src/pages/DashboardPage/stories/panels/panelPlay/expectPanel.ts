@@ -3,7 +3,11 @@ import { expect, within } from 'storybook/test';
 import { PANEL_NAME } from '../__story_mockdata__/constants';
 
 import { hasData, PANEL_LOAD, type PanelPlayArgs } from './args';
-import { expectHeatmap, expectHistogram } from './distributions';
+import {
+	expectDistribution,
+	expectHeatmap,
+	expectHistogram,
+} from './distributions';
 import { expectLineChart } from './lineChart';
 import { expectListPage } from './list';
 import { findPlot } from './plot';
@@ -32,6 +36,7 @@ const KIND_EXPECTATIONS: Record<
 	Area: expectLineChart,
 	Histogram: expectHistogram,
 	Heatmap: expectHeatmap,
+	Distribution: expectDistribution,
 	Pie: expectPie,
 	Number: expectNumber,
 	Table: expectTable,
@@ -58,7 +63,10 @@ export const expectPanel = async (
 
 	await within(root).findByText(PANEL_NAME[args.kind], {}, PANEL_LOAD);
 
-	if (args.kind === 'Heatmap' && args.heatmapSource === 'no field') {
+	if (
+		(args.kind === 'Heatmap' || args.kind === 'Distribution') &&
+		args.bucketSource === 'no field'
+	) {
 		await within(root).findByTestId('panel-no-query', {}, PANEL_LOAD);
 		await expect(findPlot(root)).toBeUndefined();
 		return;
@@ -81,7 +89,11 @@ export const expectPanel = async (
 			within(root).queryByTestId('panel-status-warning'),
 		).not.toBeInTheDocument();
 	}
+	// The panel's own read of the data, apart from the response's warning.
 	await expect(
 		Boolean(within(root).queryByTestId('panel-status-data-warning')),
-	).toBe(expectsTopListWarning(args));
+	).toBe(
+		expectsTopListWarning(args) ||
+			(args.kind === 'Distribution' && args.overflow === 'high'),
+	);
 };

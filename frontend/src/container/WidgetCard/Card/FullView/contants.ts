@@ -32,6 +32,7 @@ export const PANEL_TYPES_VS_FULL_VIEW_TABLE: PanelTypeAndGraphManagerVisibilityP
 		PIE: false,
 		HISTOGRAM: false,
 		HEATMAP: false,
+		DISTRIBUTION: false,
 		GEO_MAP: false,
 		TOP_LIST: false,
 		TEXT: false,

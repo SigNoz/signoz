@@ -5,7 +5,7 @@ export const unquoteAlias = (alias: string): string =>
 	alias.replace(/^['"]|['"]$/g, '');
 
 /**
- * A logs or traces heatmap's aggregation: one field with an optional alias.
+ * A logs or traces heatmap or distribution's aggregation: one field with an optional alias.
  * The field mirrors the querier's HeatmapAggregationField: no call, no whitespace.
  */
 export const DISTRIBUTION_FIELD = new RegExp(
@@ -26,7 +26,7 @@ export function parseAggregations(
 		'g',
 	);
 	// With no call at all, the whole expression may be the field a logs/traces
-	// heatmap buckets, e.g. "duration_nano"
+	// heatmap or distribution buckets, e.g. "duration_nano"
 	let match =
 		regex.exec(expression) ??
 		(allowDistributionField ? DISTRIBUTION_FIELD.exec(expression) : null);

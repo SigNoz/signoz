@@ -17,6 +17,8 @@ import {
 	BAR_LAYOUT_HELP,
 	BAR_LAYOUT_OPTIONS,
 	BarLayout,
+	BUCKET_STACK_HELP,
+	BUCKET_STACK_OPTIONS,
 	STACK_MODE_HELP,
 	STACK_MODE_OPTIONS,
 } from './options';
@@ -35,7 +37,8 @@ type VisualizationSectionProps = SectionEditorProps<SectionKind.Visualization> &
 /**
  * Edits the `visualization` slice: the panel-type switcher (`switchPanelKind`, every
  * kind), the per-panel time preference, bar stacking (`stackedBarChart`, Bar only),
- * area stacking (`stack`, Area only) and gap filling (`fillSpans`). Each control is
+ * area stacking (`stack`, Area only), bucket stacking (`stack`, Distribution only)
+ * and gap filling (`fillSpans`). Each control is
  * gated by its `controls` flag, so a kind only renders — and only writes — the fields
  * its spec supports.
  */
@@ -133,6 +136,22 @@ function VisualizationSection({
 						aria-label="Series layout"
 						value={stack}
 						items={STACK_MODE_OPTIONS}
+						onChange={(next): void => onChange({ ...value, stack: next })}
+					/>
+				</ConfigField>
+			)}
+
+			{controls.bucketStack && (
+				<ConfigField
+					label="Groups in a bucket"
+					help={stack && BUCKET_STACK_HELP[stack]}
+					{...reset('stack')}
+				>
+					<ConfigTiles
+						testId="panel-editor-v2-bucket-stack"
+						aria-label="Groups in a bucket"
+						value={stack}
+						items={BUCKET_STACK_OPTIONS}
 						onChange={(next): void => onChange({ ...value, stack: next })}
 					/>
 				</ConfigField>

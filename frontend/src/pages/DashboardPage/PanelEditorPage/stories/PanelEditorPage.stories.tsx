@@ -209,6 +209,12 @@ export const HeatmapTracesField: Story = {
 	play: pickHeatmapTracesField,
 };
 
+/** A new distribution panel's config pane, every section expanded. */
+export const ConfigDistribution: Story = {
+	args: { panel: 'new', newPanelKind: 'distribution' },
+	play: expandConfigSections,
+};
+
 /** A new list panel's config pane, every section expanded. */
 export const ConfigList: Story = {
 	args: { panel: 'new', newPanelKind: 'list' },

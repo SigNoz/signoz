@@ -2,6 +2,8 @@ import type {
 	DashboardtypesLinkDTO,
 	DashboardtypesAxesDTO,
 	DashboardtypesComparisonThresholdDTO,
+	DashboardtypesDistributionAxesDTO,
+	DashboardtypesDistributionPercentilesDTO,
 	DashboardtypesFillModeDTO,
 	DashboardtypesFillOpacityDTO,
 	DashboardtypesGeoMapBubblesDTO,
@@ -78,6 +80,8 @@ export enum SectionKind {
 	Dimensions = 'dimensions',
 	/** Scatter Plot's per-axis `axes` shape; `Axes` is the single y-axis shape. */
 	ScatterAxes = 'scatterAxes',
+	/** Distribution's `axes` shape: the bucket-axis range and count-axis scale. */
+	DistributionAxes = 'distributionAxes',
 	/** Geo Map's placement: what a row is, its columns, the area, the layer and the value columns. */
 	Location = 'location',
 	/** Top List's row display, for a kind with no chart to style. */
@@ -129,6 +133,8 @@ export interface PanelChartAppearanceSlice {
 	colors?: DashboardtypesHeatmapColorsDTO & DashboardtypesGeoMapColorsDTO;
 	/** Scatter Plot's dot size and opacity. */
 	points?: DashboardtypesScatterPlotPointsDTO;
+	/** Distribution's percentile markers. */
+	percentiles?: DashboardtypesDistributionPercentilesDTO;
 	/** Geo Map's circle radius range. */
 	bubbles?: DashboardtypesGeoMapBubblesDTO;
 	/** Geo Map's shape names; unset shows them. */
@@ -146,7 +152,7 @@ export interface PanelVisualizationSlice {
 	timePreference?: DashboardtypesTimePreferenceDTO;
 	/** Bar stacking; a kind declares this or `stack`, never both. */
 	stackedBarChart?: boolean;
-	/** Area stacking. */
+	/** Area or Distribution stacking; Distribution's wire enum is nominally distinct with the same members. */
 	stack?: DashboardtypesStackModeDTO;
 	fillSpans?: boolean;
 }
@@ -171,6 +177,7 @@ export interface SectionSpecMap {
 	[SectionKind.PanelHeader]: DashboardtypesHeaderOptionsDTO; // spec.plugin.spec.headerOptions (Text)
 	[SectionKind.Dimensions]: DashboardtypesScatterPlotDimensionsDTO; // spec.plugin.spec.dimensions (Scatter Plot)
 	[SectionKind.ScatterAxes]: DashboardtypesScatterPlotAxesDTO; // spec.plugin.spec.axes (Scatter Plot)
+	[SectionKind.DistributionAxes]: DashboardtypesDistributionAxesDTO; // spec.plugin.spec.axes (Distribution)
 	[SectionKind.Location]: GeoMapPlacementSlice; // spec.plugin.spec.location + .map (Geo Map)
 	[SectionKind.Appearance]: DashboardtypesTopListAppearanceDTO; // spec.plugin.spec.appearance (Top List)
 }
@@ -213,6 +220,8 @@ export interface SectionControls {
 		colors?: boolean;
 		/** Scatter Plot's dots: one size, or a min/max range when a size column is bound. */
 		points?: boolean;
+		/** Distribution's percentile markers: on/off and which ones. */
+		percentiles?: boolean;
 		/** Geo Map's value ramp: palette, scale, steps and a value range. */
 		mapColors?: boolean;
 		/** Geo Map's circle radius range. */
@@ -227,12 +236,14 @@ export interface SectionControls {
 	};
 	// switchPanelKind → the visualization-type switcher (every kind, so you can switch
 	// away from any panel); stacking → stackedBarChart (Bar); stackMode → stack
-	// (Area); fillSpans → fill gaps with 0 (TimeSeries / Area).
+	// (Area); bucketStack → stack (Distribution); fillSpans → fill gaps with 0
+	// (TimeSeries / Area).
 	[SectionKind.Visualization]: {
 		switchPanelKind: boolean;
 		timePreference?: boolean;
 		stacking?: boolean;
 		stackMode?: boolean;
+		bucketStack?: boolean;
 		fillSpans?: boolean;
 	};
 	// Editor discriminator (not a spec field): which threshold variant a kind edits.
@@ -255,6 +266,7 @@ export type AtomicSectionKind =
 	| SectionKind.PanelHeader
 	| SectionKind.Dimensions
 	| SectionKind.ScatterAxes
+	| SectionKind.DistributionAxes
 	| SectionKind.Location;
 
 /** Predicate to hide a section from the current spec; returning true removes it. */
@@ -292,6 +304,7 @@ export const SECTION_METADATA = {
 	[SectionKind.PanelHeader]: { title: 'Panel header', icon: PanelTop },
 	[SectionKind.Dimensions]: { title: 'Dimensions', icon: Crosshair },
 	[SectionKind.ScatterAxes]: { title: 'Axes', icon: Scale3D },
+	[SectionKind.DistributionAxes]: { title: 'Axes', icon: Scale3D },
 	[SectionKind.Location]: { title: 'Location', icon: MapPin },
 	[SectionKind.Appearance]: { title: 'Appearance', icon: Palette },
 } as const satisfies Record<SectionKind, SectionMetadata>;

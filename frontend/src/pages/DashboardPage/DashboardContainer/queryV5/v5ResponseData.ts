@@ -1,5 +1,6 @@
 import type {
 	Querybuildertypesv5AggregationBucketDTO,
+	Querybuildertypesv5DistributionDataDTO,
 	Querybuildertypesv5ExecStatsDTO,
 	Querybuildertypesv5RawDataDTO,
 	Querybuildertypesv5RequestTypeDTO,
@@ -34,6 +35,17 @@ export function getHeatmapResults(
 	}
 	return (response.data.data?.results ??
 		[]) as Querybuildertypesv5TimeSeriesDataDTO[];
+}
+
+/** One summed count array per group, positional against each aggregation's `meta.buckets`. */
+export function getDistributionResults(
+	response: QueryRangeV5200 | undefined,
+): Querybuildertypesv5DistributionDataDTO[] {
+	if (response?.data?.type !== 'distribution') {
+		return [];
+	}
+	return (response.data.data?.results ??
+		[]) as Querybuildertypesv5DistributionDataDTO[];
 }
 
 export function getScalarResults(

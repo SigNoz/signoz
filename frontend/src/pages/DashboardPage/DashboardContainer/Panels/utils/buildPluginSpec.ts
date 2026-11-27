@@ -32,6 +32,9 @@ import {
 import { DEFAULT_BAR_COLOR } from '../../PanelEditor/ConfigPane/sections/AppearanceSection/barColorOptions';
 import { getTableColumnKeys } from './getTableColumnKeys';
 
+/** Matches what the server writes for unset `chartAppearance.percentiles.values`. */
+const DEFAULT_DISTRIBUTION_PERCENTILES = [50, 90, 99];
+
 /** Cross-section of the per-kind spec union; assigned to `plugin.spec` (unknown) at the boundary. */
 export interface SeededPluginSpec {
 	visualization?: SectionSpecMap[SectionKind.Visualization];
@@ -157,7 +160,7 @@ function translateStackingForKind(
 		}
 		return {};
 	}
-	if (controls.stackMode) {
+	if (controls.stackMode || controls.bucketStack) {
 		if (old?.stack !== undefined) {
 			return { stack: old.stack };
 		}
@@ -326,6 +329,7 @@ const SECTION_SEEDS: SectionSeeds = {
 				colors,
 				bubbles,
 				labels,
+				percentiles,
 			} = oldPluginSpec?.chartAppearance ?? {};
 			const appearance: SectionSpecMap[SectionKind.ChartAppearance] = {};
 			if (controls.lineStyle) {
@@ -351,6 +355,13 @@ const SECTION_SEEDS: SectionSeeds = {
 			}
 			if (controls.spanGaps && spanGaps !== undefined) {
 				appearance.spanGaps = spanGaps;
+			}
+			// The server's default for unset percentiles, so a new panel previews the same.
+			if (controls.percentiles) {
+				appearance.percentiles = percentiles ?? {
+					enabled: true,
+					values: DEFAULT_DISTRIBUTION_PERCENTILES,
+				};
 			}
 			// Seeded so the controls open on the ramp the grid is drawn with; the
 			// count bounds and step count stay unset, which reads as derived.

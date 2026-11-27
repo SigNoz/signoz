@@ -180,6 +180,22 @@ export const TILE_DRAWINGS = {
 			<rect x={38} y={8} width={11} height={6} {...FILLED} />
 		</TileSvg>
 	),
+	barsSideBySide: (
+		<TileSvg>
+			<rect x={10} y={8} width={7} height={14} {...FILLED} opacity={0.5} />
+			<rect x={18} y={12} width={7} height={10} {...FILLED} />
+			<rect x={36} y={11} width={7} height={11} {...FILLED} opacity={0.5} />
+			<rect x={44} y={6} width={7} height={16} {...FILLED} />
+		</TileSvg>
+	),
+	barsPercent: (
+		<TileSvg>
+			<rect x={14} y={12} width={11} height={10} {...FILLED} opacity={0.5} />
+			<rect x={14} y={2} width={11} height={9} {...FILLED} />
+			<rect x={38} y={8} width={11} height={14} {...FILLED} opacity={0.5} />
+			<rect x={38} y={2} width={11} height={5} {...FILLED} />
+		</TileSvg>
+	),
 	areaOverlap: (
 		<TileSvg>
 			<path d="M4 15 L18 9 L32 13 L46 6 L60 9" />

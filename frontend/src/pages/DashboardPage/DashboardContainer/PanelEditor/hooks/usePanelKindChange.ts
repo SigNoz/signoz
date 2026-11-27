@@ -14,6 +14,7 @@ import {
 	toDistributionAggregation,
 } from 'lib/query/distributionField';
 import { rebuildBuilderForPanelType } from 'lib/query/panelQuery';
+import { isBucketPanelType } from 'lib/query/bucketPanelTypes';
 import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
@@ -37,8 +38,9 @@ import {
 } from '../getSwitchedPluginSpec';
 import {
 	withPercentileHistogramAggregation,
-	withSingleHeatmapQuery,
-} from '../utils/heatmapQuery';
+	withSingleBucketQuery,
+	withSingleEnabledQuery,
+} from '../utils/bucketQuery';
 
 // V1's panel-type rebuild clears orderBy for lists; re-seed the fresh-list default (timestamp desc).
 const DEFAULT_LIST_ORDER_BY: OrderByPayload[] = [
@@ -186,15 +188,15 @@ export function usePanelKindChange({
 						: transformed,
 					newKind,
 				);
-				const isHeatmap = newKind === 'signoz/HeatmapPanel';
+				const isBucketPanel = isBucketPanelType(newPanelType);
 				const converted = {
 					...ordered,
 					queryData: ordered.queryData.map(
-						isHeatmap ? toDistributionAggregation : fromDistributionAggregation,
+						isBucketPanel ? toDistributionAggregation : fromDistributionAggregation,
 					),
 				};
-				return isHeatmap
-					? withSingleHeatmapQuery(converted)
+				return isBucketPanel
+					? withSingleBucketQuery(converted)
 					: withPercentileHistogramAggregation(converted);
 			};
 
@@ -256,6 +258,10 @@ export function usePanelKindChange({
 				builder: rebuildForNewKind(query.builder),
 				...(query.builder_ai_query && {
 					builder_ai_query: rebuildForNewKind(query.builder_ai_query),
+				}),
+				...(isBucketPanelType(newPanelType) && {
+					promql: withSingleEnabledQuery(query.promql),
+					clickhouse_sql: withSingleEnabledQuery(query.clickhouse_sql),
 				}),
 			};
 			const signal = getBuilderQueries(currentSpec.queries)[0]
