@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { render, screen, waitFor } from 'tests/test-utils';
 import { TraceAggregation } from 'api/v5/v5';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { SPAN_ATTRIBUTES } from '../constants';
 import DomainMetrics from './DomainMetrics';
@@ -10,6 +12,33 @@ import DomainMetrics from './DomainMetrics';
 jest.mock('lib/dashboard/getQueryResults', () => ({
 	GetMetricQueryRange: jest.fn(),
 }));
+
+const mockGetMetricQueryRange = jest.mocked(GetMetricQueryRange);
+
+const buildResponse = (
+	rows: { data: Record<string, string> }[],
+): MetricQueryRangeSuccessResponse => ({
+	statusCode: 200,
+	message: 'success',
+	error: null,
+	payload: {
+		data: {
+			resultType: '',
+			newResult: { data: { result: [], resultType: '' } },
+			result: [
+				{ queryName: 'A', metric: {}, values: [], table: { rows, columns: [] } },
+			],
+		},
+	},
+});
+
+const findQuery = (queryData: IBuilderQuery[], name: string): IBuilderQuery => {
+	const query = queryData.find((q) => q.queryName === name);
+	if (!query) {
+		throw new Error(`Query ${name} missing from the payload`);
+	}
+	return query;
+};
 
 // Mock ErrorState component
 jest.mock('./ErrorState', () => ({
@@ -35,30 +64,16 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 		domainListFilterExpression: '',
 	};
 
-	const mockSuccessResponse = {
-		statusCode: 200,
-		error: null,
-		payload: {
+	const mockSuccessResponse = buildResponse([
+		{
 			data: {
-				result: [
-					{
-						table: {
-							rows: [
-								{
-									data: {
-										A: '150',
-										B: '125000000',
-										D: '2021-01-01T23:00:00Z',
-										F1: '5.5',
-									},
-								},
-							],
-						},
-					},
-				],
+				A: '150',
+				B: '125000000',
+				D: '2021-01-01T23:00:00Z',
+				F1: '5.5',
 			},
 		},
-	};
+	]);
 
 	beforeEach(() => {
 		queryClient = new QueryClient({
@@ -85,7 +100,7 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 
 	describe('1. V5 Query Payload with Filters', () => {
 		it('sends correct V5 payload structure with domain name filters', async () => {
-			(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockSuccessResponse);
+			mockGetMetricQueryRange.mockResolvedValue(mockSuccessResponse);
 
 			renderComponent();
 
@@ -93,7 +108,7 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 				expect(GetMetricQueryRange).toHaveBeenCalledTimes(1);
 			});
 
-			const [payload] = (GetMetricQueryRange as jest.Mock).mock.calls[0];
+			const [payload] = mockGetMetricQueryRange.mock.calls[0];
 
 			// Verify time range
 			expect(payload.start).toBe(1758259531000);
@@ -107,64 +122,60 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 			const queryData = payload.query.builder.queryData;
 
 			// Verify Query A - count with URL filter
-			const queryA = queryData.find((q: any) => q.queryName === 'A');
-			expect(queryA).toBeDefined();
+			const queryA = findQuery(queryData, 'A');
 			expect(queryA.dataSource).toBe('traces');
 			expect(queryA.aggregations?.[0]).toBeDefined();
 			expect((queryA.aggregations?.[0] as TraceAggregation)?.expression).toBe(
 				'count()',
 			);
 			// Verify exact domain filter expression structure
-			expect(queryA.filter.expression).toContain("http_host = '0.0.0.0'");
-			expect(queryA.filter.expression).toContain(
+			expect(queryA.filter?.expression).toContain("http_host = '0.0.0.0'");
+			expect(queryA.filter?.expression).toContain(
 				`${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 			);
 
 			// Verify Query B - p99 latency
-			const queryB = queryData.find((q: any) => q.queryName === 'B');
-			expect(queryB).toBeDefined();
+			const queryB = findQuery(queryData, 'B');
 			expect(queryB.aggregateOperator).toBe('p99');
 			expect(queryB.aggregations?.[0]).toBeDefined();
 			expect((queryB.aggregations?.[0] as TraceAggregation)?.expression).toBe(
 				'p99(duration_nano)',
 			);
 			// Verify exact domain filter expression structure
-			expect(queryB.filter.expression).toContain("http_host = '0.0.0.0'");
+			expect(queryB.filter?.expression).toContain("http_host = '0.0.0.0'");
 
 			// Verify Query C - error count (disabled)
-			const queryC = queryData.find((q: any) => q.queryName === 'C');
-			expect(queryC).toBeDefined();
+			const queryC = findQuery(queryData, 'C');
 			expect(queryC.disabled).toBe(true);
-			expect(queryC.filter.expression).toContain("http_host = '0.0.0.0'");
+			expect(queryC.filter?.expression).toContain("http_host = '0.0.0.0'");
 			expect(queryC.aggregations?.[0]).toBeDefined();
 			expect((queryC.aggregations?.[0] as TraceAggregation)?.expression).toBe(
 				'count()',
 			);
 
-			expect(queryC.filter.expression).toContain('has_error = true');
+			expect(queryC.filter?.expression).toContain('has_error = true');
 
 			// Verify Query D - max timestamp
-			const queryD = queryData.find((q: any) => q.queryName === 'D');
-			expect(queryD).toBeDefined();
+			const queryD = findQuery(queryData, 'D');
 			expect(queryD.aggregateOperator).toBe('max');
 			expect(queryD.aggregations?.[0]).toBeDefined();
 			expect((queryD.aggregations?.[0] as TraceAggregation)?.expression).toBe(
 				'max(timestamp)',
 			);
 			// Verify exact domain filter expression structure
-			expect(queryD.filter.expression).toContain("http_host = '0.0.0.0'");
+			expect(queryD.filter?.expression).toContain("http_host = '0.0.0.0'");
 
 			// Verify Formula F1 - error rate calculation
 			const formulas = payload.query.builder.queryFormulas;
 			expect(formulas).toBeDefined();
 			expect(formulas.length).toBeGreaterThan(0);
-			const formulaF1 = formulas.find((f: any) => f.queryName === 'F1');
+			const formulaF1 = formulas.find((f) => f.queryName === 'F1');
 			expect(formulaF1).toBeDefined();
-			expect(formulaF1.expression).toBe('(C/A)*100');
+			expect(formulaF1?.expression).toBe('(C/A)*100');
 		});
 
 		it('includes custom filters in filter expressions', async () => {
-			(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockSuccessResponse);
+			mockGetMetricQueryRange.mockResolvedValue(mockSuccessResponse);
 
 			const customFilterExpression =
 				"service.name = 'my-service' AND deployment.environment = 'production'";
@@ -178,24 +189,21 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 				expect(GetMetricQueryRange).toHaveBeenCalled();
 			});
 
-			const [payload] = (GetMetricQueryRange as jest.Mock).mock.calls[0];
+			const [payload] = mockGetMetricQueryRange.mock.calls[0];
 			const queryData = payload.query.builder.queryData;
 
 			// Verify all queries include the custom filters
-			queryData.forEach((query: any) => {
-				if (query.filter && query.filter.expression) {
-					expect(query.filter.expression).toContain('service.name');
-					expect(query.filter.expression).toContain('my-service');
-					expect(query.filter.expression).toContain('deployment.environment');
-					expect(query.filter.expression).toContain('production');
-				}
+			const expressions = queryData.map((query) => query.filter?.expression);
+			expect(expressions).toHaveLength(4);
+			expressions.forEach((expression) => {
+				expect(expression).toContain(customFilterExpression);
 			});
 		});
 	});
 
 	describe('2. Data Display State', () => {
 		it('displays metrics when data is successfully loaded', async () => {
-			(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockSuccessResponse);
+			mockGetMetricQueryRange.mockResolvedValue(mockSuccessResponse);
 
 			renderComponent();
 
@@ -216,23 +224,9 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 
 	describe('3. Empty/Missing Data State', () => {
 		it('displays "-" for missing data values', async () => {
-			const emptyResponse = {
-				statusCode: 200,
-				error: null,
-				payload: {
-					data: {
-						result: [
-							{
-								table: {
-									rows: [],
-								},
-							},
-						],
-					},
-				},
-			};
+			const emptyResponse = buildResponse([]);
 
-			(GetMetricQueryRange as jest.Mock).mockResolvedValue(emptyResponse);
+			mockGetMetricQueryRange.mockResolvedValue(emptyResponse);
 
 			renderComponent();
 
@@ -244,7 +238,7 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 
 	describe('4. Error State', () => {
 		it('displays error state when API call fails', async () => {
-			(GetMetricQueryRange as jest.Mock).mockRejectedValue(new Error('API Error'));
+			mockGetMetricQueryRange.mockRejectedValue(new Error('API Error'));
 
 			renderComponent();
 
@@ -257,7 +251,7 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 
 		it('retries API call when retry button is clicked', async () => {
 			let callCount = 0;
-			(GetMetricQueryRange as jest.Mock).mockImplementation(() => {
+			mockGetMetricQueryRange.mockImplementation(() => {
 				callCount += 1;
 				if (callCount === 1) {
 					return Promise.reject(new Error('API Error'));
