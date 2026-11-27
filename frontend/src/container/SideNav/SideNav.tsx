@@ -83,6 +83,7 @@ import {
 	aiAssistantMenuItem,
 	USER_SETTINGS_MENU_LABELS,
 	type UserSettingsMenuKey,
+	auditLogsMenuItem,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
 import {
@@ -971,6 +972,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		onSelect: handleSettingsMenuItemClick,
 	});
 
+	const isAuditLogsEnabled = isCloudUser || isEnterpriseSelfHostedUser;
+
 	return (
 		<div className={cx('sidenav-container', isPinned && 'pinned')}>
 			<div
@@ -1210,6 +1213,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					<div className="nav-bottom-section">
 						<div className="secondary-nav-items">
 							{isAIAssistantEnabled && renderNavItems([aiAssistantMenuItem], false)}
+
+							{isAuditLogsEnabled && renderNavItems([auditLogsMenuItem], false)}
 
 							<div className="nav-dropdown-item">
 								<Dropdown

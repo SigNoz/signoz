@@ -83,6 +83,14 @@ export const helpSupportMenuItem = {
 	icon: <MessageSquareText size={16} />,
 };
 
+export const auditLogsMenuItem = {
+	key: ROUTES.AUDIT_LOGS,
+	label: 'Audit Logs',
+	icon: <FileClock size={16} />,
+	isEnabled: true,
+	itemKey: 'audit-logs',
+};
+
 // The AI Assistant route is parameterized as `/ai-assistant/:conversationId`.
 // Sending the user to `/ai-assistant/new` triggers the page's fallback that
 // spawns a fresh conversation and replaces the URL with the real id, so
@@ -323,13 +331,6 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		icon: <Route size={16} />,
 		isEnabled: true,
 		itemKey: 'service-map',
-	},
-	{
-		key: ROUTES.AUDIT_LOGS,
-		label: 'Audit Logs',
-		icon: <FileClock size={16} />,
-		isEnabled: true,
-		itemKey: 'audit-logs',
 	},
 ];
 
