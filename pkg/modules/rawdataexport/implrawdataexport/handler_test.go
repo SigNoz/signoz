@@ -1,6 +1,8 @@
 package implrawdataexport
 
 import (
+	"io"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 
@@ -194,4 +196,49 @@ func TestConstructCSVRecordFromQueryResponse(t *testing.T) {
 	assert.Equal(t, "test message", record[1])
 	assert.Equal(t, "INFO", record[2])
 	assert.Equal(t, "test-id", record[3])
+}
+
+type failingResponseWriter struct {
+	*httptest.ResponseRecorder
+}
+
+func (writer failingResponseWriter) Write([]byte) (int, error) {
+	return 0, io.ErrClosedPipe
+}
+
+func TestExecuteExportCSVFlush(t *testing.T) {
+	tests := []struct {
+		name      string
+		format    string
+		failWrite bool
+	}{
+		{name: "csv format succeeds", format: "csv"},
+		{name: "default format succeeds"},
+		{name: "csv format reports flush error", format: "csv", failWrite: true},
+		{name: "default format reports flush error", failWrite: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rows := make(chan *qbtypes.RawRow, 1)
+			rows <- &qbtypes.RawRow{Data: map[string]any{"body": "hello"}}
+			close(rows)
+
+			responseRecorder := httptest.NewRecorder()
+			if tt.failWrite {
+				writer := failingResponseWriter{ResponseRecorder: responseRecorder}
+				isComplete, err := (&handler{}).executeExport(rows, nil, tt.format, writer)
+
+				assert.False(t, isComplete)
+				assert.ErrorIs(t, err, io.ErrClosedPipe)
+				return
+			}
+
+			isComplete, err := (&handler{}).executeExport(rows, nil, tt.format, responseRecorder)
+
+			assert.NoError(t, err)
+			assert.True(t, isComplete)
+			assert.Equal(t, "body\nhello\n", responseRecorder.Body.String())
+		})
+	}
 }
