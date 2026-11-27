@@ -56,8 +56,8 @@ export const NoIngestion: Story = {
 };
 
 /**
- * Telemetry reads only: no permission to manage anything, so the create actions
- * and the legacy editor role are both gone.
+ * A viewer: reads telemetry and lists alert rules, but manages nothing, so the
+ * create actions are gone or locked and the legacy editor role is too.
  */
 export const ViewerAccess: Story = {
 	args: { access: 'viewer' },

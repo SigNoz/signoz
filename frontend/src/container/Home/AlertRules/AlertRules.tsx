@@ -1,38 +1,56 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Button, Skeleton } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { AppLink } from 'lib/router/AppLink';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
-import { useAppContext } from 'providers/App/App';
-import { USER_ROLES } from 'types/roles';
+import { isModifierKeyPressed } from 'utils/app';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import {
+	RuleCreatePermission,
+	RuleListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
 
 import beaconUrl from '@/assets/Icons/beacon.svg';
 
 import { getItemIcon } from '../constants';
+import AlertRulesDenied from './AlertRulesDenied';
+import AlertRulesLoading from './AlertRulesLoading';
 import { useHomeAlertRules } from './useHomeAlertRules';
 
-export default function AlertRules({
+const LIST_CHECKS = [RuleListPermission];
+const CREATE_CHECKS = [RuleCreatePermission];
+
+function AlertRules({
 	onUpdateChecklistDoneItem,
 	loadingUserPreferences,
 }: {
 	onUpdateChecklistDoneItem: (itemKey: string) => void;
 	loadingUserPreferences: boolean;
 }): JSX.Element {
-	const { user } = useAppContext();
-
 	const location = useAppLocation();
 	const params = new URLSearchParams(location.search);
 
 	// Fetch Alerts
 	const { rules: alertRules, isError, isLoading } = useHomeAlertRules();
 	const rulesExist = alertRules.length > 0;
+
+	const { safeNavigate } = useSafeNavigate();
+	const handleCreateAlertRule = useCallback(
+		(e: React.MouseEvent): void => {
+			void logEvent('Homepage: Create alert rule clicked', {});
+			safeNavigate(ROUTES.ALERTS_NEW, { newTab: isModifierKeyPressed(e) });
+		},
+		[safeNavigate],
+	);
 
 	useEffect(() => {
 		if (rulesExist && !loadingUserPreferences) {
@@ -48,47 +66,42 @@ export default function AlertRules({
 
 					<div className="empty-title">No Alert rules yet.</div>
 
-					{user?.role !== USER_ROLES.VIEWER && (
-						<div className="empty-description">
-							Create an Alert Rule to get started
-						</div>
-					)}
+					<div className="empty-description">
+						Create an Alert Rule to get started
+					</div>
 				</div>
 
-				{user?.role !== USER_ROLES.VIEWER && (
-					<div className="empty-actions-container">
-						<AppLink to={ROUTES.ALERTS_NEW}>
-							<Button
-								type="default"
-								className="periscope-btn secondary"
-								icon={<Plus size={16} />}
-								onClick={(): void => {
-									void logEvent('Homepage: Create alert rule clicked', {});
-								}}
-							>
-								Create Alert Rule
-							</Button>
-						</AppLink>
+				<div className="empty-actions-container">
+					<AuthZButton
+						checks={CREATE_CHECKS}
+						size="md"
+						variant="solid"
+						color="secondary"
+						prefix={<Plus size={16} />}
+						testId="home-create-alert-rule"
+						onClick={handleCreateAlertRule}
+					>
+						Create Alert Rule
+					</AuthZButton>
 
-						<Button
-							type="link"
-							className="learn-more-link"
-							onClick={(): void => {
-								void logEvent('Homepage: Learn more clicked', {
-									source: 'Alert Rules',
-								});
+					<Button
+						type="link"
+						className="learn-more-link"
+						onClick={(): void => {
+							void logEvent('Homepage: Learn more clicked', {
+								source: 'Alert Rules',
+							});
 
-								window.open(
-									'https://signoz.io/docs/alerts/',
-									'_blank',
-									'noreferrer noopener',
-								);
-							}}
-						>
-							Learn more <ArrowUpRight size={12} />
-						</Button>
-					</div>
-				)}
+							window.open(
+								'https://signoz.io/docs/alerts/',
+								'_blank',
+								'noreferrer noopener',
+							);
+						}}
+					>
+						Learn more <ArrowUpRight size={12} />
+					</Button>
+				</div>
 			</div>
 		</div>
 	);
@@ -160,13 +173,7 @@ export default function AlertRules({
 	);
 
 	if (isLoading) {
-		return (
-			<Card className="dashboards-list-card home-data-card loading-card">
-				<Card.Content>
-					<Skeleton active />
-				</Card.Content>
-			</Card>
-		);
+		return <AlertRulesLoading />;
 	}
 
 	if (isError) {
@@ -215,3 +222,12 @@ export default function AlertRules({
 		</Card>
 	);
 }
+
+export default withAuthZContent(AlertRules, {
+	checks: LIST_CHECKS,
+	preloadChecks: CREATE_CHECKS,
+	fallback: ({ deniedPermissions }) => (
+		<AlertRulesDenied deniedPermissions={deniedPermissions} />
+	),
+	fallbackOnLoading: <AlertRulesLoading />,
+});

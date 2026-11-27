@@ -1,23 +1,27 @@
 import type { MouseEvent } from 'react';
 import { Plus } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import { ColumnSelector } from 'components/TanStackTableView';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import TextToolTip from 'components/TextToolTip';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { RuleCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 
 import type { AlertRule } from '../types';
 
 import styles from './AlertRulesHeaderActions.module.scss';
 
+const CREATE_CHECKS = [RuleCreatePermission];
+
 interface Props {
 	columns: TableColumnDef<AlertRule>[];
-	canAddAlert: boolean;
+	/** False on the empty list, whose own button creates the first rule. */
+	showNewAlert: boolean;
 	onNewAlert: (e: MouseEvent) => void;
 }
 
 function AlertRulesHeaderActions({
 	columns,
-	canAddAlert,
+	showNewAlert,
 	onNewAlert,
 }: Props): JSX.Element {
 	return (
@@ -27,8 +31,9 @@ function AlertRulesHeaderActions({
 				storageKey="alert-rules-columns"
 				testId="alert-columns-button"
 			/>
-			{canAddAlert && (
-				<Button
+			{showNewAlert && (
+				<AuthZButton
+					checks={CREATE_CHECKS}
 					variant="solid"
 					size="sm"
 					prefix={<Plus size={14} />}
@@ -37,7 +42,7 @@ function AlertRulesHeaderActions({
 					testId="list-alerts-new-alert-button"
 				>
 					New Alert
-				</Button>
+				</AuthZButton>
 			)}
 			<TextToolTip
 				text="More details on how to create alerts"

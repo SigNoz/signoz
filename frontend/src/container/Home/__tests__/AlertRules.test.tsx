@@ -2,6 +2,7 @@ import {
 	RuletypesAlertStateDTO,
 	type RuletypesRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';
@@ -10,7 +11,13 @@ import {
 	listRulesV3Response,
 } from 'mocks-server/__mockdata__/alert_rules';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent } from 'tests/test-utils';
+import {
+	setupAuthzAdmin,
+	setupAuthzDeny,
+	setupAuthzDenyAll,
+} from 'lib/authz/utils/authz-test-utils';
+import { RuleCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import AlertRules from '../AlertRules/AlertRules';
 
@@ -127,5 +134,67 @@ describe('Home alert rules', () => {
 		expect(
 			screen.getByTestId('home-alert-threshold-burning-warning'),
 		).toHaveTextContent('warning');
+	});
+});
+
+describe('Home alert rules - authz', () => {
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	it('shows a permission callout instead of a skeleton without list', async () => {
+		serveRules([burning]);
+		server.use(setupAuthzDenyAll());
+		renderAlertRules();
+
+		await expect(screen.findByText('list:rule:*')).resolves.toBeInTheDocument();
+		expect(screen.queryByTestId(/^home-alert-rule-/)).not.toBeInTheDocument();
+	});
+
+	it('does not request rules without list', async () => {
+		const requestedStates = serveRules([burning]);
+		server.use(setupAuthzDenyAll());
+		renderAlertRules();
+
+		await screen.findByText('list:rule:*');
+
+		expect(requestedStates).toStrictEqual([]);
+	});
+
+	it('locks Create Alert Rule without create', async () => {
+		serveRules([]);
+		server.use(setupAuthzDeny(RuleCreatePermission));
+		renderAlertRules();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('home-create-alert-rule')).toHaveAttribute(
+				'data-denied-permissions',
+				RuleCreatePermission,
+			),
+		);
+		expect(screen.getByTestId('home-create-alert-rule')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+	});
+
+	it('opens the new alert page from Create Alert Rule with create', async () => {
+		serveRules([]);
+		server.use(setupAuthzAdmin());
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderAlertRules();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('home-create-alert-rule')).toHaveAttribute(
+				'aria-disabled',
+				'false',
+			),
+		);
+		await user.click(screen.getByTestId('home-create-alert-rule'));
+		expect(safeNavigateMock).toHaveBeenCalledWith(
+			ROUTES.ALERTS_NEW,
+			expect.objectContaining({ newTab: false }),
+		);
+		expect(screen.queryByText('list:rule:*')).not.toBeInTheDocument();
 	});
 });

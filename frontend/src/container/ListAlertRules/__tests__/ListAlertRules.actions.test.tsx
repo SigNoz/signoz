@@ -3,6 +3,8 @@ import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { ActionsMenu } from 'container/ListAlertRules/components';
 import type { AlertRule } from 'container/ListAlertRules/types';
 import { useAlertRulesHandlers } from 'container/ListAlertRules/useAlertRulesHandlers';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { alertRulesFixture } from 'mocks-server/__mockdata__/alert_rules';
 import { rest } from 'msw';
@@ -26,7 +28,14 @@ async function openActionsMenu(
 	await screen.findByTestId('alert-actions-item-edit');
 }
 
+// Gating is covered in ListAlertRules.permissions.test.tsx.
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+
 describe('ListAlertRules — actions menu', () => {
+	beforeEach(() => {
+		jest.mocked(useAuthZ).mockImplementation(mockUseAuthZGrantAll);
+	});
+
 	it('renders Enable/Disable/Edit/Edit in New Tab/Clone/Delete items after opening the menu', async () => {
 		const user = userEvent.setup();
 		render(<ActionsMenuWithHandlers rule={HIGH_CPU_RULE} />);

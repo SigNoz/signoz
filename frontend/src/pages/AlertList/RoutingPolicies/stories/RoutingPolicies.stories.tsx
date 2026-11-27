@@ -56,15 +56,7 @@ export const NoPolicies: Story = {
  * policy is locked, and a row's Edit and Delete are locked in its menu.
  */
 export const Viewer: Story = {
-	args: {
-		access: 'viewer',
-		permissions: [
-			'list:route-policy',
-			'read:route-policy',
-			'list:notification-channel',
-			'read:notification-channel',
-		],
-	},
+	args: { access: 'viewer' },
 };
 
 /** A policy opened from its row: the form prefilled with its expression and channels. */

@@ -21,3 +21,5 @@ export interface RuleViewCtx {
 	userEmail: string;
 	recent: string[];
 }
+
+export type RuleAction = 'toggle' | 'edit' | 'clone' | 'delete';

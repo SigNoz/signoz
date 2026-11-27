@@ -6,8 +6,15 @@ import {
 import type { EmptyStateCopy } from 'components/ListViews/types';
 import type { SortState } from 'components/TanStackTableView/types';
 import { dataSourceForAlertType } from 'constants/alerts';
+import {
+	buildRuleDeletePermission,
+	buildRuleReadPermission,
+	buildRuleUpdatePermission,
+	RuleCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
-import type { AlertRule, RuleListFilter } from './types';
+import type { AlertRule, RuleAction, RuleListFilter } from './types';
 
 export const ALERT_RULES_REFRESH_INTERVAL = 30_000;
 
@@ -16,7 +23,21 @@ export const ALERT_ACTIONS = {
 	EDIT: 'edit',
 	CLONE: 'clone',
 	DELETE: 'delete',
-} as const;
+} as const satisfies Record<string, RuleAction>;
+
+/** What each row action needs. Edit and clone open or copy the stored rule, so they also need `read`. */
+export const getRuleActionChecks = (
+	ruleId: string,
+): Record<RuleAction, BrandedPermission[]> => {
+	const read = buildRuleReadPermission(ruleId);
+	const update = buildRuleUpdatePermission(ruleId);
+	return {
+		toggle: [update],
+		edit: [read, update],
+		clone: [read, RuleCreatePermission],
+		delete: [buildRuleDeletePermission(ruleId)],
+	};
+};
 
 const ACTION_LABELS: Record<string, string> = {
 	[ALERT_ACTIONS.TOGGLE]: 'Enable/Disable',

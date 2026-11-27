@@ -111,6 +111,7 @@ const preview: Preview = {
 						'Alerts',
 						[
 							'Rules',
+							['Overview', 'Authz'],
 							'Triggered',
 							'Overview',
 							'History',

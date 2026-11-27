@@ -3,6 +3,7 @@ import type {
 	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { ENVIRONMENT } from 'constants/env';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { gettableTransactionToPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import type {
 	BrandedPermission,
@@ -220,4 +221,39 @@ export function mockUseAuthZGrantByPrefix(
 			refetchPermissions: jest.fn(),
 		};
 	};
+}
+
+/** `useAuthZ` that grants everything except the permissions listed. */
+export function mockUseAuthZDeny(
+	...denied: BrandedPermission[]
+): (
+	permissions: BrandedPermission[],
+	options?: UseAuthZOptions,
+) => UseAuthZResult {
+	const deniedSet = new Set(denied);
+	return (permissions, _options) => {
+		const isGranted = (permission: BrandedPermission): boolean =>
+			!deniedSet.has(permission);
+		const deniedPermissions = permissions.filter((p) => !isGranted(p));
+		return {
+			isLoading: false,
+			isFetching: false,
+			error: null,
+			permissions: Object.fromEntries(
+				permissions.map((p) => [p, { isGranted: isGranted(p) }]),
+			) as UseAuthZResult['permissions'],
+			allowed: deniedPermissions.length === 0,
+			deniedPermissions,
+			isGranted,
+			refetchPermissions: jest.fn(),
+		};
+	};
+}
+
+/**
+ * Has the mocked `useAuthZ` grant everything except `permissions`. The test
+ * file must `jest.mock('lib/authz/hooks/useAuthZ/useAuthZ')`.
+ */
+export function denyPermissions(...permissions: BrandedPermission[]): void {
+	jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDeny(...permissions));
 }

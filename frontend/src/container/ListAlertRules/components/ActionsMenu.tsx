@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
+import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
 import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -18,7 +19,11 @@ import type {
 import type { AxiosError } from 'axios';
 
 import type { AlertRule } from '../types';
-import { ALERT_ACTIONS, alertActionLogEvent } from '../utils';
+import {
+	ALERT_ACTIONS,
+	alertActionLogEvent,
+	getRuleActionChecks,
+} from '../utils';
 
 interface ActionsMenuProps {
 	rule: AlertRule;
@@ -27,12 +32,13 @@ interface ActionsMenuProps {
 
 function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 	const queryClient = useQueryClient();
+	const checks = useMemo(() => getRuleActionChecks(rule.id), [rule.id]);
 
 	const handleToggle = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.TOGGLE, rule);
 		const newDisabled = !rule.disabled;
 		void toast.promise(
-			patchRuleByID({ id: rule.id ?? '' }, {
+			patchRuleByID({ id: rule.id }, {
 				disabled: newDisabled,
 			} as RuletypesPostableRuleDTO).then(() =>
 				invalidateListRulesV3(queryClient),
@@ -93,7 +99,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 	const handleDelete = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.DELETE, rule);
 		void toast.promise(
-			deleteRuleByID({ id: rule.id ?? '' }).then(() =>
+			deleteRuleByID({ id: rule.id }).then(() =>
 				invalidateListRulesV3(queryClient),
 			),
 			{
@@ -111,30 +117,34 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 		);
 	}, [rule, queryClient]);
 
-	const menuItems = useMemo<DropdownItemType[]>(
+	const menuItems = useMemo<AuthZDropdownItemType[]>(
 		() => [
 			{
 				type: 'item',
 				value: 'toggle',
 				label: rule.disabled ? 'Enable' : 'Disable',
+				checks: checks.toggle,
 				onClick: handleToggle,
 			},
 			{
 				type: 'item',
 				value: 'edit',
 				label: 'Edit',
+				checks: checks.edit,
 				onClick: handleEdit,
 			},
 			{
 				type: 'item',
 				value: 'edit-new-tab',
 				label: 'Edit in New Tab',
+				checks: checks.edit,
 				onClick: handleEditNewTab,
 			},
 			{
 				type: 'item',
 				value: 'clone',
 				label: 'Clone',
+				checks: checks.clone,
 				onClick: handleClone,
 			},
 			{ type: 'separator', value: 'before-delete' },
@@ -142,12 +152,14 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 				type: 'item',
 				value: 'delete',
 				label: 'Delete',
+				checks: checks.delete,
 				danger: true,
 				onClick: handleDelete,
 			},
 		],
 		[
 			rule.disabled,
+			checks,
 			handleToggle,
 			handleEdit,
 			handleEditNewTab,
@@ -163,7 +175,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 	return (
 		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 		<div onClick={handleClick}>
-			<Dropdown
+			<AuthZDropdown
 				items={menuItems}
 				nativeButton
 				align="end"
@@ -180,7 +192,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 				>
 					<Ellipsis size={16} />
 				</Button>
-			</Dropdown>
+			</AuthZDropdown>
 		</div>
 	);
 }

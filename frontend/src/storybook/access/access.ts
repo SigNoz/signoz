@@ -84,8 +84,11 @@ export type AccessPreset = (typeof ACCESS_PRESETS)[number];
 /**
  * The legacy roles only differ in authz for the resources the backend already
  * covers: an admin manages roles, service accounts and API keys, while editor
- * and viewer are telemetry readers and differ through `user.role` alone. The
- * presets go away with the roles; the permission list does not.
+ * and viewer are telemetry readers and differ through `user.role` alone. On the
+ * alerting resources they follow the backend's managed roles: an editor manages
+ * rules and downtimes, links channels and reads routing policies; a viewer lists
+ * and reads them all. The presets go away with the roles; the permission list
+ * does not.
  */
 const ADMIN_PERMISSIONS = [
 	LEGACY_ROLE_PERMISSIONS[USER_ROLES.ADMIN],
@@ -94,10 +97,43 @@ const ADMIN_PERMISSIONS = [
 	...CATALOGUE.filter((permission) => permission !== 'assignee:role'),
 ];
 
+const VIEWER_ALERTING_READS = [
+	'list:rule',
+	'read:rule',
+	'list:route-policy',
+	'read:route-policy',
+	'list:planned-maintenance',
+	'read:planned-maintenance',
+	'list:notification-channel',
+	'read:notification-channel',
+];
+
+const EDITOR_ALERTING = [
+	...['rule', 'planned-maintenance'].flatMap((resource) =>
+		['list', 'read', 'create', 'update', 'delete', 'attach', 'detach'].map(
+			(verb) => `${verb}:${resource}`,
+		),
+	),
+	'list:notification-channel',
+	'read:notification-channel',
+	'attach:notification-channel',
+	'detach:notification-channel',
+	'list:route-policy',
+	'read:route-policy',
+];
+
 const PRESET_PERMISSIONS: Record<AccessPreset, readonly string[]> = {
 	admin: ADMIN_PERMISSIONS,
-	editor: [LEGACY_ROLE_PERMISSIONS[USER_ROLES.EDITOR], ...TELEMETRY_READS],
-	viewer: [LEGACY_ROLE_PERMISSIONS[USER_ROLES.VIEWER], ...TELEMETRY_READS],
+	editor: [
+		LEGACY_ROLE_PERMISSIONS[USER_ROLES.EDITOR],
+		...TELEMETRY_READS,
+		...EDITOR_ALERTING,
+	],
+	viewer: [
+		LEGACY_ROLE_PERMISSIONS[USER_ROLES.VIEWER],
+		...TELEMETRY_READS,
+		...VIEWER_ALERTING_READS,
+	],
 	anonymous: [LEGACY_ROLE_PERMISSIONS[USER_ROLES.ANONYMOUS]],
 	'grant-all': [...Object.values(LEGACY_ROLE_PERMISSIONS), ...CATALOGUE],
 	'deny-all': [],
