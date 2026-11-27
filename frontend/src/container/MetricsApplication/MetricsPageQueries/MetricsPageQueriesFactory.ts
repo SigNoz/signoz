@@ -34,8 +34,8 @@ const getAggregations = ({
 	dataSource: DataSource;
 	key: string;
 	aggregateOperator: string;
-	timeAggregation: MetricAggregateOperator;
-	spaceAggregation: MetricAggregateOperator;
+	timeAggregation: TimeAggregation;
+	spaceAggregation: SpaceAggregation;
 	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
 }): IBuilderQuery['aggregations'] =>
 	dataSource === DataSource.TRACES
@@ -44,8 +44,8 @@ const getAggregations = ({
 				{
 					metricName: key,
 					temporality: '',
-					timeAggregation: timeAggregation as TimeAggregation,
-					spaceAggregation: spaceAggregation as SpaceAggregation,
+					timeAggregation,
+					spaceAggregation,
 					reduceTo: ReduceOperators.AVG,
 					...(comparisonSpaceAggregationParam && {
 						comparisonSpaceAggregationParam,
@@ -124,7 +124,6 @@ export const getQueryBuilderQuerieswithFormula = ({
 	timeAggregateOperators,
 	spaceAggregateOperators,
 	comparisonSpaceAggregationParams = [],
-	stepInterval,
 	dataSource,
 }: BuilderQuerieswithFormulaProps): QueryBuilderData => ({
 	queryFormulas: expressions.map((expression, index) => ({
@@ -156,7 +155,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 			items: additionalItems[index],
 			op: 'AND',
 		},
-		stepInterval: stepInterval ?? null,
+		stepInterval: null,
 		dataSource,
 	})),
 	queryTraceOperator: [],

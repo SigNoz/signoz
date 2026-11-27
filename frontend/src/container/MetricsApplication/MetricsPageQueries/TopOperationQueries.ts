@@ -4,11 +4,8 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import {
-	DataSource,
-	MetricAggregateOperator,
-	QueryBuilderData,
-} from 'types/common/queryBuilder';
+import { SpaceAggregation, TimeAggregation } from 'types/api/v5/queryRange';
+import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import {
 	GraphTitle,
@@ -111,21 +108,21 @@ export const topOperationQueries = ({
 		KeyOperationTableHeader.ERROR_RATE,
 		KeyOperationTableHeader.NUM_OF_CALLS,
 	];
-	const timeAggregateOperators = [
-		MetricAggregateOperator.EMPTY,
-		MetricAggregateOperator.EMPTY,
-		MetricAggregateOperator.EMPTY,
-		MetricAggregateOperator.RATE,
-		MetricAggregateOperator.RATE,
-		MetricAggregateOperator.RATE,
+	const timeAggregateOperators: TimeAggregation[] = [
+		'',
+		'',
+		'',
+		'rate',
+		'rate',
+		'rate',
 	];
-	const spaceAggregateOperators = [
-		MetricAggregateOperator.P50,
-		MetricAggregateOperator.P90,
-		MetricAggregateOperator.P99,
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
+	const spaceAggregateOperators: SpaceAggregation[] = [
+		'p50',
+		'p90',
+		'p99',
+		'sum',
+		'sum',
+		'sum',
 	];
 	const expressions = ['D*100/E'];
 	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];

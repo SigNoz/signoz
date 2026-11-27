@@ -5,11 +5,8 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import {
-	DataSource,
-	MetricAggregateOperator,
-	QueryBuilderData,
-} from 'types/common/queryBuilder';
+import { SpaceAggregation, TimeAggregation } from 'types/api/v5/queryRange';
+import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import {
 	FORMULA,
@@ -82,16 +79,8 @@ export const latency = ({
 	const dataSource = isSpanMetricEnable ? DataSource.METRICS : DataSource.TRACES;
 	const queryNameAndExpression = QUERYNAME_AND_EXPRESSION;
 
-	const timeAggregateOperators = [
-		MetricAggregateOperator.EMPTY,
-		MetricAggregateOperator.EMPTY,
-		MetricAggregateOperator.EMPTY,
-	];
-	const spaceAggregateOperators = [
-		MetricAggregateOperator.P50,
-		MetricAggregateOperator.P90,
-		MetricAggregateOperator.P99,
-	];
+	const timeAggregateOperators: TimeAggregation[] = ['', '', ''];
+	const spaceAggregateOperators: SpaceAggregation[] = ['p50', 'p90', 'p99'];
 
 	return getQueryBuilderQueries({
 		autocompleteData,
@@ -119,18 +108,18 @@ export const apDexMetricsQueryBuilderQueries = ({
 		ms: number,
 	): {
 		key: string;
-		spaceAggregation: MetricAggregateOperator;
+		spaceAggregation: SpaceAggregation;
 		param?: MetrictypesComparisonSpaceAggregationParamDTO;
 	} => {
 		const bucket = getNearestHighestBucketValue(ms, metricsBuckets);
 		return bucket === '+Inf'
 			? {
 					key: WidgetKeys.SignozLatencyCount,
-					spaceAggregation: MetricAggregateOperator.SUM,
+					spaceAggregation: 'sum',
 				}
 			: {
 					key: WidgetKeys.SignozLatencyBucket,
-					spaceAggregation: MetricAggregateOperator.COUNT,
+					spaceAggregation: 'count',
 					param: { operator: '<=', threshold: Number(bucket) },
 				};
 	};
@@ -261,15 +250,15 @@ export const apDexMetricsQueryBuilderQueries = ({
 		: [FORMULA.APDEX_CUMULATIVE_SPAN_METRICS];
 	const legendFormulas = [GraphTitle.APDEX];
 	// v5 forces increase on histograms, so the total matches it
-	const timeAggregateOperators = [
-		MetricAggregateOperator.INCREASE,
-		MetricAggregateOperator.INCREASE,
-		MetricAggregateOperator.INCREASE,
+	const timeAggregateOperators: TimeAggregation[] = [
+		'increase',
+		'increase',
+		'increase',
 	];
 
 	// a plain sum keeps the le label on B and C, and the formula then cannot join them
-	const spaceAggregateOperators = [
-		MetricAggregateOperator.SUM,
+	const spaceAggregateOperators: SpaceAggregation[] = [
+		'sum',
 		satisfied.spaceAggregation,
 		tolerating.spaceAggregation,
 	];
@@ -336,8 +325,8 @@ export const operationPerSec = ({
 	const legends = OPERATION_LEGENDS;
 	const dataSource = DataSource.METRICS;
 
-	const timeAggregateOperators = [MetricAggregateOperator.RATE];
-	const spaceAggregateOperators = [MetricAggregateOperator.SUM];
+	const timeAggregateOperators: TimeAggregation[] = ['rate'];
+	const spaceAggregateOperators: SpaceAggregation[] = ['sum'];
 
 	return getQueryBuilderQueries({
 		autocompleteData,
@@ -430,14 +419,8 @@ export const errorPercentage = ({
 	const disabled = [true, true];
 	const expressions = [FORMULA.ERROR_PERCENTAGE];
 	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];
-	const timeAggregateOperators = [
-		MetricAggregateOperator.RATE,
-		MetricAggregateOperator.RATE,
-	];
-	const spaceAggregateOperators = [
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
-	];
+	const timeAggregateOperators: TimeAggregation[] = ['rate', 'rate'];
+	const spaceAggregateOperators: SpaceAggregation[] = ['sum', 'sum'];
 	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({

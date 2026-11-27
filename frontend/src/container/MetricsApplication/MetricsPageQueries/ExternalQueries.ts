@@ -4,11 +4,8 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import {
-	DataSource,
-	MetricAggregateOperator,
-	QueryBuilderData,
-} from 'types/common/queryBuilder';
+import { SpaceAggregation, TimeAggregation } from 'types/api/v5/queryRange';
+import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import { FORMULA, MetricsType, WidgetKeys } from '../constant';
 import {
@@ -87,14 +84,8 @@ export const externalCallErrorPercent = ({
 
 	const additionalItems = [additionalItemsA, additionalItemsB];
 
-	const timeAggregateOperators = [
-		MetricAggregateOperator.RATE,
-		MetricAggregateOperator.RATE,
-	];
-	const spaceAggregateOperators = [
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
-	];
+	const timeAggregateOperators: TimeAggregation[] = ['rate', 'rate'];
+	const spaceAggregateOperators: SpaceAggregation[] = ['sum', 'sum'];
 	const legends = [legend, legend];
 	const dataSource = DataSource.METRICS;
 
@@ -148,14 +139,8 @@ export const externalCallDuration = ({
 
 	const additionalItems = [additionalItemsA, additionalItemsA];
 	const legends = [legend, legend];
-	const timeAggregateOperators = [
-		MetricAggregateOperator.RATE,
-		MetricAggregateOperator.RATE,
-	];
-	const spaceAggregateOperators = [
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
-	];
+	const timeAggregateOperators: TimeAggregation[] = ['rate', 'rate'];
+	const spaceAggregateOperators: SpaceAggregation[] = ['sum', 'sum'];
 	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
@@ -202,8 +187,8 @@ export const externalCallRpsByAddress = ({
 	const legends = [legend];
 	const dataSource = DataSource.METRICS;
 
-	const timeAggregateOperators = [MetricAggregateOperator.RATE];
-	const spaceAggregateOperators = [MetricAggregateOperator.SUM];
+	const timeAggregateOperators: TimeAggregation[] = ['rate'];
+	const spaceAggregateOperators: SpaceAggregation[] = ['sum'];
 
 	return getQueryBuilderQueries({
 		autocompleteData,
@@ -251,14 +236,8 @@ export const externalCallDurationByAddress = ({
 	const autocompleteData = [autocompleteDataA, autocompleteDataB];
 	const additionalItems = [additionalItemsA, additionalItemsA];
 	const legends = [legend, legend];
-	const timeAggregateOperators = [
-		MetricAggregateOperator.RATE,
-		MetricAggregateOperator.RATE,
-	];
-	const spaceAggregateOperators = [
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
-	];
+	const timeAggregateOperators: TimeAggregation[] = ['rate', 'rate'];
+	const spaceAggregateOperators: SpaceAggregation[] = ['sum', 'sum'];
 	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({

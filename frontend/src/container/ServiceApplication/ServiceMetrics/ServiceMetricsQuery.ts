@@ -11,11 +11,8 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import {
-	DataSource,
-	MetricAggregateOperator,
-	QueryBuilderData,
-} from 'types/common/queryBuilder';
+import { SpaceAggregation, TimeAggregation } from 'types/api/v5/queryRange';
+import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 export const serviceMetricsQuery = (
 	topLevelOperation: [keyof ServiceDataProps, string[]],
@@ -154,17 +151,12 @@ export const serviceMetricsQuery = (
 		operationPrSecondAdditionalItems,
 	];
 
-	const timeAggregateOperators = [
-		MetricAggregateOperator.EMPTY,
-		MetricAggregateOperator.RATE,
-		MetricAggregateOperator.RATE,
-		MetricAggregateOperator.RATE,
-	];
-	const spaceAggregateOperators = [
-		MetricAggregateOperator.P99,
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
+	const timeAggregateOperators: TimeAggregation[] = ['', 'rate', 'rate', 'rate'];
+	const spaceAggregateOperators: SpaceAggregation[] = [
+		'p99',
+		'sum',
+		'sum',
+		'sum',
 	];
 
 	const disabled = [false, true, true, false];
