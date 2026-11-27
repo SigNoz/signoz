@@ -34,7 +34,7 @@ function GraphWrapper({
 	return (
 		<div className="timeline-graph" data-testid="timeline-graph">
 			<div className="timeline-graph__title" data-testid="timeline-graph-title">
-				{totalCurrentTriggers} triggers in {relativeTime}
+				{totalCurrentTriggers} triggers{relativeTime ? ` in ${relativeTime}` : ''}
 			</div>
 			<div className="timeline-graph__chart">
 				<DataStateRenderer
