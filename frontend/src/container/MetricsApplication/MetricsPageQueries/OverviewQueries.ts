@@ -1,10 +1,13 @@
+import {
+	MetrictypesSpaceAggregationDTO,
+	MetrictypesTimeAggregationDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { OPERATORS } from 'constants/queryBuilder';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { SpaceAggregation, TimeAggregation } from 'types/api/v5/queryRange';
 import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import {
@@ -78,8 +81,16 @@ export const latency = ({
 	const dataSource = isSpanMetricEnable ? DataSource.METRICS : DataSource.TRACES;
 	const queryNameAndExpression = QUERYNAME_AND_EXPRESSION;
 
-	const timeAggregateOperators: TimeAggregation[] = ['', '', ''];
-	const spaceAggregateOperators: SpaceAggregation[] = ['p50', 'p90', 'p99'];
+	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+		MetrictypesTimeAggregationDTO[''],
+		MetrictypesTimeAggregationDTO[''],
+		MetrictypesTimeAggregationDTO[''],
+	];
+	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+		MetrictypesSpaceAggregationDTO.p50,
+		MetrictypesSpaceAggregationDTO.p90,
+		MetrictypesSpaceAggregationDTO.p99,
+	];
 
 	return getQueryBuilderQueries({
 		autocompleteData,
@@ -228,15 +239,15 @@ export const apDexMetricsQueryBuilderQueries = ({
 	const expressions = [FORMULA.APDEX];
 	const legendFormulas = [GraphTitle.APDEX];
 	// v5 forces increase on histograms, so the total matches it
-	const timeAggregateOperators: TimeAggregation[] = [
-		'increase',
-		'increase',
-		'increase',
+	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+		MetrictypesTimeAggregationDTO.increase,
+		MetrictypesTimeAggregationDTO.increase,
+		MetrictypesTimeAggregationDTO.increase,
 	];
 
 	// a plain sum keeps the le label on B and C, and the formula then cannot join them
-	const spaceAggregateOperators: SpaceAggregation[] = [
-		'sum',
+	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+		MetrictypesSpaceAggregationDTO.sum,
 		satisfied.spaceAggregation,
 		tolerating.spaceAggregation,
 	];
@@ -303,8 +314,12 @@ export const operationPerSec = ({
 	const legends = OPERATION_LEGENDS;
 	const dataSource = DataSource.METRICS;
 
-	const timeAggregateOperators: TimeAggregation[] = ['rate'];
-	const spaceAggregateOperators: SpaceAggregation[] = ['sum'];
+	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+		MetrictypesTimeAggregationDTO.rate,
+	];
+	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+		MetrictypesSpaceAggregationDTO.sum,
+	];
 
 	return getQueryBuilderQueries({
 		autocompleteData,
@@ -397,8 +412,14 @@ export const errorPercentage = ({
 	const disabled = [true, true];
 	const expressions = [FORMULA.ERROR_PERCENTAGE];
 	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];
-	const timeAggregateOperators: TimeAggregation[] = ['rate', 'rate'];
-	const spaceAggregateOperators: SpaceAggregation[] = ['sum', 'sum'];
+	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+		MetrictypesTimeAggregationDTO.rate,
+		MetrictypesTimeAggregationDTO.rate,
+	];
+	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+		MetrictypesSpaceAggregationDTO.sum,
+		MetrictypesSpaceAggregationDTO.sum,
+	];
 	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({

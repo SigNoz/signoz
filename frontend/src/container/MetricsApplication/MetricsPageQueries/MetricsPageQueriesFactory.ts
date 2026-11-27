@@ -1,4 +1,8 @@
-import { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	MetrictypesComparisonSpaceAggregationParamDTO,
+	MetrictypesSpaceAggregationDTO,
+	MetrictypesTimeAggregationDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	alphabet,
 	initialFormulaBuilderFormValues,
@@ -7,7 +11,6 @@ import {
 import getStep from 'lib/getStep';
 import store from 'store';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { SpaceAggregation, TimeAggregation } from 'types/api/v5/queryRange';
 import {
 	DataSource,
 	MetricAggregateOperator,
@@ -34,8 +37,8 @@ const getAggregations = ({
 	dataSource: DataSource;
 	key: string;
 	aggregateOperator: string;
-	timeAggregation: TimeAggregation;
-	spaceAggregation: SpaceAggregation;
+	timeAggregation: MetrictypesTimeAggregationDTO;
+	spaceAggregation: MetrictypesSpaceAggregationDTO;
 	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
 }): IBuilderQuery['aggregations'] =>
 	dataSource === DataSource.TRACES

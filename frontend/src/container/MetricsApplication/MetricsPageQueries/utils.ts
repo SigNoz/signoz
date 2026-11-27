@@ -1,3 +1,4 @@
+import { MetrictypesSpaceAggregationDTO } from 'api/generated/services/sigNoz.schemas';
 import { WidgetKeys } from '../constant';
 import { LatencyCountAtOrBelow } from '../Tabs/types';
 import { getNearestHighestBucketValue } from '../utils';
@@ -12,11 +13,11 @@ export const getLatencyCountAtOrBelow = (
 	return bucket === undefined
 		? {
 				key: WidgetKeys.SignozLatencyCount,
-				spaceAggregation: 'sum',
+				spaceAggregation: MetrictypesSpaceAggregationDTO.sum,
 			}
 		: {
 				key: WidgetKeys.SignozLatencyBucket,
-				spaceAggregation: 'count',
+				spaceAggregation: MetrictypesSpaceAggregationDTO.count,
 				param: { operator: '<=', threshold: bucket },
 			};
 };

@@ -1,12 +1,12 @@
 import { ReactNode } from 'react';
-import { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	MetrictypesComparisonSpaceAggregationParamDTO,
+	MetrictypesSpaceAggregationDTO,
+	MetrictypesTimeAggregationDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import type {
-	SpaceAggregation,
-	TimeAggregation,
-} from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 export interface IServiceName {
@@ -34,8 +34,8 @@ export interface BuilderQueriesProps {
 	aggregateOperator?: string[];
 	dataSource: DataSource;
 	queryNameAndExpression?: string[];
-	timeAggregateOperators: TimeAggregation[];
-	spaceAggregateOperators: SpaceAggregation[];
+	timeAggregateOperators: MetrictypesTimeAggregationDTO[];
+	spaceAggregateOperators: MetrictypesSpaceAggregationDTO[];
 }
 
 export interface BuilderQuerieswithFormulaProps {
@@ -46,8 +46,8 @@ export interface BuilderQuerieswithFormulaProps {
 	expressions: string[];
 	legendFormulas: string[];
 	additionalItems: TagFilterItem[][];
-	timeAggregateOperators: TimeAggregation[];
-	spaceAggregateOperators: SpaceAggregation[];
+	timeAggregateOperators: MetrictypesTimeAggregationDTO[];
+	spaceAggregateOperators: MetrictypesSpaceAggregationDTO[];
 	comparisonSpaceAggregationParams?: (
 		| MetrictypesComparisonSpaceAggregationParamDTO
 		| undefined
@@ -82,7 +82,7 @@ export interface TableRendererProps {
 
 export interface LatencyCountAtOrBelow {
 	key: string;
-	spaceAggregation: SpaceAggregation;
+	spaceAggregation: MetrictypesSpaceAggregationDTO;
 	param?: MetrictypesComparisonSpaceAggregationParamDTO;
 }
 

@@ -1,3 +1,7 @@
+import {
+	MetrictypesSpaceAggregationDTO,
+	MetrictypesTimeAggregationDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 import { OPERATORS } from 'constants/queryBuilder';
 import {
@@ -11,7 +15,6 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { SpaceAggregation, TimeAggregation } from 'types/api/v5/queryRange';
 import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 export const serviceMetricsQuery = (
@@ -151,12 +154,17 @@ export const serviceMetricsQuery = (
 		operationPrSecondAdditionalItems,
 	];
 
-	const timeAggregateOperators: TimeAggregation[] = ['', 'rate', 'rate', 'rate'];
-	const spaceAggregateOperators: SpaceAggregation[] = [
-		'p99',
-		'sum',
-		'sum',
-		'sum',
+	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+		MetrictypesTimeAggregationDTO[''],
+		MetrictypesTimeAggregationDTO.rate,
+		MetrictypesTimeAggregationDTO.rate,
+		MetrictypesTimeAggregationDTO.rate,
+	];
+	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+		MetrictypesSpaceAggregationDTO.p99,
+		MetrictypesSpaceAggregationDTO.sum,
+		MetrictypesSpaceAggregationDTO.sum,
+		MetrictypesSpaceAggregationDTO.sum,
 	];
 
 	const disabled = [false, true, true, false];

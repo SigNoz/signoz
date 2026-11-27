@@ -1,10 +1,13 @@
+import {
+	MetrictypesSpaceAggregationDTO,
+	MetrictypesTimeAggregationDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { OPERATORS } from 'constants/queryBuilder';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { SpaceAggregation, TimeAggregation } from 'types/api/v5/queryRange';
 import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import {
@@ -108,21 +111,21 @@ export const topOperationQueries = ({
 		KeyOperationTableHeader.ERROR_RATE,
 		KeyOperationTableHeader.NUM_OF_CALLS,
 	];
-	const timeAggregateOperators: TimeAggregation[] = [
-		'',
-		'',
-		'',
-		'rate',
-		'rate',
-		'rate',
+	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+		MetrictypesTimeAggregationDTO[''],
+		MetrictypesTimeAggregationDTO[''],
+		MetrictypesTimeAggregationDTO[''],
+		MetrictypesTimeAggregationDTO.rate,
+		MetrictypesTimeAggregationDTO.rate,
+		MetrictypesTimeAggregationDTO.rate,
 	];
-	const spaceAggregateOperators: SpaceAggregation[] = [
-		'p50',
-		'p90',
-		'p99',
-		'sum',
-		'sum',
-		'sum',
+	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+		MetrictypesSpaceAggregationDTO.p50,
+		MetrictypesSpaceAggregationDTO.p90,
+		MetrictypesSpaceAggregationDTO.p99,
+		MetrictypesSpaceAggregationDTO.sum,
+		MetrictypesSpaceAggregationDTO.sum,
+		MetrictypesSpaceAggregationDTO.sum,
 	];
 	const expressions = ['D*100/E'];
 	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];

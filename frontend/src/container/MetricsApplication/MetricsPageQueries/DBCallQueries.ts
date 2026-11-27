@@ -1,10 +1,13 @@
+import {
+	MetrictypesSpaceAggregationDTO,
+	MetrictypesTimeAggregationDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { OPERATORS } from 'constants/queryBuilder';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { SpaceAggregation, TimeAggregation } from 'types/api/v5/queryRange';
 import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import { FORMULA, MetricsType, WidgetKeys } from '../constant';
@@ -52,8 +55,12 @@ export const databaseCallsRPS = ({
 	const legends = [legend];
 	const dataSource = DataSource.METRICS;
 
-	const timeAggregateOperators: TimeAggregation[] = ['rate'];
-	const spaceAggregateOperators: SpaceAggregation[] = ['sum'];
+	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+		MetrictypesTimeAggregationDTO.rate,
+	];
+	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+		MetrictypesSpaceAggregationDTO.sum,
+	];
 
 	return getQueryBuilderQueries({
 		autocompleteData,
@@ -109,8 +116,14 @@ export const databaseCallsAvgDuration = ({
 	const disabled = [true, true];
 	const legendFormulas = ['Average Duration'];
 	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
-	const timeAggregateOperators: TimeAggregation[] = ['rate', 'rate'];
-	const spaceAggregateOperators: SpaceAggregation[] = ['sum', 'sum'];
+	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+		MetrictypesTimeAggregationDTO.rate,
+		MetrictypesTimeAggregationDTO.rate,
+	];
+	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+		MetrictypesSpaceAggregationDTO.sum,
+		MetrictypesSpaceAggregationDTO.sum,
+	];
 	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
