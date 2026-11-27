@@ -2,11 +2,13 @@ package clickhouseprometheusv2
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/storage"
 )
@@ -108,4 +110,88 @@ func finishQuery(ctx context.Context, qry promql.Query) (*prometheus.Result, err
 
 func (p *provider) Querier(mint, maxt int64) (storage.Querier, error) {
 	return &querier{mint: mint, maxt: maxt, client: p.client}, nil
+}
+
+func (p *provider) LabelNames(ctx context.Context, matcherSets [][]*labels.Matcher, start, end time.Time, limit int) ([]string, error) {
+	return p.mergedLabelQuery(ctx, matcherSets, start, end, limit, func(q storage.Querier, matchers []*labels.Matcher) ([]string, error) {
+		names, _, err := q.LabelNames(ctx, nil, matchers...)
+		return names, err
+	})
+}
+
+func (p *provider) LabelValues(ctx context.Context, name string, matcherSets [][]*labels.Matcher, start, end time.Time, limit int) ([]string, error) {
+	return p.mergedLabelQuery(ctx, matcherSets, start, end, limit, func(q storage.Querier, matchers []*labels.Matcher) ([]string, error) {
+		values, _, err := q.LabelValues(ctx, name, nil, matchers...)
+		return values, err
+	})
+}
+
+// mergedLabelQuery runs fetch once per matcher set (AND-matched) and returns
+// the sorted, deduplicated union (OR-matched), capped to limit. No Limit
+// hint reaches fetch: the underlying LabelNames/LabelValues queries apply it
+// as a bare SQL LIMIT with no ORDER BY, which would pick an arbitrary, not
+// the smallest, subset — this is the only place allowed to truncate.
+func (p *provider) mergedLabelQuery(ctx context.Context, matcherSets [][]*labels.Matcher, start, end time.Time, limit int, fetch func(storage.Querier, []*labels.Matcher) ([]string, error)) ([]string, error) {
+	q, err := p.Querier(start.UnixMilli(), end.UnixMilli())
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	if len(matcherSets) == 0 {
+		matcherSets = [][]*labels.Matcher{nil}
+	}
+
+	merged := make(map[string]struct{})
+	for _, matchers := range matcherSets {
+		values, err := fetch(q, matchers)
+		if err != nil {
+			return nil, err
+		}
+		for _, value := range values {
+			merged[value] = struct{}{}
+		}
+	}
+	return sortedLimitedKeys(merged, limit), nil
+}
+
+func (p *provider) Series(ctx context.Context, matcherSets [][]*labels.Matcher, start, end time.Time, limit int) ([]labels.Labels, error) {
+	q, err := p.Querier(start.UnixMilli(), end.UnixMilli())
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	hints := &storage.SelectHints{Start: start.UnixMilli(), End: end.UnixMilli(), Func: "series"}
+	merged := make(map[string]labels.Labels)
+	for _, matchers := range matcherSets {
+		ss := q.Select(ctx, false, hints, matchers...)
+		for ss.Next() {
+			lset := ss.At().Labels()
+			merged[lset.String()] = lset
+		}
+		if err := ss.Err(); err != nil {
+			return nil, err
+		}
+	}
+
+	keys := sortedLimitedKeys(merged, limit)
+	out := make([]labels.Labels, len(keys))
+	for i, key := range keys {
+		out[i] = merged[key]
+	}
+	return out, nil
+}
+
+// sortedLimitedKeys returns m's keys sorted ascending, capped to limit (0 means unlimited).
+func sortedLimitedKeys[V any](m map[string]V, limit int) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+	if limit > 0 && len(keys) > limit {
+		keys = keys[:limit]
+	}
+	return keys
 }

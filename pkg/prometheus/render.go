@@ -35,15 +35,15 @@ type queryData struct {
 }
 
 type response struct {
-	Status    string     `json:"status"`
-	Data      *queryData `json:"data,omitempty"`
-	ErrorType errorType  `json:"errorType,omitempty"`
-	Error     string     `json:"error,omitempty"`
-	Warnings  []string   `json:"warnings,omitempty"`
-	Infos     []string   `json:"infos,omitempty"`
+	Status    string    `json:"status"`
+	Data      any       `json:"data,omitempty"`
+	ErrorType errorType `json:"errorType,omitempty"`
+	Error     string    `json:"error,omitempty"`
+	Warnings  []string  `json:"warnings,omitempty"`
+	Infos     []string  `json:"infos,omitempty"`
 }
 
-func (h *handler) respond(ctx context.Context, w http.ResponseWriter, data *queryData, warnings, infos []string) {
+func (h *handler) respond(ctx context.Context, w http.ResponseWriter, data any, warnings, infos []string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(&response{Status: "success", Data: data, Warnings: warnings, Infos: infos}); err != nil {
@@ -155,6 +155,37 @@ func (SamplePairSchema) JSONSchema() (jsonschema.Schema, error) {
 	s.WithItems(*(&jsonschema.Items{}).WithSchemaOrBool(item.ToSchemaOrBool()))
 	s.WithDescription(`A [timestamp, value] pair: float unix seconds, then the string-encoded sample value ("NaN", "+Inf", "-Inf" included).`)
 	return s, nil
+}
+
+// LabelsParamsSchema is shared by /labels and /label/{name}/values: both
+// accept the same optional match[]/start/end/limit parameters, and the path
+// carries {name} for the latter.
+type LabelsParamsSchema struct {
+	Match []string `query:"match[]" description:"PromQL series selector, e.g. {job=\"api\"}. Repeatable; results are the union of all match[] selectors. Omit to leave unfiltered."`
+	Start string   `query:"start" description:"Range start: RFC3339 or float unix seconds. Defaults to the Unix epoch."`
+	End   string   `query:"end" description:"Range end: RFC3339 or float unix seconds. Defaults to now."`
+	Limit string   `query:"limit" description:"Maximum number of results to return."`
+}
+
+type SeriesParamsSchema struct {
+	Match []string `query:"match[]" required:"true" description:"PromQL series selector, e.g. {job=\"api\"}. At least one is required; repeatable, results are the union of all match[] selectors."`
+	Start string   `query:"start" description:"Range start: RFC3339 or float unix seconds. Defaults to the Unix epoch."`
+	End   string   `query:"end" description:"Range end: RFC3339 or float unix seconds. Defaults to now."`
+	Limit string   `query:"limit" description:"Maximum number of results to return."`
+}
+
+type LabelsSuccessResponseSchema struct {
+	Status   string   `json:"status" enum:"success" required:"true"`
+	Data     []string `json:"data" required:"true"`
+	Warnings []string `json:"warnings,omitempty"`
+	Infos    []string `json:"infos,omitempty"`
+}
+
+type SeriesSuccessResponseSchema struct {
+	Status   string              `json:"status" enum:"success" required:"true"`
+	Data     []map[string]string `json:"data" required:"true"`
+	Warnings []string            `json:"warnings,omitempty"`
+	Infos    []string            `json:"infos,omitempty"`
 }
 
 type ErrorResponseSchema struct {
