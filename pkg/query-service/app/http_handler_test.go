@@ -99,6 +99,28 @@ func TestPrepareQuery(t *testing.T) {
 			},
 			query: "SELECT body FROM table Where id = 'id' AND elapsed_time >= 1.240000 AND serviceName IN ['frontend','route']",
 		},
+		{
+			name: "dotted variable name in go template",
+			postData: &model.DashboardVars{
+				Query: "SELECT JSONExtractString(labels, 'postgresql.table.name') AS `table.name` FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'postgresql.operations' AND JSONExtractString(labels, 'postgresql.database.name') IN {{.db.name}} GROUP BY `table.name`",
+				Variables: map[string]interface{}{
+					"db.name": []string{"appdb", "postgres"},
+				},
+			},
+			query: "SELECT JSONExtractString(labels, 'postgresql.table.name') AS `table.name` FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'postgresql.operations' AND JSONExtractString(labels, 'postgresql.database.name') IN ['appdb','postgres'] GROUP BY `table.name`",
+		},
+		{
+			name: "multiple dotted variable names with shared prefix and whitespace",
+			postData: &model.DashboardVars{
+				Query: "SELECT x FROM t WHERE cluster = {{ .k8s.cluster.name }} AND env = {{- .k8s.cluster -}} AND host IN $host.name",
+				Variables: map[string]interface{}{
+					"k8s.cluster.name": "prod-us",
+					"k8s.cluster":      "prod",
+					"host.name":        []string{"node-1", "node-2"},
+				},
+			},
+			query: "SELECT x FROM t WHERE cluster = 'prod-us' AND env ='prod'AND host IN ['node-1','node-2']",
+		},
 	}
 
 	for _, tc := range testCases {
