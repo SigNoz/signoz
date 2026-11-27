@@ -111,7 +111,7 @@ export const topOperationQueries = ({
 		KeyOperationTableHeader.ERROR_RATE,
 		KeyOperationTableHeader.NUM_OF_CALLS,
 	];
-	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+	const timeAggregateOperators = [
 		MetrictypesTimeAggregationDTO[''],
 		MetrictypesTimeAggregationDTO[''],
 		MetrictypesTimeAggregationDTO[''],
@@ -119,7 +119,7 @@ export const topOperationQueries = ({
 		MetrictypesTimeAggregationDTO.rate,
 		MetrictypesTimeAggregationDTO.rate,
 	];
-	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+	const spaceAggregateOperators = [
 		MetrictypesSpaceAggregationDTO.p50,
 		MetrictypesSpaceAggregationDTO.p90,
 		MetrictypesSpaceAggregationDTO.p99,

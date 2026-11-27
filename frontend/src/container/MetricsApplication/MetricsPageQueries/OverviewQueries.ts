@@ -81,12 +81,12 @@ export const latency = ({
 	const dataSource = isSpanMetricEnable ? DataSource.METRICS : DataSource.TRACES;
 	const queryNameAndExpression = QUERYNAME_AND_EXPRESSION;
 
-	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+	const timeAggregateOperators = [
 		MetrictypesTimeAggregationDTO[''],
 		MetrictypesTimeAggregationDTO[''],
 		MetrictypesTimeAggregationDTO[''],
 	];
-	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+	const spaceAggregateOperators = [
 		MetrictypesSpaceAggregationDTO.p50,
 		MetrictypesSpaceAggregationDTO.p90,
 		MetrictypesSpaceAggregationDTO.p99,
@@ -242,14 +242,14 @@ export const apDexMetricsQueryBuilderQueries = ({
 	const expressions = [FORMULA.APDEX];
 	const legendFormulas = [GraphTitle.APDEX];
 	// v5 forces increase on histograms, so the total matches it
-	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+	const timeAggregateOperators = [
 		MetrictypesTimeAggregationDTO.increase,
 		MetrictypesTimeAggregationDTO.increase,
 		MetrictypesTimeAggregationDTO.increase,
 	];
 
 	// a plain sum keeps the le label on B and C, and the formula then cannot join them
-	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+	const spaceAggregateOperators = [
 		MetrictypesSpaceAggregationDTO.sum,
 		satisfied.spaceAggregation,
 		tolerating.spaceAggregation,
@@ -317,12 +317,8 @@ export const operationPerSec = ({
 	const legends = OPERATION_LEGENDS;
 	const dataSource = DataSource.METRICS;
 
-	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
-		MetrictypesTimeAggregationDTO.rate,
-	];
-	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
-		MetrictypesSpaceAggregationDTO.sum,
-	];
+	const timeAggregateOperators = [MetrictypesTimeAggregationDTO.rate];
+	const spaceAggregateOperators = [MetrictypesSpaceAggregationDTO.sum];
 
 	return getQueryBuilderQueries({
 		autocompleteData,
@@ -415,11 +411,11 @@ export const errorPercentage = ({
 	const disabled = [true, true];
 	const expressions = [FORMULA.ERROR_PERCENTAGE];
 	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];
-	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+	const timeAggregateOperators = [
 		MetrictypesTimeAggregationDTO.rate,
 		MetrictypesTimeAggregationDTO.rate,
 	];
-	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+	const spaceAggregateOperators = [
 		MetrictypesSpaceAggregationDTO.sum,
 		MetrictypesSpaceAggregationDTO.sum,
 	];

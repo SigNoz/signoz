@@ -87,11 +87,11 @@ export const externalCallErrorPercent = ({
 
 	const additionalItems = [additionalItemsA, additionalItemsB];
 
-	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+	const timeAggregateOperators = [
 		MetrictypesTimeAggregationDTO.rate,
 		MetrictypesTimeAggregationDTO.rate,
 	];
-	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+	const spaceAggregateOperators = [
 		MetrictypesSpaceAggregationDTO.sum,
 		MetrictypesSpaceAggregationDTO.sum,
 	];
@@ -148,11 +148,11 @@ export const externalCallDuration = ({
 
 	const additionalItems = [additionalItemsA, additionalItemsA];
 	const legends = [legend, legend];
-	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+	const timeAggregateOperators = [
 		MetrictypesTimeAggregationDTO.rate,
 		MetrictypesTimeAggregationDTO.rate,
 	];
-	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+	const spaceAggregateOperators = [
 		MetrictypesSpaceAggregationDTO.sum,
 		MetrictypesSpaceAggregationDTO.sum,
 	];
@@ -202,12 +202,8 @@ export const externalCallRpsByAddress = ({
 	const legends = [legend];
 	const dataSource = DataSource.METRICS;
 
-	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
-		MetrictypesTimeAggregationDTO.rate,
-	];
-	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
-		MetrictypesSpaceAggregationDTO.sum,
-	];
+	const timeAggregateOperators = [MetrictypesTimeAggregationDTO.rate];
+	const spaceAggregateOperators = [MetrictypesSpaceAggregationDTO.sum];
 
 	return getQueryBuilderQueries({
 		autocompleteData,
@@ -255,11 +251,11 @@ export const externalCallDurationByAddress = ({
 	const autocompleteData = [autocompleteDataA, autocompleteDataB];
 	const additionalItems = [additionalItemsA, additionalItemsA];
 	const legends = [legend, legend];
-	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+	const timeAggregateOperators = [
 		MetrictypesTimeAggregationDTO.rate,
 		MetrictypesTimeAggregationDTO.rate,
 	];
-	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+	const spaceAggregateOperators = [
 		MetrictypesSpaceAggregationDTO.sum,
 		MetrictypesSpaceAggregationDTO.sum,
 	];

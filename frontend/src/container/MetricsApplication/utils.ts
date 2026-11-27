@@ -48,7 +48,7 @@ export const getNearestHighestBucketValue = (
 	value: number,
 	buckets: number[],
 ): number | undefined => {
-	// sort a copy, the buckets come from the query cache
+	// buckets are cached query data; never mutate
 	return [...buckets].sort((a, b) => a - b).find((bucket) => bucket >= value);
 };
 

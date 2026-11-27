@@ -154,13 +154,13 @@ export const serviceMetricsQuery = (
 		operationPrSecondAdditionalItems,
 	];
 
-	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+	const timeAggregateOperators = [
 		MetrictypesTimeAggregationDTO[''],
 		MetrictypesTimeAggregationDTO.rate,
 		MetrictypesTimeAggregationDTO.rate,
 		MetrictypesTimeAggregationDTO.rate,
 	];
-	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+	const spaceAggregateOperators = [
 		MetrictypesSpaceAggregationDTO.p99,
 		MetrictypesSpaceAggregationDTO.sum,
 		MetrictypesSpaceAggregationDTO.sum,

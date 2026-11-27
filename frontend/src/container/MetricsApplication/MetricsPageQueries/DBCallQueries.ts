@@ -55,12 +55,8 @@ export const databaseCallsRPS = ({
 	const legends = [legend];
 	const dataSource = DataSource.METRICS;
 
-	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
-		MetrictypesTimeAggregationDTO.rate,
-	];
-	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
-		MetrictypesSpaceAggregationDTO.sum,
-	];
+	const timeAggregateOperators = [MetrictypesTimeAggregationDTO.rate];
+	const spaceAggregateOperators = [MetrictypesSpaceAggregationDTO.sum];
 
 	return getQueryBuilderQueries({
 		autocompleteData,
@@ -116,11 +112,11 @@ export const databaseCallsAvgDuration = ({
 	const disabled = [true, true];
 	const legendFormulas = ['Average Duration'];
 	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
-	const timeAggregateOperators: MetrictypesTimeAggregationDTO[] = [
+	const timeAggregateOperators = [
 		MetrictypesTimeAggregationDTO.rate,
 		MetrictypesTimeAggregationDTO.rate,
 	];
-	const spaceAggregateOperators: MetrictypesSpaceAggregationDTO[] = [
+	const spaceAggregateOperators = [
 		MetrictypesSpaceAggregationDTO.sum,
 		MetrictypesSpaceAggregationDTO.sum,
 	];
