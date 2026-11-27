@@ -91,6 +91,7 @@ describe('UnpricedModelsTab (integration)', () => {
 
 	afterEach(() => {
 		server.resetHandlers();
+		usePendingMappingStore.getState().clearPending();
 		toastSuccess.mockClear();
 		toastError.mockClear();
 	});
