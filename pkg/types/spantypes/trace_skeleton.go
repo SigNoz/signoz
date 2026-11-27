@@ -206,6 +206,15 @@ func (skeleton *TraceSkeleton) spanID(i int32) string {
 	return skeleton.spanIDs[skeleton.idOffsets[i]:skeleton.idOffsets[i+1]]
 }
 
+func (skeleton *TraceSkeleton) position(spanID string) (int32, bool) {
+	for i := range int32(skeleton.len()) {
+		if skeleton.spanID(i) == spanID {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
 func (skeleton *TraceSkeleton) children(i int32) []int32 {
 	return skeleton.childList[skeleton.childStart[i]:skeleton.childStart[i+1]]
 }

@@ -33,4 +33,5 @@ type Module interface {
 	GetThread(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.ThreadQuery) (*spantypes.GettableTraceThread, error)
 	GetTraceHighlights(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceHighlightsQuery) (*spantypes.TraceHighlights, error)
 	GetTraceSpan(ctx context.Context, traceID string, spanID string) (*spantypes.Span, error)
+	ListTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.SpanListQuery) (*spantypes.SpanList, error)
 }

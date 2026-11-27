@@ -60,7 +60,7 @@ func NewTraceHighlightsQuery(params *GetTraceHighlightsParams) (*TraceHighlights
 func NewTraceHighlights(skeleton *TraceSkeleton, query *TraceHighlightsQuery) *TraceHighlights {
 	highlights := &TraceHighlights{Services: skeleton.serviceStats()}
 	for _, view := range query.Views {
-		list := NewSpanList(skeleton.page(skeleton.treeOrder, view, 0, query.Limit))
+		list := NewSpanList(skeleton.page(skeleton.treeOrder, view, 0, query.Limit), nil)
 		switch view {
 		case SpanListViewErrorOrigins:
 			highlights.ErrorOrigins = list

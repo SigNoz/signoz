@@ -3,7 +3,6 @@ package impltracedetail
 import (
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
@@ -167,19 +166,46 @@ func (h *handler) GetTraceSpan(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, result)
 }
 
-// These routes are registered for their place in the API spec; the implementation follows.
-func (h *handler) ListTraceSpans(rw http.ResponseWriter, _ *http.Request) {
-	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span list is not implemented yet"))
+func (h *handler) ListTraceSpans(rw http.ResponseWriter, r *http.Request) {
+	h.listTraceSpans(rw, r, spantypes.SpanScopeTrace)
 }
 
-func (h *handler) ListTraceSpanChildren(rw http.ResponseWriter, _ *http.Request) {
-	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span children is not implemented yet"))
+func (h *handler) ListTraceSpanChildren(rw http.ResponseWriter, r *http.Request) {
+	h.listTraceSpans(rw, r, spantypes.SpanScopeChildren)
 }
 
-func (h *handler) ListTraceSpanDescendants(rw http.ResponseWriter, _ *http.Request) {
-	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span descendants is not implemented yet"))
+func (h *handler) ListTraceSpanDescendants(rw http.ResponseWriter, r *http.Request) {
+	h.listTraceSpans(rw, r, spantypes.SpanScopeDescendants)
 }
 
-func (h *handler) ListTraceSpanAncestors(rw http.ResponseWriter, _ *http.Request) {
-	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span ancestors is not implemented yet"))
+func (h *handler) ListTraceSpanAncestors(rw http.ResponseWriter, r *http.Request) {
+	h.listTraceSpans(rw, r, spantypes.SpanScopeAncestors)
+}
+
+func (h *handler) listTraceSpans(rw http.ResponseWriter, r *http.Request, scope spantypes.SpanScope) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	params := new(spantypes.ListTraceSpansParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	query, err := spantypes.NewSpanListQuery(params, scope, mux.Vars(r)["spanID"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	result, err := h.module.ListTraceSpans(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], query)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
 }

@@ -320,3 +320,28 @@ func (m *module) GetTraceSpan(ctx context.Context, traceID string, spanID string
 	}
 	return spantypes.NewSpan(traceID, &rows[0]), nil
 }
+
+func (m *module) ListTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.SpanListQuery) (*spantypes.SpanList, error) {
+	bounds, err := m.store.GetTraceBounds(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+	skeleton, err := m.store.GetTraceSkeleton(ctx, orgID, traceID, bounds)
+	if err != nil {
+		return nil, err
+	}
+	page, err := spantypes.NewSpanListPage(skeleton, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// The attributes of the page's spans are read only when the response shows some of them.
+	var rows []spantypes.StorableSpan
+	if len(query.SelectFields) > 0 {
+		rows, err = m.store.GetTraceSpansByIDs(ctx, traceID, bounds.Start, bounds.End, page.SpanIDs())
+		if err != nil {
+			return nil, err
+		}
+	}
+	return spantypes.NewSpanList(page, rows), nil
+}
