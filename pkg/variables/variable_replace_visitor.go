@@ -111,6 +111,8 @@ func (v *variableReplacementVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitFullText(t)
 	case *grammar.SearchCallContext:
 		return v.VisitSearchCall(t)
+	case *grammar.PatternCallContext:
+		return v.VisitPatternCall(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
 	case *grammar.FunctionParamListContext:
@@ -207,6 +209,8 @@ func (v *variableReplacementVisitor) VisitPrimary(ctx *grammar.PrimaryContext) a
 		return v.Visit(ctx.FunctionCall())
 	} else if ctx.SearchCall() != nil {
 		return v.Visit(ctx.SearchCall())
+	} else if ctx.PatternCall() != nil {
+		return v.Visit(ctx.PatternCall())
 	} else if ctx.FullText() != nil {
 		return v.Visit(ctx.FullText())
 	}
@@ -421,6 +425,13 @@ func (v *variableReplacementVisitor) VisitSearchCall(ctx *grammar.SearchCallCont
 		return specialSkipMarker
 	}
 	return "search" + result
+}
+
+func (visitor *variableReplacementVisitor) VisitPatternCall(ctx *grammar.PatternCallContext) any {
+	// Keep pattern(...) as written: pattern texts are not variable slots, so a
+	// variable set to __all__ must not drop the call.
+	start, stop := ctx.GetStart(), ctx.GetStop()
+	return start.GetInputStream().GetText(start.GetStart(), stop.GetStop())
 }
 
 func (v *variableReplacementVisitor) VisitFunctionParamList(ctx *grammar.FunctionParamListContext) any {
