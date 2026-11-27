@@ -170,6 +170,9 @@ type aggregationRef struct {
 type seriesLookup struct {
 	// seriesKey -> timestamp -> value
 	data map[string]map[int64]float64
+	// seriesKey -> timestamps whose value is partial; only series with a
+	// partial value have an entry
+	partial map[string]map[int64]struct{}
 	// seriesKey -> original series for metadata preservation
 	seriesMetadata map[string]*TimeSeries
 	// maps a variable to its series keys, letting evaluation iterate a single
@@ -374,7 +377,8 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 		// series key is a unique identifier for a series
 		// timestamp is the timestamp of the value
 		// value is the value of the series at the timestamp
-		data: make(map[string]map[int64]float64),
+		data:    make(map[string]map[int64]float64),
+		partial: make(map[string]map[int64]struct{}),
 		// seriesMetadata is a map of series key to series metadata
 		// series metadata is the metadata of the series
 		// this is used to preserve the original label structure and metadata
@@ -440,6 +444,12 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 			// Store all timestamp-value pairs
 			for _, value := range series.Values {
 				lookup.data[seriesKey][value.Timestamp] = value.Value
+				if value.Partial {
+					if lookup.partial[seriesKey] == nil {
+						lookup.partial[seriesKey] = make(map[int64]struct{})
+					}
+					lookup.partial[seriesKey][value.Timestamp] = struct{}{}
+				}
 			}
 		}
 	}
@@ -558,6 +568,8 @@ func isSubset(supersetMap map[string]any, subset []*Label) bool {
 func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *seriesLookup) *TimeSeries {
 	// Find matching series for each variable
 	variableData := make(map[string]map[int64]float64)
+	// variable -> partial timestamps of its matched series, nil when it has none
+	var variablePartial map[string]map[int64]struct{}
 	// not every series would have a value for every timestamp
 	// so we need to collect all timestamps from the series that have a value
 	// for the variable
@@ -573,6 +585,12 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 			if isSubset(targetMap, lookup.seriesMetadata[seriesKey].Labels) {
 				if timestampData, exists := lookup.data[seriesKey]; exists {
 					variableData[variable] = timestampData
+					if partial := lookup.partial[seriesKey]; partial != nil {
+						if variablePartial == nil {
+							variablePartial = make(map[string]map[int64]struct{})
+						}
+						variablePartial[variable] = partial
+					}
 					// Collect all timestamps
 					for ts := range timestampData {
 						allTimestamps[ts] = struct{}{}
@@ -610,13 +628,18 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 			delete(values, k)
 		}
 
-		// Collect values for this timestamp
+		// Collect values for this timestamp; the result is partial when any of
+		// them is, a zero filled in below never is
 		validCount := 0
+		partial := false
 		for _, variable := range fe.variables {
 			if varData, exists := variableData[variable]; exists {
 				if value, exists := varData[timestamp]; exists {
 					values[variable] = value
 					validCount++
+					if _, exists := variablePartial[variable][timestamp]; exists {
+						partial = true
+					}
 				}
 			}
 		}
@@ -648,6 +671,7 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 		backing[n] = TimeSeriesValue{
 			Timestamp: timestamp,
 			Value:     value,
+			Partial:   partial,
 		}
 		resultValues = append(resultValues, &backing[n])
 		n++

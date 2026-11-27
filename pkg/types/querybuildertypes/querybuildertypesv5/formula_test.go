@@ -1051,3 +1051,42 @@ func TestAbsValueExpression(t *testing.T) {
 	assert.Equal(t, 15.0, series.Values[0].Value) // |−10| + |5| = 15
 	assert.Equal(t, 24.0, series.Values[1].Value) // |20| + |−4| = 24
 }
+
+func TestFormulaKeepsPartialValues(t *testing.T) {
+	labels := createLabels(map[string]string{"service_name": "frontend"})
+	tsData := map[string]*TimeSeriesData{
+		"A": createFormulaTestTimeSeriesData("A", []*TimeSeries{
+			{
+				Labels: labels,
+				Values: []*TimeSeriesValue{
+					{Timestamp: 1, Value: 4},
+					{Timestamp: 2, Value: 4},
+					{Timestamp: 3, Value: 1, Partial: true},
+				},
+			},
+		}),
+		"B": createFormulaTestTimeSeriesData("B", []*TimeSeries{
+			{
+				Labels: labels,
+				Values: []*TimeSeriesValue{
+					{Timestamp: 1, Value: 2},
+					{Timestamp: 3, Value: 1},
+				},
+			},
+		}),
+	}
+
+	evaluator, err := NewFormulaEvaluator("A + B", map[string]bool{"A": true, "B": true})
+	require.NoError(t, err)
+
+	result, err := evaluator.EvaluateFormula(tsData)
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	require.Len(t, result[0].Values, 3)
+
+	// A point is partial when any value it was computed from is partial; a value
+	// filled in as zero is not.
+	assert.False(t, result[0].Values[0].Partial)
+	assert.False(t, result[0].Values[1].Partial)
+	assert.True(t, result[0].Values[2].Partial)
+}
