@@ -293,6 +293,31 @@ func TestBucketCache_FluxInterval(t *testing.T) {
 	assert.Len(t, missing, 1)
 }
 
+func TestBucketCache_Put_DropsStepCrossingFluxBoundary(t *testing.T) {
+	bc := createTestBucketCache(t)
+	ctx := context.Background()
+	orgID := valuer.UUID{}
+	step := qbtypes.Step{Duration: time.Minute}
+	stepMs := uint64(time.Minute.Milliseconds())
+
+	fluxBoundary := uint64(time.Now().UnixMilli()) - uint64(defaultFluxInterval.Milliseconds())
+	// the step that contains the boundary is still filling
+	straddlingStepMs := fluxBoundary / stepMs * stepMs
+	query := &mockQuery{fingerprint: "flux-straddle", startMs: straddlingStepMs - 10*stepMs, endMs: straddlingStepMs + stepMs}
+	bc.Put(ctx, orgID, query, step, &qbtypes.Result{
+		Type:  qbtypes.RequestTypeTimeSeries,
+		Value: createTestTimeSeries("A", query.startMs, query.endMs, stepMs),
+	})
+
+	cached, missing := bc.GetMissRanges(ctx, orgID, query, step)
+	require.NotNil(t, cached)
+	for _, value := range cached.Value.(*qbtypes.TimeSeriesData).Aggregations[0].Series[0].Values {
+		assert.Less(t, uint64(value.Timestamp), straddlingStepMs)
+	}
+	require.NotEmpty(t, missing)
+	assert.LessOrEqual(t, missing[0].From, straddlingStepMs)
+}
+
 func TestBucketCache_MergeTimeSeriesResults(t *testing.T) {
 	memCache := createTestCache(t)
 	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
