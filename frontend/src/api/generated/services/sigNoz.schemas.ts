@@ -12587,6 +12587,7 @@ export enum QuickfiltertypesSourceDTO {
 	exceptions = 'exceptions',
 	meter = 'meter',
 	ai_observability = 'ai_observability',
+	audit = 'audit',
 }
 export interface QuickfiltertypesSourceFiltersDTO {
 	/**
@@ -13503,6 +13504,7 @@ export enum SavedviewtypesSourceDTO {
 	logs = 'logs',
 	metrics = 'metrics',
 	meter = 'meter',
+	audit = 'audit',
 	ai_observability = 'ai_observability',
 }
 export interface SavedviewtypesSavedViewSpecDTO {

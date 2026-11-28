@@ -13,4 +13,5 @@ export const QUICK_FILTER_SOURCE_TO_SIGNAL: Record<
 	[QuickFiltersSource.AI_OBSERVABILITY]: TelemetrytypesSignalDTO.traces,
 	[QuickFiltersSource.METER_EXPLORER]: TelemetrytypesSignalDTO.metrics,
 	[QuickFiltersSource.INFRA_MONITORING]: TelemetrytypesSignalDTO.metrics,
+	[QuickFiltersSource.AUDIT_LOGS]: TelemetrytypesSignalDTO.logs,
 };
