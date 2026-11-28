@@ -1,6 +1,8 @@
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { AllTheProviders, renderHook } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { StringOperators } from 'types/common/queryBuilder';
 
@@ -22,7 +24,7 @@ function withFirstQuery(
 function decodeQuery(link: string): Query {
 	const search = link.split('?')[1];
 	const raw = new URLSearchParams(search).get(QueryParams.compositeQuery);
-	return JSON.parse(raw as string);
+	return JSON.parse(decodeURIComponent(raw as string));
 }
 
 describe('getExportPanelType', () => {
@@ -54,6 +56,26 @@ describe('getCreateAlertLink', () => {
 		expect(link.startsWith(`${ROUTES.ALERTS_NEW}?`)).toBe(true);
 		expect(decodeQuery(link)).toStrictEqual(query);
 	});
+
+	it.each(["service.name ILIKE 'api%'", "http.route = '/a+b'"])(
+		'the alert page reads back the filter %s unchanged',
+		(expression) => {
+			const link = getCreateAlertLink({
+				query: withFirstQuery(initialQueriesMap.logs, { filter: { expression } }),
+				panelType: PANEL_TYPES.TIME_SERIES,
+			});
+
+			const { result } = renderHook(() => useGetCompositeQueryParam(), {
+				wrapper: ({ children }): JSX.Element => (
+					<AllTheProviders initialRoute={link}>{children}</AllTheProviders>
+				),
+			});
+
+			expect(result.current?.builder.queryData[0].filter?.expression).toBe(
+				expression,
+			);
+		},
+	);
 
 	it('logs list: noop becomes count and order by is dropped', () => {
 		const query = withFirstQuery(initialQueriesMap.logs, {
