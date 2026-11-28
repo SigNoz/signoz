@@ -83,6 +83,11 @@ export const AIQueryBuilder: Story = {
 	play: openAIQueryBuilder,
 };
 
+/** A new time series panel from the AI explorer's Add to dashboard, opened on its AI query. */
+export const AIExplorerExport: Story = {
+	args: { panel: 'new', aiExplorerExport: true },
+};
+
 /** A number panel: one value, formatted, with comparison thresholds. */
 export const NumberPanel: Story = {
 	args: { panel: 'p99-latency' },

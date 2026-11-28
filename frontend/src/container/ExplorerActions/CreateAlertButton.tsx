@@ -5,21 +5,21 @@ import logEvent from 'api/common/logEvent';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useAppNavigate } from 'lib/router/useAppNavigate';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	EXPLORER_ACTION_EVENTS,
+	ExplorerActionsSource,
 	getCreateAlertLink,
 	getExplorerActionEventPayload,
 } from './utils';
 
 function CreateAlertButton({
 	query,
-	sourcepage,
+	sourcePage,
 	isOneChartPerQuery = false,
 }: {
 	query: Query | null;
-	sourcepage: DataSource;
+	sourcePage: ExplorerActionsSource;
 	isOneChartPerQuery?: boolean;
 }): JSX.Element {
 	const navigate = useAppNavigate();
@@ -30,8 +30,8 @@ function CreateAlertButton({
 			return;
 		}
 		void logEvent(
-			EXPLORER_ACTION_EVENTS[sourcepage].createAlert,
-			getExplorerActionEventPayload({ sourcepage, panelType, isOneChartPerQuery }),
+			EXPLORER_ACTION_EVENTS[sourcePage].createAlert,
+			getExplorerActionEventPayload({ sourcePage, panelType, isOneChartPerQuery }),
 		);
 		navigate(getCreateAlertLink({ query, panelType }));
 	};
