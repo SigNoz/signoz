@@ -16,6 +16,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
 import {
 	queryRangeV5RawResponse,
@@ -206,3 +207,5 @@ export const llmExplorerMocks = defineStoryMocks({
 	],
 	config: (values) => ({ route: explorerRoute(values.view) }),
 });
+
+export type LLMExplorerArgs = PageStoryArgs<typeof llmExplorerMocks>;

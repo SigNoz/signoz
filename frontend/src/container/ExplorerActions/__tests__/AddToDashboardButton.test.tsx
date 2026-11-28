@@ -17,7 +17,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import AddToDashboardButton from '../AddToDashboardButton';
-import { getExportPanelType } from '../utils';
+import { ExplorerActionsSource, getExportPanelType } from '../utils';
 
 const DASHBOARD = { id: 'dash-1', title: 'Dash 1' };
 
@@ -94,7 +94,7 @@ function setPanelType(panelType: PANEL_TYPES): void {
 
 async function exportTo(
 	query: Query | null,
-	sourcepage: DataSource,
+	sourcePage: ExplorerActionsSource,
 	panelType: PANEL_TYPES,
 	panelTypeProp?: PANEL_TYPES,
 ): Promise<void> {
@@ -102,7 +102,7 @@ async function exportTo(
 	render(
 		<AddToDashboardButton
 			query={query}
-			sourcepage={sourcepage}
+			sourcePage={sourcePage}
 			panelType={panelTypeProp}
 		/>,
 	);
@@ -128,7 +128,12 @@ describe('AddToDashboardButton', () => {
 
 	it('is disabled without a query and the picker stays closed', () => {
 		setPanelType(PANEL_TYPES.LIST);
-		render(<AddToDashboardButton query={null} sourcepage={DataSource.LOGS} />);
+		render(
+			<AddToDashboardButton
+				query={null}
+				sourcePage={ExplorerActionsSource.LOGS_EXPLORER}
+			/>,
+		);
 
 		expect(screen.getByTestId('explorer-add-to-dashboard')).toHaveAttribute(
 			'aria-disabled',
@@ -140,7 +145,12 @@ describe('AddToDashboardButton', () => {
 	it('hands the picker the same query it will export', async () => {
 		const query = stagedQuery(DataSource.LOGS);
 		setPanelType(PANEL_TYPES.TIME_SERIES);
-		render(<AddToDashboardButton query={query} sourcepage={DataSource.LOGS} />);
+		render(
+			<AddToDashboardButton
+				query={query}
+				sourcePage={ExplorerActionsSource.LOGS_EXPLORER}
+			/>,
+		);
 
 		await userEvent
 			.setup()
@@ -155,19 +165,23 @@ describe('AddToDashboardButton', () => {
 	it("logs the explorer's own open and success events", async () => {
 		const query = stagedQuery(DataSource.TRACES);
 
-		await exportTo(query, DataSource.TRACES, PANEL_TYPES.TABLE);
+		await exportTo(
+			query,
+			ExplorerActionsSource.TRACES_EXPLORER,
+			PANEL_TYPES.TABLE,
+		);
 
 		expect(mockedLogEvent).toHaveBeenCalledWith(
 			'Traces Explorer: Add to dashboard clicked',
 			{
-				sourcepage: DataSource.TRACES,
+				sourcepage: ExplorerActionsSource.TRACES_EXPLORER,
 				panelType: PANEL_TYPES.TABLE,
 			},
 		);
 		expect(mockedLogEvent).toHaveBeenCalledWith(
 			'Traces Explorer: Add to dashboard successful',
 			{
-				sourcepage: DataSource.TRACES,
+				sourcepage: ExplorerActionsSource.TRACES_EXPLORER,
 				panelType: PANEL_TYPES.TABLE,
 				isNewDashboard: undefined,
 				dashboardName: DASHBOARD.title,
@@ -181,7 +195,7 @@ describe('AddToDashboardButton', () => {
 		// context says list, the page says time series
 		await exportTo(
 			query,
-			DataSource.METRICS,
+			ExplorerActionsSource.METRICS_EXPLORER,
 			PANEL_TYPES.LIST,
 			PANEL_TYPES.TIME_SERIES,
 		);
@@ -206,7 +220,11 @@ describe('AddToDashboardButton', () => {
 				PANEL_TYPES.LIST,
 			) as Query;
 
-			await exportTo(exportQuery, DataSource.LOGS, PANEL_TYPES.LIST);
+			await exportTo(
+				exportQuery,
+				ExplorerActionsSource.LOGS_EXPLORER,
+				PANEL_TYPES.LIST,
+			);
 
 			expect(exportQuery.builder.queryData[0].orderBy).toStrictEqual([
 				{ columnName: 'timestamp', order: 'desc' },
@@ -221,7 +239,7 @@ describe('AddToDashboardButton', () => {
 			async (panelType) => {
 				const exportQuery = getLogsExportQuery(staged, panelType) as Query;
 
-				await exportTo(exportQuery, DataSource.LOGS, panelType);
+				await exportTo(exportQuery, ExplorerActionsSource.LOGS_EXPLORER, panelType);
 
 				expect(exportQuery).toBe(staged);
 				expect(mockSafeNavigate).toHaveBeenCalledWith(
@@ -241,7 +259,11 @@ describe('AddToDashboardButton', () => {
 				options,
 			);
 
-			await exportTo(exportQuery, DataSource.TRACES, PANEL_TYPES.LIST);
+			await exportTo(
+				exportQuery,
+				ExplorerActionsSource.TRACES_EXPLORER,
+				PANEL_TYPES.LIST,
+			);
 
 			const [queryData] = exportQuery.builder.queryData;
 			expect(queryData.selectColumns).toStrictEqual(COLUMNS);
@@ -258,7 +280,11 @@ describe('AddToDashboardButton', () => {
 				options,
 			);
 
-			await exportTo(exportQuery, DataSource.TRACES, PANEL_TYPES.TRACE);
+			await exportTo(
+				exportQuery,
+				ExplorerActionsSource.TRACES_EXPLORER,
+				PANEL_TYPES.TRACE,
+			);
 
 			expect(exportQuery.builder.queryData[0].selectColumns).toBeUndefined();
 			expect(mockSafeNavigate).toHaveBeenCalledWith(
@@ -278,7 +304,11 @@ describe('AddToDashboardButton', () => {
 					options,
 				);
 
-				await exportTo(exportQuery, DataSource.TRACES, panelType);
+				await exportTo(
+					exportQuery,
+					ExplorerActionsSource.TRACES_EXPLORER,
+					panelType,
+				);
 
 				expect(exportQuery.builder.queryData[0].orderBy).toStrictEqual([]);
 				expect(mockSafeNavigate).toHaveBeenCalledWith(
@@ -296,7 +326,11 @@ describe('AddToDashboardButton', () => {
 					options,
 				);
 
-				await exportTo(exportQuery, DataSource.TRACES, panelType);
+				await exportTo(
+					exportQuery,
+					ExplorerActionsSource.TRACES_EXPLORER,
+					panelType,
+				);
 
 				expect(exportQuery).toBe(staged);
 				expect(mockSafeNavigate).toHaveBeenCalledWith(
@@ -311,7 +345,7 @@ describe('AddToDashboardButton', () => {
 
 		await exportTo(
 			query,
-			DataSource.METRICS,
+			ExplorerActionsSource.METRICS_EXPLORER,
 			PANEL_TYPES.TIME_SERIES,
 			PANEL_TYPES.TIME_SERIES,
 		);

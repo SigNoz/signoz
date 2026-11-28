@@ -10,23 +10,23 @@ import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashb
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import {
 	EXPLORER_ACTION_EVENTS,
+	ExplorerActionsSource,
 	getExplorerActionEventPayload,
 	getExportPanelType,
 } from './utils';
 
 function AddToDashboardButton({
 	query,
-	sourcepage,
+	sourcePage,
 	panelType,
 	isOneChartPerQuery = false,
 }: {
 	query: Query | null;
-	sourcepage: DataSource;
+	sourcePage: ExplorerActionsSource;
 	panelType?: PANEL_TYPES;
 	isOneChartPerQuery?: boolean;
 }): JSX.Element {
@@ -40,9 +40,9 @@ function AddToDashboardButton({
 			return;
 		}
 		void logEvent(
-			EXPLORER_ACTION_EVENTS[sourcepage].addToDashboard,
+			EXPLORER_ACTION_EVENTS[sourcePage].addToDashboard,
 			getExplorerActionEventPayload({
-				sourcepage,
+				sourcePage,
 				panelType: contextPanelType,
 				isOneChartPerQuery,
 			}),
@@ -59,9 +59,9 @@ function AddToDashboardButton({
 		}
 		const exportPanelType = panelType ?? getExportPanelType(contextPanelType);
 
-		void logEvent(EXPLORER_ACTION_EVENTS[sourcepage].exported, {
+		void logEvent(EXPLORER_ACTION_EVENTS[sourcePage].exported, {
 			...getExplorerActionEventPayload({
-				sourcepage,
+				sourcePage,
 				panelType: contextPanelType,
 				isOneChartPerQuery,
 			}),
