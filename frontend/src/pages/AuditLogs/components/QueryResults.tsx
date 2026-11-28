@@ -72,7 +72,11 @@ export function QueryResults({
 			)}
 
 			{showTable && (
-				<div className={styles.results} data-testid="audit-logs-results">
+				<div
+					className={styles.results}
+					data-testid="audit-logs-results"
+					data-log-detail-ignore="true"
+				>
 					<TanStackTable<AuditLog>
 						ref={ref}
 						className={styles.auditLogsTable}

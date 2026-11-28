@@ -28,6 +28,7 @@ import styles from './DetailsDrawer.module.scss';
 import { useLogNavigation } from '@/components/LogDetail/LogDetailsHeader/useLogNavigation';
 import LogNavigation from '@/components/LogDetail/LogDetailsHeader/LogNavigation';
 import { useArrowKeyNavigation } from '@/container/TracesExplorer/SpanDrawer/useArrowKeyNavigation';
+import { useCloseOnOutsideClick } from '../hooks/useCloseOnOutsideClick';
 
 export const DetailsDrawer = ({
 	logs,
@@ -51,6 +52,8 @@ export const DetailsDrawer = ({
 			onNavigateLog: handleSetActiveLog,
 			onScrollToLog,
 		});
+
+	useCloseOnOutsideClick(activeLog !== null, handleCloseLogDetail);
 
 	useArrowKeyNavigation({
 		enabled: true,
