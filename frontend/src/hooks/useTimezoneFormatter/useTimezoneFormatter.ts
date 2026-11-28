@@ -75,7 +75,7 @@ function useTimezoneFormatter({ userTimezone }: { userTimezone: Timezone }): {
 			format = DATE_TIME_FORMATS.ISO_DATETIME_SECONDS as string,
 		): string => {
 			const timestamp = dayjs(input).valueOf();
-			const cacheKey = `${timestamp}_${userTimezone.value}`;
+			const cacheKey = `${timestamp}_${userTimezone.value}_${format}`;
 
 			// Check cache first
 			const cachedValue = cache.get(cacheKey);

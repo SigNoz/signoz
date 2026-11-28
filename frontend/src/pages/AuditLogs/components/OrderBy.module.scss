@@ -1,0 +1,24 @@
+.orderBy {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.label {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	color: var(--l2-foreground);
+}
+
+.select {
+	:global(.order-by-select) {
+		width: 100px;
+
+		:global(.ant-select-selector) {
+			background-color: transparent;
+			border: none;
+			box-shadow: none;
+		}
+	}
+}

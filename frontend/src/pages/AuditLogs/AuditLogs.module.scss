@@ -1,0 +1,38 @@
+.auditLogsRoot {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	overflow: hidden;
+}
+
+.auditLogsRightPane {
+	height: 100%;
+	width: 100%;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.queryToolbar {
+	width: 100%;
+	display: flex;
+	justify-content: space-between;
+}
+
+.queryToolbarLeft {
+	display: flex;
+	padding-left: var(--spacing-4);
+}
+
+.queryToolbarRight {
+	display: flex;
+}
+
+.actionsRow {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--spacing-4);
+	padding: var(--spacing-4) var(--spacing-8);
+}

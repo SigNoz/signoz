@@ -16,6 +16,7 @@ import {
 	ChartArea,
 	Cloudy,
 	DraftingCompass,
+	FileClock,
 	FileKey2,
 	Github,
 	HardDrive,
@@ -79,6 +80,14 @@ export const helpSupportMenuItem = {
 	key: ROUTES.SUPPORT,
 	label: 'Help & Support',
 	icon: <MessageSquareText size={16} />,
+};
+
+export const auditLogsMenuItem = {
+	key: ROUTES.AUDIT_LOGS,
+	label: 'Audit Logs',
+	icon: <FileClock size={16} />,
+	isEnabled: true,
+	itemKey: 'audit-logs',
 };
 
 // The AI Assistant route is parameterized as `/ai-assistant/:conversationId`.

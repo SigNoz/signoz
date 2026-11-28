@@ -59,6 +59,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import {
+	BuilderQuerySource,
 	DataSource,
 	IsDefaultQueryProps,
 	QueryBuilderContextType,
@@ -293,7 +294,7 @@ export function QueryBuilderProvider({
 			query: Query,
 			panelType: PANEL_TYPES,
 			dataSource: DataSource,
-			signalSource?: 'meter' | '',
+			signalSource?: BuilderQuerySource,
 		): Query => {
 			const slotKey = getBuilderSlotKeyForQueryType(query.queryType);
 			const builder = getBuilderBySlotKey(query, slotKey);

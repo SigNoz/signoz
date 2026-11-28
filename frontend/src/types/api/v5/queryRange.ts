@@ -247,6 +247,7 @@ export interface TraceBuilderQuery extends BaseBuilderQuery {
 
 export interface LogBuilderQuery extends BaseBuilderQuery {
 	signal: 'logs';
+	source?: 'audit';
 	aggregations?: LogAggregation[];
 }
 

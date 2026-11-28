@@ -1,4 +1,5 @@
 import { FieldDataType } from 'types/api/v5/queryRange';
+import { BuilderQuerySource } from 'types/common/queryBuilder';
 
 export interface QueryKeyDataSuggestionsProps {
 	label: string;
@@ -34,7 +35,7 @@ export interface QueryKeyRequestProps {
 	fieldDataType?: FieldDataType;
 	metricName?: string;
 	metricNamespace?: string;
-	signalSource?: 'meter' | '';
+	signalSource?: BuilderQuerySource;
 }
 
 export type SignalType = 'traces' | 'logs' | 'metrics';

@@ -82,6 +82,7 @@ import {
 	aiAssistantMenuItem,
 	USER_SETTINGS_MENU_LABELS,
 	type UserSettingsMenuKey,
+	auditLogsMenuItem,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
 import {
@@ -284,9 +285,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		const shouldShowIntegrationsValue =
 			(isCloudUser || isEnterpriseSelfHostedUser) && (isAdmin || isEditor);
 
+		const shouldShowAuditLogs = isCloudUser || isEnterpriseSelfHostedUser;
+
 		const isEnabledForItem = (item: SidebarItem): boolean | undefined => {
 			if (item.key === ROUTES.INTEGRATIONS) {
 				return shouldShowIntegrationsValue;
+			}
+			if (item.key === ROUTES.AUDIT_LOGS) {
+				return shouldShowAuditLogs;
 			}
 			return item.isEnabled;
 		};
@@ -958,6 +964,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		onSelect: handleSettingsMenuItemClick,
 	});
 
+	const isAuditLogsEnabled = isCloudUser || isEnterpriseSelfHostedUser;
+
 	return (
 		<div className={cx('sidenav-container', isPinned && 'pinned')}>
 			<div
@@ -1197,6 +1205,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					<div className="nav-bottom-section">
 						<div className="secondary-nav-items">
 							{isAIAssistantEnabled && renderNavItems([aiAssistantMenuItem], false)}
+
+							{isAuditLogsEnabled && renderNavItems([auditLogsMenuItem], false)}
 
 							<div className="nav-dropdown-item">
 								<Dropdown

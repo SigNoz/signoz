@@ -62,6 +62,7 @@ export const QuickFiltersSource = {
 	AI_OBSERVABILITY: QuickfiltertypesSourceDTO.ai_observability,
 	/** No saved filter list: renders `config` as given. */
 	INFRA_MONITORING: 'infra-monitoring',
+	AUDIT_LOGS: QuickfiltertypesSourceDTO.audit,
 } as const;
 
 export type QuickFiltersSource =

@@ -1,0 +1,15 @@
+.hint {
+	position: sticky;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	padding: var(--spacing-4) 0;
+	color: var(--l3-foreground);
+	background: var(--drawer-background);
+	z-index: 10;
+}
+
+.icon {
+	color: var(--l3-foreground);
+}

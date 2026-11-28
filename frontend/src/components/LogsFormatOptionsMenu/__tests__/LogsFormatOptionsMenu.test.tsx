@@ -228,6 +228,24 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		).not.toBeInTheDocument();
 	});
 
+	it('hides the format section when there are no format items', async () => {
+		const user = userEvent.setup();
+		render(
+			<LogsFormatOptionsMenu
+				items={[]}
+				selectedOptionFormat={undefined}
+				config={{ fontSize: { value: FontSize.SMALL, onChange: jest.fn() } }}
+			/>,
+		);
+
+		await user.click(screen.getByTestId('periscope-btn-format-options'));
+
+		await expect(
+			screen.findByTestId('font-size-select'),
+		).resolves.toBeInTheDocument();
+		expect(screen.queryByTestId('format-options-menu')).not.toBeInTheDocument();
+	});
+
 	it('fires onOpenColumns and closes the popover when "Edit columns" is clicked', async () => {
 		const onOpenColumns = jest.fn();
 		const { getByTestId } = renderWithOnOpen(onOpenColumns, 'table');

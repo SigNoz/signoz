@@ -45,6 +45,8 @@ function OtherFilters({
 }): JSX.Element {
 	const isMeterDataSource =
 		savedFiltersSource === QuickfiltertypesSourceDTO.meter;
+	const isAuditDataSource =
+		savedFiltersSource === QuickfiltertypesSourceDTO.audit;
 	const isAIObservability =
 		savedFiltersSource === QuickfiltertypesSourceDTO.ai_observability;
 
@@ -52,12 +54,22 @@ function OtherFilters({
 		? 'builder_ai_query'
 		: undefined;
 
+	const source = useMemo(() => {
+		if (isMeterDataSource) {
+			return TelemetrytypesSourceDTO.meter;
+		}
+		if (isAuditDataSource) {
+			return TelemetrytypesSourceDTO.audit;
+		}
+		return undefined;
+	}, [isMeterDataSource, isAuditDataSource]);
+
 	const fieldKeysConfig: FieldKeysConfig = isAIObservability
 		? { searchText: inputValue }
 		: {
 				searchText: inputValue,
 				signal: QUICK_FILTER_SOURCE_TO_SIGNAL[savedFiltersSource],
-				source: isMeterDataSource ? TelemetrytypesSourceDTO.meter : undefined,
+				source,
 			};
 
 	const { data: fetchedKeys, isFetching } = useFieldKeysSuggestion(

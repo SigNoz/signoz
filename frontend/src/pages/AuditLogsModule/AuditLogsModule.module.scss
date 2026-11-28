@@ -1,0 +1,17 @@
+.auditLogsModule {
+	:global(.ant-tabs-nav) {
+		padding: 0 16px;
+		margin-bottom: 0;
+
+		&::before {
+			border-bottom: 1px solid var(--l1-border) !important;
+		}
+	}
+}
+
+.tabItem {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 8px;
+}

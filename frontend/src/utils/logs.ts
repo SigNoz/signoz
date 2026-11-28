@@ -65,6 +65,11 @@ export const getActiveLogBackground = (
 					Color.BG_SAKURA_500,
 					'20',
 				)} !important;`;
+			case LogType.SUCCESS:
+				return `background-color: ${rgbaFromHexColor(
+					Color.BG_FOREST_500,
+					'20',
+				)} !important;`;
 			case LogType.INFO:
 			default:
 				return `background-color: ${rgbaFromHexColor(
@@ -98,6 +103,10 @@ export const getActiveLogBackground = (
 		case LogType.FATAL:
 			return `background-color: ${rgbaFromHexColorOpaque(
 				Color.BG_SAKURA_100,
+			)} !important;`;
+		case LogType.SUCCESS:
+			return `background-color: ${rgbaFromHexColorOpaque(
+				Color.BG_FOREST_100,
 			)} !important;`;
 		default:
 			return `background-color: ${rgbaFromHexColorOpaque(
