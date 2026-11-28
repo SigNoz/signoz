@@ -21,6 +21,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ExplorerActions from 'container/ExplorerActions/ExplorerActions';
+import { ExplorerActionsSource } from 'container/ExplorerActions/utils';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -347,7 +348,7 @@ function TimeSeries({
 									headerActions={
 										<ExplorerActions
 											query={stagedQuery ? exportQuery : null}
-											sourcepage={DataSource.METRICS}
+											sourcePage={ExplorerActionsSource.METRICS_EXPLORER}
 											panelType={PANEL_TYPES.TIME_SERIES}
 											isOneChartPerQuery={changeLayoutForOneChartPerQuery}
 										/>

@@ -34,6 +34,7 @@ import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import AIExplorerActions from '../AIExplorerActions/AIExplorerActions';
 import TraceExplorerControls from '../Controls';
 import {
 	TRACE_VIEW_BUILDER_QUERY_TYPE,
@@ -191,6 +192,7 @@ function TracesView({
 		<div className={styles.container}>
 			<div className={styles.actionsContainer}>
 				<div className="trace-explorer-controls">
+					<AIExplorerActions panelType={PANEL_TYPES.TRACE} />
 					<div className={styles.orderByContainer}>
 						<div className={styles.orderByLabel}>
 							Order by <Minus size={14} /> <ArrowUp10 size={14} />
